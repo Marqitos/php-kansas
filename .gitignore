@@ -17,6 +17,7 @@ local.properties
 .loadpath
 
 _notes/
+SyncToy*.dat
 
 # External tool builders
 .externalToolBuilders/
