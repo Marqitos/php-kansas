@@ -43,6 +43,12 @@ class Kansas_Controllers_Index
 		return new Kansas_View_Result_Sass($file);
 	}
 	
+	public function File() {
+		$file				= $this->getParam('file');
+		return new Kansas_View_Result_File($file);
+	}
+		
+	
 	public function clearCache() {
 		$ru = $this->getParam('ru', '/');
 		$view = $this->createView();
