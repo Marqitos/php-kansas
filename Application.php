@@ -339,7 +339,8 @@ class Kansas_Application
 					$this->_viewOptions = $options;
 					break;
 				case 'title':
-					$this->_titleClass = $value->class;
+					if($value->class)
+						$this->_titleClass = $value->class;
 					$options = $value->toArray();
 					unset($options['class']);
 					$this->_titleOptions = $options;
