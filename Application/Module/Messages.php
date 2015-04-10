@@ -26,7 +26,7 @@ class Kansas_Application_Module_Messages
 		return $this->options->router->basePath;
 	}
 
-	public function fillContactForm(Zend_Controller_Request_Http $request, Zend_View_Abstract $view, System_Guid $target) {
+	public function fillContactForm(Zend_Controller_Request_Http $request, Zend_View_Interface $view, System_Guid $target) {
 		$error = $request->getParam('err', null);
 		if($error !== null)
 			$error = (int)$error;
