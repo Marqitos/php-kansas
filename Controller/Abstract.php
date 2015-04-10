@@ -5,15 +5,11 @@ abstract class Kansas_Controller_Abstract
 		
 	private $_request;
 		
-	protected function getApplication() {
-		return Kansas_Application::getInstance();
-	}
-	
 	protected function createView() {
 		global $view;
 		global $application;
-		if(!$view instanceof Zend_View_Abstract)
-			$view = Kansas_Application::getInstance()->createView();
+		if(!$view instanceof Zend_View_Interface)
+			$view = $application->createView();
 		$view->assign($this->_request->getParams());
 		return $view;
 	}

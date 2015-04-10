@@ -63,9 +63,10 @@ class Kansas_Router_Shop_Order
 	 */
 	public function getOrders() {
 		if($this->_orders == null) {
+			global $application;
 			$auth = Zend_Auth::getInstance();
 			$this->_orders = $auth->hasIdentity()?
-				Kansas_Application::getInstance()->getProvider('shop')->getOrdersByUser($auth->getIdentity()):
+				$application->getProvider('shop')->getOrdersByUser($auth->getIdentity()):
 				new Kansas_Core_GuidItem_Collection();
 		}
 		return $this->_orders;

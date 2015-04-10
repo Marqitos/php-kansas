@@ -14,8 +14,9 @@ class Kansas_Media_Group_Image_TagType
 	}
 	
 	public function getSlugCollection() {
+		global $application;
 		if($this->_collection == null)
-			$this->_collection = Kansas_Application::getInstance()->getProvider('Image')->getTagGroupsByType($this->getTagType());
+			$this->_collection = $application->getProvider('Image')->getTagGroupsByType($this->getTagType());
 		return $this->_collection;	
 	}
 		

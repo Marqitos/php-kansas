@@ -11,7 +11,8 @@ class Kansas_Controllers_Account
 	}
 	
 	protected function getModule() {
-		return $this->getApplication()->getModule('Users');
+		global $application;
+		return $application->getModule('Users');
 	}
 	
 	public function index() {
@@ -104,8 +105,9 @@ class Kansas_Controllers_Account
 	}
 	
 	public function fbRegister() {
+		global $application;
 		$ru				= $this->getParam('ru', '/');
-		$facebook = $this->getApplication()->createAuthMembership('facebook');
+		$facebook = $application->createAuthMembership('facebook');
 		if(isset($_REQUEST['signed_request'])) {
 			$facebook->register();
 			$result	= Zend_Auth::getInstance()->authenticate($facebook);

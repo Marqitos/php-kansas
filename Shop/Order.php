@@ -56,18 +56,20 @@ class Kansas_Shop_Order
 		return $this->_userId;
 	}
 	public function getUser() {
+		global $application;
 		if($this->_user == null && $this->_userId != null)
-			$this->_user = Kansas_Application::getInstance()->getProvider('Users')->getById($this->_userId);
+			$this->_user = $application->getProvider('Users')->getById($this->_userId);
 		
 		return $this->_user;
 	}
 	
 	public function getItems() {
+		global $application;
 		if($this->_items == null) {
 			if($this->getId() == System_Guid::getEmpty())
 				$this->_items = new Kansas_Shop_Order_Item_Collection($this);
 			else 
-				$this->_items = Kansas_Application::getInstance()->getProvider('Shop')->getItemsByOrder($this); // Cargar desde base de datos
+				$this->_items = $application->getProvider('Shop')->getItemsByOrder($this); // Cargar desde base de datos
 		}
 		return $this->_items;
 	}
@@ -82,8 +84,8 @@ class Kansas_Shop_Order
 
 	public function getShippingAddress() {
 		if($this->_shippingAddress == null) {
-			$shop = Kansas_Application::getInstance()->getModule('Shop')->getShop();
-			$this->_shippingAddress = $shop->getShippingAddress($this->getShippingAddressId(), $this->getUserId());
+			global $application;
+			$this->_shippingAddress = $application->getModule('Shop')->getShop()->getShippingAddress($this->getShippingAddressId(), $this->getUserId());
 		}
 		return $this->_shippingAddress;
 	}
@@ -110,10 +112,10 @@ class Kansas_Shop_Order
 	}
 	
 	public function getShippingMethod() {
-		if($this->_shippingMethod == null) {
-			$shop = Kansas_Application::getInstance()->getModule('Shop')->getShop();
-			$this->_shippingMethod = $shop->getShippingMethod($this->getShippingMethodId());
-		}
+		global $application;
+		if($this->_shippingMethod == null)
+			$this->_shippingMethod = $application->getModule('Shop')->getShop()->getShippingMethod($this->getShippingMethodId());
+
 		return $this->_shippingMethod;
 	}
 	public function getShippingMethodId() {
@@ -338,6 +340,7 @@ class Kansas_Shop_Order
 	}
 	
 	public function createPayment($paymentMethod) {
+		global $application;
 		// Solo se soporta la creacion de un pago, cuando no hay un pago, o hay uno sin confirmar o cancelado.
 		if(array_search($this->row['StepType'], array(
 				'create',
@@ -346,7 +349,7 @@ class Kansas_Shop_Order
 				'payment-void')) === false)
 			throw new System_NotSupportedException('El pago ya ha sido realizado');		
 			
-		$shop = Kansas_Application::getInstance()->getModule('Shop')->getShop();
+		$shop = $application->getModule('Shop')->getShop();
 		$payment = $this->getPayment();
 		if ($payment != null && 
 				array_search($payment->getStatus(), array(

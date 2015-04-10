@@ -40,8 +40,9 @@ class Kansas_Router_Shop_Category
 	}
 	
 	public function getCategories() {
+		global $application;
 		if($this->_categories == null)
-			$this->_categories = Kansas_Application::getInstance()->getProvider('shop')->getCategories();
+			$this->_categories = $application->getProvider('shop')->getCategories();
 		return $this->_categories;
 	}
 	

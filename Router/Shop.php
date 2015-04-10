@@ -225,8 +225,9 @@ class Kansas_Router_Shop
 	}
 	
 	protected function getFamilies() {
+		global $application;
 		if($this->_families == null)
-			$this->_families = Kansas_Application::getInstance()->getProvider('shop')->getFamilies();
+			$this->_families = $application->getProvider('shop')->getFamilies();
 		return $this->_families;
 	}
 	

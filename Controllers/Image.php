@@ -17,7 +17,8 @@ class Kansas_Controllers_Image
 				)));
 		}
 		if($auth->hasIdentity()) {
-			$images = Kansas_Application::getInstance()->getProvider('Image')->getAll();
+			global $application;
+			$images = $application->getProvider('Image')->getAll();
 			$view->assign('body_class',		'gallery-full');
 			$view->assign('createAlbum',	$router->assemble(array(
 				'action'	=> 'createAlbum'
@@ -118,7 +119,7 @@ class Kansas_Controllers_Image
 	public function createImage() {
 		$auth = Zend_Auth::getInstance();
 		if($auth->hasIdentity()) {
-			$application 	= Kansas_Application::getInstance();
+			global $application;
 			$router 			= $this->getParam('router');
 			$model				= $application->getProvider('Image')->createImage();
 			$model->setReturnUrl($this->getParam(Kansas_Core_Model::KEY_RETURN_URL, $router->assemble()));
@@ -137,13 +138,14 @@ class Kansas_Controllers_Image
 	}
 	
 	public function editImage() {
+		global $application;
 		$view 				= $this->createView();
 		$router 			= $this->getParam('router');
 		$model 				= Kansas_Media_Image::getModel($mId);
 		$view->assign('model', 			$model);
 		$view->assign('id', 				$mId);
 		$view->assign('gallery',		new Kansas_Media_Group_Image_Gallery('Albunes'));
-		$view->assign('tagTypes',		$this->getApplication()->getProvider('Image')->getTagTypes());
+		$view->assign('tagTypes',		$application->getProvider('Image')->getTagTypes());
 		
 		if($model->hasSourceNew())
 			$view->assign('newSource',	$model->getSourceNew());
@@ -174,8 +176,8 @@ class Kansas_Controllers_Image
 	}
 	
 	public function saveImage() {
+		global $application;
 		$model 				= Kansas_Media_Image::getModel($mId);
-		$application	= Kansas_Application::getInstance();
 		$application->getProvider('Model')->updateModel($mId, $model);
 		
 		$validation		= $model->save();
@@ -196,9 +198,9 @@ class Kansas_Controllers_Image
 	}
 	
 	public function addSource() {
+		global $application;
 		$model 				= Kansas_Media_Image::getModel($mId);
 		$validation		= $model->addSourceNew();
-		$application	= Kansas_Application::getInstance();
 		$application->getProvider('Model')->updateModel($mId, $model);
 		$router 		= $this->getParam('router');
 		$url				= $router->assemble(array(
@@ -211,11 +213,11 @@ class Kansas_Controllers_Image
 		return $result;
 	}
 	public function removeSource() {
+		global $application;
 		$model 				= Kansas_Media_Image::getModel($mId);
 		$source				= $this->getParam('source');
 		$sId					= new System_Guid($source);
 		$model->removeSource($sId);
-		$application	= Kansas_Application::getInstance();
 		$application->getProvider('Model')->updateModel($mId, $model);
 		$router 		= $this->getParam('router');
 		$url				= $router->assemble(array(
@@ -228,26 +230,26 @@ class Kansas_Controllers_Image
 		return $result;
 	}
 	public function addTag() {
+		global $application;
 		$model 				= Kansas_Media_Image::getModel($mId);
 		$validation		= $model->addTagNew();
-		$application	= Kansas_Application::getInstance();
 		$application->getProvider('Model')->updateModel($mId, $model);
-		$router 		= $this->getParam('router');
-		$url				= $router->assemble(array(
+		$router 			= $this->getParam('router');
+		$url					= $router->assemble([
 										'action'								=> 'editImage',
 										'model'									=> $mId,
 										'tagValidationError'		=> $validation
-									));
+									]);
 		$result = new Kansas_View_Result_Redirect();
 		$result->setGotoUrl($url);
 		return $result;
 	}
 	public function removeTag() {
+		global $application;
 		$model 				= Kansas_Media_Image::getModel($mId);
 		$tag					= $this->getParam('tag');
 		$tId					= new System_Guid($tag);
 		$model->removeTag($tId);
-		$application	= Kansas_Application::getInstance();
 		$application->getProvider('Model')->updateModel($mId, $model);
 		$router 		= $this->getParam('router');
 		$url				= $router->assemble(array(

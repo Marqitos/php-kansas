@@ -44,8 +44,9 @@ class Kansas_Media_Image
 		return $this->_sourceId;
 	}
 	public function getDefaultSource() {
+		global $application;
 		if($this->_source == null || $this->_source->getId() != $this->_sourceId)
-			$this->_source = Kansas_Application::getInstance()->getProvider('Image')->getSource($this->_sourceId);
+			$this->_source = $application->getProvider('Image')->getSource($this->_sourceId);
 		return $this->_source;
 	}
 
@@ -53,16 +54,18 @@ class Kansas_Media_Image
 		return $this->_albumId;
 	}
 	public function getAlbum() {
+		global $application;
 		if($this->_album == null)
-			$this->_album = Kansas_Application::getInstance()->getProvider('Image')->getAlbum($this->_albumId);
+			$this->_album = $application->getProvider('Image')->getAlbum($this->_albumId);
 		return $this->_album;
 	}
 
 	public function getSources() {
+		global $application;
 		if($this->_sources == null)
 			$this->_sources = $this->getId()->isEmpty()?
 				new Kansas_Core_GuidItem_Collection():
-				Kansas_Application::getInstance()->getProvider('Image')->getSources($this->getId());
+				$application->getProvider('Image')->getSources($this->getId());
 			
 		if(isset($this->row['sourcesRemoved']))
 			foreach($this->row['sourcesRemoved'] as $remove)
@@ -74,13 +77,15 @@ class Kansas_Media_Image
 				
 		return $this->_sources;
 	}
+	
 	public function getSource($format) {
+		global $application;
 		if(isset($this->_sources)) {
 			foreach($this->_sources as $source)
 				if($source->getFormat() == $format)
 					return $source;
 		}
-		return Kansas_Application::getInstance()->getProvider('Image')->getSourceByImageFormat($this->getId(), $format);
+		return $application->getProvider('Image')->getSourceByImageFormat($this->getId(), $format);
 	}
 	public function addSource(Kansas_Media_Image_Source_Interface $source) {
 		if(!isset($this->row['sourcesEdit']))
@@ -118,10 +123,11 @@ class Kansas_Media_Image
 	}
 	
 	public function getTags() {
+		global $application;
 		if($this->_tags == null)
 			$this->_tags = $this->getId()->isEmpty()?
 				new Kansas_Core_GuidItem_Collection():
-				Kansas_Application::getInstance()->getProvider('Image')->getTagGroupsByImageId($this->getId());
+				$application->getProvider('Image')->getTagGroupsByImageId($this->getId());
 
 		if(isset($this->row['tagsRemoved']))
 			foreach($this->row['tagsRemoved'] as $remove)
@@ -130,18 +136,20 @@ class Kansas_Media_Image
 		if(isset($this->row['tagsEdit']))
 			foreach($this->row['tagsEdit'] as $tag)
 				if(!isset($this->_tags[$tag]))
-					$this->_tags->add(Kansas_Application::getInstance()->getProvider('Image')->getTagGroup($tag));
+					$this->_tags->add($application->getProvider('Image')->getTagGroup($tag));
 
 		return $this->_tags;
 	}
+
 	public function addTag($tag) {
+		global $application;
 		if(!isset($this->row['tagsEdit']))
 			$this->row['tagsEdit'] = new Kansas_Core_GuidItem_GuidCollection();
 			
 		$this->row['tagsEdit']->add($tag);
 		
 		if(isset($this->_tags))
-			$this->_tags->add(Kansas_Application::getInstance()->getProvider('Image')->getTagGroup($tag));
+			$this->_tags->add($application->getProvider('Image')->getTagGroup($tag));
 	}
 	public function removeTag($tag) {
 		if(!isset($this->row['tagsRemoved']))
@@ -168,7 +176,7 @@ class Kansas_Media_Image
 	public static function getModel(&$mId) {
 		$model = parent::getModel($mId);
 		if($model == null) {
-			$application	= Kansas_Application::getInstance();
+			global $application;
 			$request			= $application->getRequest();
 			$router				= $request->getParam('router');
 			$image				= new System_Guid($request->getParam('image'));
@@ -191,8 +199,9 @@ class Kansas_Media_Image
 	}
 	
 	public function fill() {
+		global $application;
 		parent::fill();
-		$request = Kansas_Application::getInstance()->getRequest();
+		$request = $application->getRequest();
 		
 		$this->row['Name'] = trim($this->row['Name']);
 		
@@ -216,6 +225,7 @@ class Kansas_Media_Image
 	}
 	
 	public function save() {
+		global $application;
 		// Validar datos
 		$result = self::VALIDATION_SUCCESS;
 		
@@ -229,7 +239,7 @@ class Kansas_Media_Image
 		if($result != self::VALIDATION_SUCCESS)
 			return $result;
 			
-		Kansas_Application::getInstance()->getProvider('Image')->saveImage($this->row);
+		$application->getProvider('Image')->saveImage($this->row);
 
 		return self::VALIDATION_SUCCESS;
 	}

@@ -29,8 +29,9 @@ class Kansas_Media_Image_Source
 			$this->_image->getId();
 	}
 	public function getImage() {
+		global $application;
 		if($this->_image == null)
-			$this->_image = Kansas_Application::getInstance()->getProvider('Image')->getImage($this->_imageId);
+			$this->_image = $application->getProvider('Image')->getImage($this->_imageId);
 		return $this->_image;
 	}
 	

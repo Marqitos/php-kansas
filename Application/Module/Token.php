@@ -40,7 +40,8 @@ class Kansas_Application_Module_Token
 	}
 	
 	public function getAuthTokenUrl($url, $device = true) {
-		return $_SERVER['SERVER_NAME'] . '/' . $this->getApplication()->getModule('Users')->getBasePath() . 'token' . Kansas_Responde::buildQueryString([
+		global $application;
+		return $_SERVER['SERVER_NAME'] . '/' . $application->getModule('Users')->getBasePath() . 'token' . Kansas_Response::buildQueryString([
 			'token' => $this->getToken($device),
 			'ru'		=> $url
 		]);
