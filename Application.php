@@ -26,7 +26,7 @@ class Kansas_Application
 	private $_log;
 	private $_logWriter;
 	
-	private $_viewClass = 'Smarty_View';
+	private $_viewClass = 'Kansas_View_Smarty';
 	private $_viewOptions;
 	
 	private $_title;
@@ -310,7 +310,8 @@ class Kansas_Application
 					$this->_log = Zend_Log::factory($value);
 					break;
 				case 'view':
-					$this->_viewClass = $value->class;
+					if(isset($value->class))
+						$this->_viewClass = $value->class;
 					$options = $value->toArray();
 					unset($options['class']);
 					$this->_viewOptions = $options;
@@ -346,7 +347,7 @@ class Kansas_Application
 	
 	public function createView() {
 		if($this->_viewOptions == null)
-			$this->_viewOptions = new Zend_Config([]);
+			$this->_viewOptions = [];
 		$view = new $this->_viewClass($this->_viewOptions);
 		if($view->getCaching())
 			$view->setCacheId($this->getRequest()->getRequestUri());
