@@ -1,5 +1,7 @@
 <?php
 
+use Zend\Http\PhpEnvironment\Request;
+
 class Kansas_Application
 	implements Kansas_Application_Interface {
 
@@ -10,7 +12,7 @@ class Kansas_Application
 	private $_loaders = [
 		'controller' => ['Kansas_Controllers_' => 'Kansas/Controllers/'],
 		'helper'     => ['Kansas_Helpers_' => 'Kansas/Helpers/'],
-		'module'     => ['Kansas_Application_Module'	=> 'Kansas/Application/Module'],
+		'module'     => ['Kansas_Application_Module_'	=> 'Kansas/Application/Module/'],
 		'provider'	 => ['Kansas_Db_' => 'Kansas/Db/']
 	];
 
@@ -20,7 +22,6 @@ class Kansas_Application
 	private $_request;
 	
 	private $_errorPlugin;
-	private $_constructionPage;
 	private $_router;
 	
 	private $_log;
@@ -116,7 +117,7 @@ class Kansas_Application
 	
 	public function getRequest() {
 		if($this->_request == null)
-			$this->_request = new Zend_Controller_Request_Http();
+			$this->_request = new Request();
 		return $this->_request;
 	}
 	
@@ -132,7 +133,7 @@ class Kansas_Application
 			'Index';
 		$controllerClass = $this->getLoader('controller')->load($controller);
 		$class = new $controllerClass();
-		$class->init($request);
+		$class->init($request, $params);
 		if(!is_callable([$class, $action]))
 			throw new System_NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($class));
 		return $class->$action($params);
@@ -155,8 +156,7 @@ class Kansas_Application
 			$params = [];
 			if($params = $this->getRouter()->match($this->getRequest())) {
 				// Route
-				$params = $this->fireRoute($params);
-				$this->setRequestParams($params);
+				$params = array_merge($this->fireRoute($params), $this->getDefaultParams());
 				$result = $this->dispatch($params);
 			}
 			if(!isset($result) || $result == null)
@@ -170,12 +170,13 @@ class Kansas_Application
 	}
 	
 	// Asocia los parametros indicados y los básicos a la petición actual
-	public function setRequestParams($params) {
+	public function getDefaultParams() {
 		$request = $this->getRequest();
-		$params['application']	= $this;
-		$params['url'] 					= trim($request->getPathInfo(), '/');
-		$params['uri'] 					= $request->getRequestUri();
-		$request->setParams($params);
+		return [
+			'application'	=> $this,
+			'url'					=> trim($request->getUri()->getPath(), '/'),
+			'uri'					=> $request->getUriString()
+		];
 	}
 	
 	public function getEnviroment() {
@@ -243,10 +244,6 @@ class Kansas_Application
 			$params = call_user_func($callback, $provider, $providerName);
 	}
 
-	public function setConstructionPage($constructionPage) {
-		$this->_constructionPage = $constructionPage;
-		return $this;
-	}
 
 	public function getDb() {
 		if($this->_db instanceof Zend_Config)
@@ -379,8 +376,7 @@ class Kansas_Application
 	// devuelve una respuesta de solicitud, correspondiente al error indicado
 	public function createErrorResult(Exception $e) {
 		$params = $this->getErrorPlugin()->getParams($e);
-		$params = $this->fireRoute($params);
-		$this->setRequestParams($params);
+		$params = array_merge($this->fireRoute($params), $this->getDefaultParams());
 		return $this->dispatch($params);
 	}
 

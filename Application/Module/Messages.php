@@ -1,5 +1,7 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Application_Module_Messages
 	extends Kansas_Application_Module_Abstract {
 
@@ -26,7 +28,7 @@ class Kansas_Application_Module_Messages
 		return $this->options->router->basePath;
 	}
 
-	public function fillContactForm(Zend_Controller_Request_Http $request, Zend_View_Interface $view, System_Guid $target) {
+	public function fillContactForm(Request $request, Zend_View_Interface $view, System_Guid $target) {
 		$error = $request->getParam('err', null);
 		if($error !== null)
 			$error = (int)$error;
@@ -36,7 +38,7 @@ class Kansas_Application_Module_Messages
 		$view->assign('action',	'/mensajes/enviar');
 	}
 
-	public function ApiMatch(Zend_Controller_Request_Abstract $request) {
+	public function ApiMatch(Request $request) {
 		$apiRouter = new Kansas_Router_API_Messages();
 		$apiRouter->setBasePath("api/messages");
 		return $apiRouter->match($request);
