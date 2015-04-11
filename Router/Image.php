@@ -1,16 +1,19 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Router_Image
 	extends Kansas_Router_Abstract {
 		
-	public function match(Zend_Controller_Request_Abstract $request) {
+	public function match(Request $request) {
+		global $application;
 		$path = Kansas_Router_GetPartialPath($this, $request);
 
 		if($path === false || $path == '')
 			return false;
 		
 		
-		$imageProvider = Kansas_Application::getInstance()->getProvider('image');
+		$imageProvider = $application->getProvider('image');
 		$images = $imageProvider->getAll();
 		
 		foreach($images as $image) {

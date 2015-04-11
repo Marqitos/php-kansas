@@ -33,8 +33,9 @@ class Kansas_Shop_Family
 	}
 	
 	public function getParent() {
+		global $application;
 		if($this->_parent == null && $this->_parentId != null)
-			$this->_parent = Kansas_Application::getInstance()->getProvider('shop')->getFamilyById($this->getId());
+			$this->_parent = $application->getProvider('shop')->getFamilyById($this->getId());
 		return $this->_parent;
 	}
 	
@@ -48,8 +49,9 @@ class Kansas_Shop_Family
 
 	
 	public function getProducts() {
+		global $application;
 		if($this->_products == null)
-			$this->_products = Kansas_Application::getInstance()->getProvider('shop')->getProductsByFamily($this);
+			$this->_products = $application->getProvider('shop')->getProductsByFamily($this);
 		return $this->_products;
 	}
 	

@@ -1,5 +1,7 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Router_Shop_Order
 	extends Kansas_Router_Abstract {
 		
@@ -9,7 +11,7 @@ class Kansas_Router_Shop_Order
 		parent::__construct($options);
 	}
 		
-	public function match(Zend_Controller_Request_Abstract $request) {
+	public function match(Request $request) {
 		$path = Kansas_Router_GetPartialPath($this, $request);
 
 		if($path === false)
@@ -63,9 +65,10 @@ class Kansas_Router_Shop_Order
 	 */
 	public function getOrders() {
 		if($this->_orders == null) {
+			global $application;
 			$auth = Zend_Auth::getInstance();
 			$this->_orders = $auth->hasIdentity()?
-				Kansas_Application::getInstance()->getProvider('shop')->getOrdersByUser($auth->getIdentity()):
+				$application->getProvider('shop')->getOrdersByUser($auth->getIdentity()):
 				new Kansas_Core_GuidItem_Collection();
 		}
 		return $this->_orders;

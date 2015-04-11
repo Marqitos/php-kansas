@@ -1,5 +1,7 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Application_Module_Shop
 	extends Kansas_Application_Module_Abstract {
 		
@@ -15,7 +17,7 @@ class Kansas_Application_Module_Shop
 			$provider->tagProviders[] = $application->getProvider('Shop_TagProvider');
 	}
 		
-	public function route(Zend_Controller_Request_Abstract $request, $params) {
+	public function route(Request $request, $params) {
 		$count = 0;
 		if($cart = Kansas_Shop_Order::getCurrent($count, false)) {
 			$params['cart'] = $cart;

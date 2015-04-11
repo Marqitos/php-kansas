@@ -53,8 +53,9 @@ class Kansas_Shop_Product
 	}
 	
 	public function getFamily() {
+		global $application;
 		if($this->_family == null)
-			$this->_family = Kansas_Application::getInstance()->getProvider('shop')->getFamilyById($this->_familyId);
+			$this->_family = $application->getProvider('shop')->getFamilyById($this->_familyId);
 		return $this->_family;
 	}
 	

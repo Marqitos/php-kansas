@@ -1,9 +1,11 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Controllers_API
 	extends Kansas_Controller_Abstract {
 	
-	public function init(Zend_Controller_Request_Http $request) {
+	public function init(Request $request) {
 		parent::init($request);
 		// Cargar autenticación
 		global $application;

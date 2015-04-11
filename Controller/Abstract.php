@@ -1,40 +1,40 @@
 <?php
 
+use Zend\Http\Request;
+
 abstract class Kansas_Controller_Abstract
 	implements Kansas_Controller_Interface {
 		
 	private $_request;
+	private $_params;
 		
-	protected function getApplication() {
-		return Kansas_Application::getInstance();
-	}
-	
 	protected function createView() {
 		global $view;
 		global $application;
-		if(!$view instanceof Zend_View_Abstract)
-			$view = Kansas_Application::getInstance()->createView();
-		$view->assign($this->_request->getParams());
+		if(!$view instanceof Zend_View_Interface)
+			$view = $application->createView();
+		$view->assign($this->_params);
 		return $view;
 	}
 	protected function createPage($description = null, $keywords = null, Kansas_View_Page_Interface $parent = null) {
-		$id;
 		$router	= $this->getParam('router');
-		$url		= trim($this->getRequest()->getPathInfo(), '/');
 		$page		= $description instanceof Kansas_Post_Interface	? new Kansas_View_Page_Post($description, $parent, $router)
 						//:	System_Guid::tryParse($keywords, $id)					?	new Kansas_View_Page_Db($id, $description, $url, $parent, $router)
-																														: new Kansas_View_Page_Static($description, $keywords, $url,	$parent, $router);
+																														: new Kansas_View_Page_Static($description, $keywords, $this->getParam('url'),	$parent, $router);
 															
-		$this->_request->setParam('page', $page);
+		$this->_params['page'] = $page;
 		return $this->createView();
 	}
 	
-	public function init(Zend_Controller_Request_Http $request) {
+	public function init(Request $request, array $params) {
 		$this->_request = $request;
+		$this->_params 	= $params;
 	}
 	
 	protected function getParam($key, $default = null) {
-		return $this->_request->getParam($key, $default);
+		return	isset($this->_params[$key])	? $this->_params[$key]
+		//				$this->_request->getParam($key, $default);				 
+																				: $default;
 	}
 	
 	protected function getRequest() {

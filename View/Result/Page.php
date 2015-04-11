@@ -5,7 +5,7 @@ class Kansas_View_Result_Page
 
 	private $_page;
 	
-	public function __construct(Zend_View_Abstract $view, $template, Kansas_View_Page_Interface $page) {
+	public function __construct(Zend_View_Interface $view, $template, Kansas_View_Page_Interface $page) {
 		parent::__construct($view, $template);
 		$this->_page = $page;
 	}

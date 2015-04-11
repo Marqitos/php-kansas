@@ -1,5 +1,7 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Router_Default
 	extends Kansas_Router_Abstract {
 	use Router_PartialPath;
@@ -15,7 +17,7 @@ class Kansas_Router_Default
 		$this->_routers = new SplPriorityQueue();
 	}
 
-	public function match(Zend_Controller_Request_Abstract $request) {
+	public function match(Request $request) {
 		$path 	= $this->getPartialPath($this, $request);
 		$params = false;
 		

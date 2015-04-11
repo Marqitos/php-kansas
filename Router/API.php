@@ -1,5 +1,7 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Router_API
 	extends Kansas_Router_Abstract {
 	use Router_PartialPath;
@@ -11,7 +13,7 @@ class Kansas_Router_API
 		$this->_routers = [];
 	}
 	
-	public function match(Zend_Controller_Request_Abstract $request) {
+	public function match(Request $request) {
 		global $application;
 		$path = $this->getPartialPath($this, $request);
 		$params = false;

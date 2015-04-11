@@ -4,6 +4,7 @@ class Kansas_Controllers_Error
 	extends Kansas_Controller_Abstract {
 	
 	public function Index(array $params) {
+		global $application;
 		$error;
 		$code			= $this->getErrorCode($error);
 		$message	= $error instanceof System_Net_WebException ?
@@ -27,7 +28,7 @@ class Kansas_Controllers_Error
 		$view->assign($params);
 		$view->assign('errorCode',	$code);
 		$view->assign('exception',	$error);
-		$view->assign('env', 				$this->getApplication()->getEnviroment());
+		$view->assign('env', 				$application->getEnviroment());
 		$view->assign('pageTitle',	$message);
 		$view->assign('requestUri', $this->getRequest()->getPathInfo());
 		

@@ -18,8 +18,9 @@ class Kansas_Db_Shop_TagProvider
 	}
 	
 	public function getTagGroups() {
+		global $application;
 		$result = new ArrayIterator();
-		$products = Kansas_Application::getInstance()->getProvider('shop')->getProducts();
+		$products = $application->getProvider('shop')->getProducts();
 		foreach($products as $product)
 			$result[] = Kansas_Db_Shop_TagProvider_ProductToImageTagGroup($product);
 		return $result;

@@ -1,30 +1,33 @@
 <?php
 
+use Zend\Http\PhpEnvironment\Request;
+
 class Kansas_Application
 	implements Kansas_Application_Interface {
 
-	private $_providerLoader;
 	private $_providers = [];
 	private $_db;
 	private $_config;
 
-	private $_moduleLoader;
+	private $_loaders = [
+		'controller' => ['Kansas_Controllers_' => 'Kansas/Controllers/'],
+		'helper'     => ['Kansas_Helpers_' => 'Kansas/Helpers/'],
+		'module'     => ['Kansas_Application_Module_'	=> 'Kansas/Application/Module/'],
+		'provider'	 => ['Kansas_Db_' => 'Kansas/Db/']
+	];
+
 	private $_modules	= [];
 	private $_modulesLoaded = false;
-
-	private $_controllerLoader;
-	private $_helperLoader;
 
 	private $_request;
 	
 	private $_errorPlugin;
-	private $_constructionPage;
 	private $_router;
 	
 	private $_log;
 	private $_logWriter;
 	
-	private $_viewClass = 'Smarty_View';
+	private $_viewClass = 'Kansas_View_Smarty';
 	private $_viewOptions;
 	
 	private $_title;
@@ -42,15 +45,18 @@ class Kansas_Application
 	
 	/* Miembros de Kansas_Application_Interface */
 
+	public function getLoader($loaderName) {
+		if(!isset($this->_loaders[$loaderName]))
+			return false;
+		if(!($this->_loaders[$loaderName] instanceof Kansas_PluginLoader_Interface))
+			$this->_loaders[$loaderName] = new Kansas_PluginLoader($this->_loaders[$loaderName]);
+		return $this->_loaders[$loaderName];
+	}
+
 	private function loadModules() {
 		foreach($this->_modules as $moduleName => $options)
 			$this->getModule($moduleName);
 		$this->_modulesLoaded = true;
-	}
-	public function getModuleLoader() {
-		if($this->_moduleLoader == null)
-			$this->_moduleLoader = new Zend_Loader_PluginLoader(['Kansas_Application_Module'	=> 'Kansas/Application/Module']);
-		return $this->_moduleLoader;
 	}
 	public function getModule($moduleName) {
 		if(!is_string($moduleName))
@@ -58,7 +64,7 @@ class Kansas_Application
 		$moduleName = ucfirst($moduleName);
 		if(!isset($this->_modules[$moduleName]) || !($this->_modules[$moduleName] instanceof Kansas_Application_Module_Interface)) {
 			try {
-				$moduleClass = $this->getModuleLoader()->load($moduleName);
+				$moduleClass = $this->getLoader('module')->load($moduleName);
 				$options = isset($this->_modules[$moduleName]) && $this->_modules[$moduleName] instanceof Zend_Config ?
 					$this->_modules[$moduleName]:
 					new Zend_Config([]);
@@ -96,17 +102,12 @@ class Kansas_Application
 		return $result;
 	}
 	
-	public function getProviderLoader() {
-		if($this->_providerLoader == null)
-			$this->_providerLoader = new Zend_Loader_PluginLoader(['Kansas_Db_' => 'Kansas/Db/']);
-		return $this->_providerLoader;
-	}
 	public function getProvider($providerName) {
 		if(!is_string($providerName))
 			throw new System_ArgumentOutOfRangeException('providerName', $providerName, 'Se esperaba una cadena');
 		$providerName = ucfirst($providerName);
 		if(!array_key_exists($providerName, $this->_providers)) {
-			$providerClass = $this->getProviderLoader()->load($providerName);
+			$providerClass = $this->getLoader('provider')->load($providerName);
 			$provider = new $providerClass($this->getDb());
 			$this->_providers[$providerName] = $provider;
 			$this->fireCreateProvider($provider, $providerName);
@@ -116,19 +117,8 @@ class Kansas_Application
 	
 	public function getRequest() {
 		if($this->_request == null)
-			$this->_request = new Zend_Controller_Request_Http();
+			$this->_request = new Request();
 		return $this->_request;
-	}
-	
-	public function getControllerLoader() {
-		if($this->_controllerLoader == null)
-			$this->_controllerLoader = new Zend_Loader_PluginLoader(['Kansas_Controllers_' => 'Kansas/Controllers/']);
-		return $this->_controllerLoader;
-	}
-	public function getHelperLoader() {
-		if($this->_helperLoader == null)
-			$this->_helperLoader = new Zend_Loader_PluginLoader(['Kansas_Helpers_' => 'Kansas/Helpers/']);
-		return $this->_helperLoader;
 	}
 	
 	public function dispatch($params) {
@@ -141,9 +131,9 @@ class Kansas_Application
 		$action = isset($params['action']) ?
 			$params['action']:
 			'Index';
-		$controllerClass = $this->getControllerLoader()->load($controller);
+		$controllerClass = $this->getLoader('controller')->load($controller);
 		$class = new $controllerClass();
-		$class->init($request);
+		$class->init($request, $params);
 		if(!is_callable([$class, $action]))
 			throw new System_NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($class));
 		return $class->$action($params);
@@ -166,8 +156,7 @@ class Kansas_Application
 			$params = [];
 			if($params = $this->getRouter()->match($this->getRequest())) {
 				// Route
-				$params = $this->fireRoute($params);
-				$this->setRequestParams($params);
+				$params = array_merge($this->fireRoute($params), $this->getDefaultParams());
 				$result = $this->dispatch($params);
 			}
 			if(!isset($result) || $result == null)
@@ -181,12 +170,13 @@ class Kansas_Application
 	}
 	
 	// Asocia los parametros indicados y los básicos a la petición actual
-	public function setRequestParams($params) {
+	public function getDefaultParams() {
 		$request = $this->getRequest();
-		$params['application']	= $this;
-		$params['url'] 					= trim($request->getPathInfo(), '/');
-		$params['uri'] 					= $request->getRequestUri();
-		$request->setParams($params);
+		return [
+			'application'	=> $this,
+			'url'					=> trim($request->getUri()->getPath(), '/'),
+			'uri'					=> $request->getUriString()
+		];
 	}
 	
 	public function getEnviroment() {
@@ -254,10 +244,6 @@ class Kansas_Application
 			$params = call_user_func($callback, $provider, $providerName);
 	}
 
-	public function setConstructionPage($constructionPage) {
-		$this->_constructionPage = $constructionPage;
-		return $this;
-	}
 
 	public function getDb() {
 		if($this->_db instanceof Zend_Config)
@@ -292,23 +278,11 @@ class Kansas_Application
 					break;
 				case 'loader':
 					foreach($value as $loaderName => $options) {
-						$loader = null;
-						switch($loaderName) {
-							case 'controller':
-								$loader = $this->getControllerLoader();
-								break;
-							case 'provider':
-								$loader = $this->getProviderLoader();
-								break;
-							case 'module':
-								$loader = $this->getModuleLoader();
-								break;
-						}
-						if($loader == null)
+						if($loader = $this->getLoader($loaderName)) {
+							foreach($options->toArray() as $prefix => $path)
+								$loader->addPrefixPath($prefix, realpath($path));
+						} else
 							throw new System_ArgumentOutOfRangeException();
-							
-						foreach($options->toArray() as $prefix => $path)
-							$loader->addPrefixPath($prefix, realpath($path));
 					}
 					break;
 				case 'module':
@@ -333,7 +307,8 @@ class Kansas_Application
 					$this->_log = Zend_Log::factory($value);
 					break;
 				case 'view':
-					$this->_viewClass = $value->class;
+					if(isset($value->class))
+						$this->_viewClass = $value->class;
 					$options = $value->toArray();
 					unset($options['class']);
 					$this->_viewOptions = $options;
@@ -344,9 +319,6 @@ class Kansas_Application
 					$options = $value->toArray();
 					unset($options['class']);
 					$this->_titleOptions = $options;
-					break;
-				default:
-					var_dump($key);
 					break;
 			}
 			
@@ -372,7 +344,7 @@ class Kansas_Application
 	
 	public function createView() {
 		if($this->_viewOptions == null)
-			$this->_viewOptions = new Zend_Config([]);
+			$this->_viewOptions = [];
 		$view = new $this->_viewClass($this->_viewOptions);
 		if($view->getCaching())
 			$view->setCacheId($this->getRequest()->getRequestUri());
@@ -404,8 +376,7 @@ class Kansas_Application
 	// devuelve una respuesta de solicitud, correspondiente al error indicado
 	public function createErrorResult(Exception $e) {
 		$params = $this->getErrorPlugin()->getParams($e);
-		$params = $this->fireRoute($params);
-		$this->setRequestParams($params);
+		$params = array_merge($this->fireRoute($params), $this->getDefaultParams());
 		return $this->dispatch($params);
 	}
 

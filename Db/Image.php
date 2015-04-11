@@ -6,10 +6,9 @@ class Kansas_Db_Image
 	public $tagProviders;
 		
 	public function __construct(Zend_Db_Adapter_Abstract $db) {
+		global $application;
 		parent::__construct($db);
-		$this->tagProviders = array(
-			Kansas_Application::getInstance()->getProvider('Image_TagProvider')
-		);
+		$this->tagProviders = [$application->getProvider('Image_TagProvider')];
 	}
 
 	// Gallery

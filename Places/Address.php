@@ -21,8 +21,9 @@ class Kansas_Places_Address
 	
 	/* Miembros de Kansas_Places_Address_Interface */
 	public function getUser() {
+		global $application;
 		if($this->_user == null)
-			$this->_user = Kansas_Application::getInstance()->getProvider('users')->getById($this->_userId);
+			$this->_user = $application->getProvider('users')->getById($this->_userId);
 		return $this->_user;
 	}
 	public function getUserId() {
@@ -57,8 +58,9 @@ class Kansas_Places_Address
 		return $this->row['State'];
 	}
 	public function getCountry() {
+		global $application;
 		if($this->_country == null)
-			$this->_country = Kansas_Application::getInstance()->getProvider('Places')->getCountryByCode($this->row['Country']);
+			$this->_country = $application->getProvider('Places')->getCountryByCode($this->row['Country']);
 		return $this->_country;
 	}
 	public function getCountryCode() {
@@ -90,7 +92,8 @@ class Kansas_Places_Address
 	}
 	
 	public function save() {
-		$this->row = Kansas_Application::getInstance()->getProvider('places')->saveAddress($this->row);
+		global $application;
+		$this->row = $application->getProvider('places')->saveAddress($this->row);
 		$this->init();
 	}
 	

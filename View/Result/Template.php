@@ -8,7 +8,7 @@ class Kansas_View_Result_Template
 	private $_template;
 	private $_view;
 	
-	public function __construct(Zend_View_Abstract $view, $template) {
+	public function __construct(Zend_View_Interface $view, $template) {
 		$this->_view			= $view;
 		$this->_template	= $template;
 	}

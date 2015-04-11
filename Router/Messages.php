@@ -1,5 +1,7 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Router_Messages
 	extends Kansas_Router_Abstract {
 	use Router_PartialPath;
@@ -8,7 +10,7 @@ class Kansas_Router_Messages
 		parent::__construct($options);
 	}
 		
-	public function match(Zend_Controller_Request_Abstract $request) {
+	public function match(Request $request) {
 		$path = $this->getPartialPath($this, $request);
 		$params = false;
 
@@ -46,20 +48,15 @@ class Kansas_Router_Messages
 				);
 				break;
 			default:
-				$application = Kansas_Application::getInstance();
-				if($application->hasModule('users') && $user = $application->getModule('users')->getIdentity()) {
-					try {
-						$id = new System_Guid($path);
-						$thread = $application->getProvider('messages')->getThreadById($id, $user->getId());
-						if($thread != null) {
-							$params = [
-								'controller'	=> 'messages',
-								'action'			=> 'show',
-								'thread'			=> $thread
-							];
-						}
-					} catch(Exception $ex) {
-						break;
+				global $application;
+				if($application->hasModule('users') && $user = $application->getModule('users')->getIdentity() && $id = System_Guid::tryParse($path)) {
+					$thread = $application->getProvider('messages')->getThreadById($id, $user->getId());
+					if($thread != null) {
+						$params = [
+							'controller'	=> 'messages',
+							'action'			=> 'show',
+							'thread'			=> $thread
+						];
 					}
 				}
 				break;
@@ -79,7 +76,8 @@ class Kansas_Router_Messages
 	}
 	
 	public function getTitle($partial = '') {
-		return Kansas_Application::getInstance()->getRouter()->getTitle($partial);
+		global $application;
+		return $application->getRouter()->getTitle($partial);
 	}
 		
 }

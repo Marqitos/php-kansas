@@ -1,5 +1,7 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Router_ImageAlbum
 	extends Kansas_Router_Abstract {
 
@@ -40,7 +42,7 @@ class Kansas_Router_ImageAlbum
 		return $this->_galleryRouter;
 	}
 		
-	public function match(Zend_Controller_Request_Abstract $request) {
+	public function match(Request $request) {
 		$path = Kansas_Router_GetPartialPath($this, $request);
 
 		if($path === false)

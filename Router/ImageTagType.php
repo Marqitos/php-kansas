@@ -25,8 +25,9 @@ class Kansas_Router_ImageTagType
 	}
 		
 	public function getGallery() {
+		global $application;
 		if($this->_gallery == null)
-			$this->_gallery = Kansas_Application::getInstance()->getProvider('Image')->getByTagType($this->options->tagType);
+			$this->_gallery = $application->getProvider('Image')->getByTagType($this->options->tagType);
 		return $this->_gallery;
 	}
 	

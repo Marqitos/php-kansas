@@ -1,5 +1,7 @@
 <?php
 
+use Zend\Http\Request;
+
 class Kansas_Router_Shop
 	extends Kansas_Router_Abstract {
 		
@@ -17,7 +19,7 @@ class Kansas_Router_Shop
 		parent::__construct($options);
 	}
 		
-	public function match(Zend_Controller_Request_Abstract $request) {
+	public function match(Request $request) {
 		$path = Kansas_Router_GetPartialPath($this, $request);
 
 		if($path === false)
@@ -225,8 +227,9 @@ class Kansas_Router_Shop
 	}
 	
 	protected function getFamilies() {
+		global $application;
 		if($this->_families == null)
-			$this->_families = Kansas_Application::getInstance()->getProvider('shop')->getFamilies();
+			$this->_families = $application->getProvider('shop')->getFamilies();
 		return $this->_families;
 	}
 	

@@ -18,9 +18,10 @@ class Kansas_Controllers_Index
 	}
 	
 	public function Css() {
+		global $application;
 		$files = $this->getParam('files');
 		$cssResult = new Kansas_View_Result_Css($files);
-		$backendCache = Kansas_Application::getInstance()->getModule('BackendCache');
+		$backendCache = $application->getModule('BackendCache');
 		if($backendCache) {
 			$cache = $backendCache->getCache();
 			$cacheId = $cssResult->getCacheId();
@@ -42,6 +43,12 @@ class Kansas_Controllers_Index
 		$file				= $this->getParam('file');
 		return new Kansas_View_Result_Sass($file);
 	}
+	
+	public function File() {
+		$file				= $this->getParam('file');
+		return new Kansas_View_Result_File($file);
+	}
+		
 	
 	public function clearCache() {
 		$ru = $this->getParam('ru', '/');

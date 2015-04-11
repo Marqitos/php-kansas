@@ -8,7 +8,7 @@ class Kansas_Db_Auth_Facebook
 	}
 	
 	public function createUser($fbUser, $name, $email) {
-		$application = Kansas_Application::getInstance();
+		global $application;
 		$usersProvider = $application->getProvider('Users');
 		$user = $usersProvider->getByEmail($email);
 		$this->db->beginTransaction();
