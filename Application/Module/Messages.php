@@ -29,9 +29,7 @@ class Kansas_Application_Module_Messages
 	}
 
 	public function fillContactForm(Request $request, Zend_View_Interface $view, System_Guid $target) {
-		$error = $request->getParam('err', null);
-		if($error !== null)
-			$error = (int)$error;
+		$error = isset($_REQUEST['err']) ? (int)$_REQUEST['err'] : null;
 		$view->assign('msg',		Bioter_Model_Message::getModel($mId));
 		$view->assign('error',	$error);
 		$view->assign('target',	$target->getHex());
