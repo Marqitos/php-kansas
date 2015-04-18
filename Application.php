@@ -146,9 +146,6 @@ class Kansas_Application
 		} else
 			error_reporting(E_ERROR);
 
-			error_reporting(E_ALL);
-			ini_set("display_errors", 1);
-
 		$this->loadModules();
 		// PreInit
 		$this->firePreInit();
@@ -175,7 +172,10 @@ class Kansas_Application
 		return [
 			'application'	=> $this,
 			'url'					=> trim($request->getUri()->getPath(), '/'),
-			'uri'					=> $request->getUriString()
+			'uri'					=> $request->getUriString(),
+			'requestType' => $request->isXmlHttpRequest() ? 'XMLHttpRequest' : 
+											 $request->isFlashRequest()   ? 'flash'
+											                              : 'HttpRequest'
 		];
 	}
 	

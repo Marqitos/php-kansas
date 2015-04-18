@@ -114,7 +114,7 @@ class Kansas_View_Smarty
     
     $file = substr($file, strrpos($file, '/'));
     $this->getEngine()->setTemplateDir($this->getScriptPaths());
-    echo $this->getEngine()->fetch($file, $this->_cacheId);
+    return $this->getEngine()->fetch($file, $this->_cacheId);
   }
 
   public function isCached($template, $cacheId = null) {
