@@ -1,6 +1,5 @@
 <?php
 
-use Zend\Http\Request;
 require_once('Kansas/Application/Module/Abstract.php');
 
 class Kansas_Application_Module_API
@@ -29,7 +28,7 @@ class Kansas_Application_Module_API
 		return $this->options->router->basePath;
 	}
 
-	public function ApiMatch(Request $request) {
+	public function ApiMatch(Kansas_Request $request) {
 		throw new System_NotSupportedException();
 	}
 

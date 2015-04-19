@@ -1,7 +1,5 @@
 <?php
 
-use Zend\Http\Request;
-
 class Kansas_Application_Module_RouterCache
 	extends Kansas_Application_Module_Abstract {
 	
@@ -14,7 +12,7 @@ class Kansas_Application_Module_RouterCache
 		return $application->getModule('BackendCache')->getCache();
 	}
 	
-	public function getCacheId(Request $request) {
+	public function getCacheId(Kansas_Request $request) {
 		return urlencode(
 			'router|'.
 			Kansas_User::getCurrentRole().
@@ -23,7 +21,7 @@ class Kansas_Application_Module_RouterCache
 		);
 	}
 	
-	public function routing(Request $request, $params, &$basepath, &$cancel) {
+	public function routing(Kansas_Request $request, $params, &$basepath, &$cancel) {
 		$cacheId = $this->getCacheId($request);
 		if($this->getCache()->test($cacheId)) {
 			$params = unserialize($this->getCache()->load($cacheId));
@@ -32,7 +30,7 @@ class Kansas_Application_Module_RouterCache
 		}
 		return $params;
 	}
-	public function route(Request $request, $params) {
+	public function route(Kansas_Request $request, $params) {
 		if(!isset($params['cache']) && !isset($params['error']))
 			$this->getCache()->save(serialize($params), $this->getCacheId($request));
 		return $params;

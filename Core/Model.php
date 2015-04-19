@@ -53,16 +53,14 @@ abstract class Kansas_Core_Model
 	/** 
 		* 	Rellena los datos del objeto, con los datos enviados en la peticion web
 		*/
-	public function fill($map = []) {
-		global $application;
-		$request = $application->getRequest();
+	public function fill(Kansas_Controller_Interface $controller, array $map = []) {
 		foreach($this->row as $key => $value) {
 			if(isset($map[$key])) {
 				if($map[$key] == false)
 					continue;
-				$this->row[$key] = $request->getParam($map[$key], $value);
+				$this->row[$key] = $controller->getParam($map[$key], $value);
 			} else
-				$this->row[$key] = $request->getParam($key, $value);
+				$this->row[$key] = $controller->getParam($key, $value);
 		}
 		return $this;
 	}

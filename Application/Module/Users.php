@@ -1,7 +1,5 @@
 <?php
 
-use Zend\Http\Request;
-
 class Kansas_Application_Module_Users
 	extends Kansas_Application_Module_Abstract {
 
@@ -17,7 +15,7 @@ class Kansas_Application_Module_Users
 		$application->registerRouteCallbacks([$this, "appRoute"]);
 	}
 	
-	public function appRoute(Request $request, $params) {
+	public function appRoute(Kansas_Request $request, $params) {
 		$result = [];
 		if(Zend_Auth::getInstance()->hasIdentity())
 			$result['identity'] = Zend_Auth::getInstance()->getIdentity();

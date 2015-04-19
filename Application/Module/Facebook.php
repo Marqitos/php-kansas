@@ -1,4 +1,5 @@
 <?php
+require_once('Facebook/Facebook.php');
 
 class Kansas_Application_Module_Facebook
 	extends Kansas_Application_Module_Abstract
@@ -17,7 +18,7 @@ class Kansas_Application_Module_Facebook
 		$users->getRouter()->setRoute('fb-register', [
 			'Controller'	=>	'Facebook',
 			'Action'			=>	'Register']);
-		$this->_core = new Facebook_Core($this->options->toArray()); 
+		$this->_core = new Facebook($this->options->toArray()); 
 	}
 
 	public function factory() {

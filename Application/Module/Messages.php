@@ -1,7 +1,5 @@
 <?php
 
-use Zend\Http\Request;
-
 class Kansas_Application_Module_Messages
 	extends Kansas_Application_Module_Abstract {
 
@@ -28,7 +26,7 @@ class Kansas_Application_Module_Messages
 		return $this->options->router->basePath;
 	}
 
-	public function fillContactForm(Request $request, Zend_View_Interface $view, System_Guid $target) {
+	public function fillContactForm(Kansas_Request $request, Zend_View_Interface $view, System_Guid $target) {
 		$error = isset($_REQUEST['err']) ? (int)$_REQUEST['err'] : null;
 		$view->assign('msg',		Bioter_Model_Message::getModel($mId));
 		$view->assign('error',	$error);
@@ -36,7 +34,7 @@ class Kansas_Application_Module_Messages
 		$view->assign('action',	'/mensajes/enviar');
 	}
 
-	public function ApiMatch(Request $request) {
+	public function ApiMatch(Kansas_Request $request) {
 		$apiRouter = new Kansas_Router_API_Messages();
 		$apiRouter->setBasePath("api/messages");
 		return $apiRouter->match($request);

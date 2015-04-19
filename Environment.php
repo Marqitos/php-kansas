@@ -3,6 +3,7 @@
 class Kansas_Environment {
 	
 	private $_status;
+	private $_request;
 	private $t_inicio;
 	protected static $instance;
 	
@@ -50,6 +51,12 @@ class Kansas_Environment {
 	
 	public function getExecutionTime() {
 		return microtime(true) - $this->t_inicio;
+	}
+	
+	public function getRequest() {
+		if($this->_request == null)
+			$this->_request = new Kansas_Request();
+		return $this->_request;
 	}
 	
 }

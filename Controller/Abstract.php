@@ -1,7 +1,5 @@
 <?php
 
-use Zend\Http\Request;
-
 abstract class Kansas_Controller_Abstract
 	implements Kansas_Controller_Interface {
 		
@@ -25,7 +23,7 @@ abstract class Kansas_Controller_Abstract
 		return $this->createView();
 	}
 	
-	public function init(Request $request, array $params) {
+	public function init(Kansas_Request $request, array $params) {
 		$this->_request = $request;
 		$this->_params 	= $params;
 	}

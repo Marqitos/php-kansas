@@ -1,7 +1,5 @@
 <?php
 
-use Zend\Http\PhpEnvironment\Request;
-
 class Kansas_Application
 	implements Kansas_Application_Interface {
 
@@ -19,8 +17,6 @@ class Kansas_Application
 	private $_modules	= [];
 	private $_modulesLoaded = false;
 
-	private $_request;
-	
 	private $_errorPlugin;
 	private $_router;
 	
@@ -116,9 +112,8 @@ class Kansas_Application
 	}
 	
 	public function getRequest() {
-		if($this->_request == null)
-			$this->_request = new Request();
-		return $this->_request;
+		global $environment;
+		return $environment->getRequest();
 	}
 	
 	public function dispatch($params) {
@@ -174,7 +169,8 @@ class Kansas_Application
 	}
 	
 	public function getEnvironment() {
-		return Kansas_Environment::getInstance()->getStatus();
+		global $environment;
+		return $environment->getStatus();
 	}
 	
 	public function getErrorPlugin() {

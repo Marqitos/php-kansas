@@ -1,13 +1,11 @@
 <?php
 
-use Zend\Http\Request;
-
 class Kansas_Controllers_Account
 	extends Kansas_Controller_Abstract {
 		
 	private $_auth;
 	
-	public function init(Request $request) {
+	public function init(Kansas_Request $request) {
 		parent::init($request);
 		$this->_auth = Zend_Auth::getInstance();
 	}
