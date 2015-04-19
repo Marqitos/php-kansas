@@ -1,4 +1,5 @@
 <?php
+require_once('Facebook/Facebook.php');
 
 class Kansas_Auth_Facebook
 	implements Zend_Auth_Adapter_Interface {
@@ -7,7 +8,7 @@ class Kansas_Auth_Facebook
 	private $_core;
 	private $_provider;
 	
-	public function __construct(Kansas_Db_SignIn $signIn, Kansas_Db_Auth_Facebook $provider, Facebook_Core $core) {
+	public function __construct(Kansas_Db_SignIn $signIn, Kansas_Db_Auth_Facebook $provider, Facebook $core) {
 		$this->_signIn		= $signIn;
 		$this->_provider	= $provider;
 		$this->_core			= $core;
