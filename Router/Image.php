@@ -1,11 +1,9 @@
 <?php
 
-use Zend\Http\Request;
-
 class Kansas_Router_Image
 	extends Kansas_Router_Abstract {
 		
-	public function match(Request $request) {
+	public function match(Kansas_Request $request) {
 		global $application;
 		$path = Kansas_Router_GetPartialPath($this, $request);
 

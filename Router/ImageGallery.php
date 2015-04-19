@@ -1,7 +1,5 @@
 <?php
 
-use Zend\Http\Request;
-
 class Kansas_Router_ImageGallery
 	extends Kansas_Router_ImageGallery_Abstract {
 	
@@ -11,7 +9,7 @@ class Kansas_Router_ImageGallery
 		parent::__construct($options);
 	}
 		
-	public function match(Request $request) {
+	public function match(Kansas_Request $request) {
 		if($params = parent::match($request))
 			return $params;
 			

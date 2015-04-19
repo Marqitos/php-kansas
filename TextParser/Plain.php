@@ -1,0 +1,52 @@
+<?php
+/**
+ * @title            Plain Text Parser Class
+ * @desc             Plain Text Parser with HTML5 support.
+ *
+ * @author           Marcos Porto Mariño <marcosarnoso@msn.com>
+ * @version          0.1
+ */
+ 
+class Kansas_TextParser_Plain
+	extends Kansas_TextParser_Abstract {
+
+    /**
+     * @access public
+     * @param string $sText
+     */
+    public function __construct($sText) {
+        $this->sText = $sText;
+        parent::__construct();
+    }
+
+    /**
+     * @access public
+     * @return string The code parsed
+     */
+    public function __toString() {
+        return $this->sText;
+    }
+
+    /**
+     * Run the parse methods
+     *
+     * @access protected
+     * @return void
+     */
+    protected function run() {
+        $this->paragraph();
+				$this->lineBreaks();
+    }
+
+    /**
+     * Parse text and processing
+     *
+     * @access protected
+     * @return void
+     */
+    protected function lineBreaks() {
+        // Line breaks
+        $this->sText = nl2br($this->sText);
+    }
+
+}

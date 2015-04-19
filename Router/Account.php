@@ -1,7 +1,5 @@
 <?php
 
-use Zend\Http\Request;
-
 class Kansas_Router_Account
 	extends Kansas_Router_Abstract {
 	use Router_PartialPath;
@@ -25,7 +23,7 @@ class Kansas_Router_Account
 		];
 	}
 		
-	public function match(Request $request) {
+	public function match(Kansas_Request $request) {
 		$path = $this->getPartialPath($this, $request);
 		if($path === false)
 			return false;

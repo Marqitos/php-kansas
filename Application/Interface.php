@@ -8,5 +8,5 @@ interface Kansas_Application_Interface {
 	public function dispatch($params);
 	public function run();
 	public function createView();
-	public function getEnviroment();
+	public function getEnvironment();
 }

@@ -28,7 +28,7 @@ class Kansas_Controllers_Error
 		$view->assign($params);
 		$view->assign('errorCode',	$code);
 		$view->assign('exception',	$error);
-		$view->assign('env', 				$application->getEnviroment());
+		$view->assign('env', 				$application->getEnvironment());
 		$view->assign('pageTitle',	$message);
 		$view->assign('requestUri', $this->getRequest()->getPathInfo());
 		

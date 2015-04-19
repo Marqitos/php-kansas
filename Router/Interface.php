@@ -1,9 +1,7 @@
 <?php
 
-use Zend\Http\Request;
-
 interface Kansas_Router_Interface {
-	public function match(Request $request);
+	public function match(Kansas_Request $request);
   public function assemble($data = array(), $reset = false, $encode = false);
 
 	public function getBasePath();
@@ -12,7 +10,7 @@ interface Kansas_Router_Interface {
 }
 
 trait Router_PartialPath {
-	protected function getPartialPath(Kansas_Router_Interface $route, Request $request) {
+	protected function getPartialPath(Kansas_Router_Interface $route, Kansas_Request $request) {
 		$path = trim($request->getUri()->getPath(), '/');
 		$basePath = $route->getBasePath();
 		if(Kansas_String::startWith($path, $basePath))

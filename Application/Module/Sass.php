@@ -7,27 +7,44 @@ class Kansas_Application_Module_Sass
 		
 	private $_parser;
 	private $_cache = false;
+	private $_router;
 
 	public function __construct(Zend_Config $options) {
 		parent::__construct($options);
 		if(isset($options->cache))
 			$this->_cache = $options->cache;
+		global $application;
+		$application->registerPreInitCallbacks([$this, "appPreInit"]);
+	}
+	
+	public function appPreInit() { // añadir router
+		global $application;
+		$application->getRouter()->addRouter($this->getRouter());
+	}
+
+	public function getRouter() {
+		if($this->_router == null)
+			$this->_router = new Kansas_Router_Theme(new Zend_Config(['basePath' => 'theme']));
+		return $this->_router;
 	}
 
 	public function getParser() {
 		if($this->_parser == null) {
 			$options = $this->options->toArray();
 			
-			if(isset($options['cacheDir']))
-				$options['cacheDir'] = realpath($options['cacheDir']);
-	
-			if(isset($options['load_paths']))
+			if(isset($options['load_paths'])) {
 				if(is_string($options['load_paths']))
 					$options['load_paths'] = realpath($options['load_paths']);
 				else if(is_array($options['load_paths']))
 					foreach($options['load_paths'] as $key => $path)
 						$options['load_paths'][$key] = realpath($path);
-	
+			} else {
+				$options['load_paths'] = [];
+				if($themePath = Kansas_Router_Theme::getThemePath())
+					$options['load_paths'][] = $themePath;
+				$options['load_paths'][] = realpath(BASE_PATH . './themes/shared/');
+			}
+
 			$this->_parser = new SassParser($options); 
 		}
 		return $this->_parser;

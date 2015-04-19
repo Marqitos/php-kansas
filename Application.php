@@ -1,7 +1,5 @@
 <?php
 
-use Zend\Http\PhpEnvironment\Request;
-
 class Kansas_Application
 	implements Kansas_Application_Interface {
 
@@ -19,8 +17,6 @@ class Kansas_Application
 	private $_modules	= [];
 	private $_modulesLoaded = false;
 
-	private $_request;
-	
 	private $_errorPlugin;
 	private $_router;
 	
@@ -116,9 +112,8 @@ class Kansas_Application
 	}
 	
 	public function getRequest() {
-		if($this->_request == null)
-			$this->_request = new Request();
-		return $this->_request;
+		global $environment;
+		return $environment->getRequest();
 	}
 	
 	public function dispatch($params) {
@@ -140,15 +135,6 @@ class Kansas_Application
 	}
 	
 	public function run() {
-		if(Kansas_Enviroment::getInstance()->getStatus() ==  Kansas_Enviroment::DEVELOPMENT) {
-			error_reporting(E_ALL);
-			ini_set("display_errors", 1);
-		} else
-			error_reporting(E_ERROR);
-
-			error_reporting(E_ALL);
-			ini_set("display_errors", 1);
-
 		$this->loadModules();
 		// PreInit
 		$this->firePreInit();
@@ -175,12 +161,16 @@ class Kansas_Application
 		return [
 			'application'	=> $this,
 			'url'					=> trim($request->getUri()->getPath(), '/'),
-			'uri'					=> $request->getUriString()
+			'uri'					=> $request->getUriString(),
+			'requestType' => $request->isXmlHttpRequest() ? 'XMLHttpRequest' : 
+											 $request->isFlashRequest()   ? 'flash'
+											                              : 'HttpRequest'
 		];
 	}
 	
-	public function getEnviroment() {
-		return Kansas_Enviroment::getInstance()->getStatus();
+	public function getEnvironment() {
+		global $environment;
+		return $environment->getStatus();
 	}
 	
 	public function getErrorPlugin() {

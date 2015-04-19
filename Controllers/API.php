@@ -1,11 +1,9 @@
 <?php
 
-use Zend\Http\Request;
-
 class Kansas_Controllers_API
 	extends Kansas_Controller_Abstract {
 	
-	public function init(Request $request) {
+	public function init(Kansas_Request $request) {
 		parent::init($request);
 		// Cargar autenticación
 		global $application;
@@ -26,10 +24,10 @@ class Kansas_Controllers_API
 		global $application;
 		$auth = Zend_Auth::getInstance();
 		return new Kansas_View_Result_Json([
-			'host'				=> $this->getRequest()->getHttpHost(), //'webbioter.com',
+			'host'				=> $this->getRequest()->getHttpHost(),
 			'name'				=> $application->getTitle()->__toString(),
 			'username'		=> $auth->getIdentity()->getName(),
-			'enviroment'	=> $application->getEnviroment()
+			'environment'	=> $application->getEnvironment()
 		]);
 	}
 	

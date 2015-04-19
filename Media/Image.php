@@ -173,18 +173,18 @@ class Kansas_Media_Image
 	}
 
 	/* Metodos Estaticos */
-	public static function getModel(&$mId) {
+	public static function getModel(&$mId, Kansas_Controller_Interface $controller) {
 		$model = parent::getModel($mId);
 		if($model == null) {
 			global $application;
 			$request			= $application->getRequest();
-			$router				= $request->getParam('router');
-			$image				= new System_Guid($request->getParam('image'));
+			$router				= $controller->getParam('router');
+			$image				= new System_Guid($controller->getParam('image'));
 			$model				= $application->getProvider('Image')->getById($image);
-			$model->setReturnUrl($request->getParam(Kansas_Core_Model::KEY_RETURN_URL, $router->assemble()));
+			$model->setReturnUrl($controller->getParam(Kansas_Core_Model::KEY_RETURN_URL, $router->assemble()));
 			$mId					= $application->getProvider('Model')->createModel($model);
 		} else
-			$model->fill();
+			$model->fill($controller);
 		return $model;
 	}
 	
@@ -198,23 +198,21 @@ class Kansas_Media_Image
 		return self::$_404;
 	}
 	
-	public function fill() {
-		global $application;
-		parent::fill();
-		$request = $application->getRequest();
+	public function fill(Kansas_Controller_Interface $controller) {
+		parent::fill($controller);
 		
 		$this->row['Name'] = trim($this->row['Name']);
 		
 		if(empty($this->row['slug']) && !empty($this->row['Name']))
 			$this->row['slug'] = Kansas_Core_Slug_Slugify($this->row['Name']);
 		
-		$tag = $request->getParam('tag');
+		$tag = $controller->getParam('tag');
 		$this->row['newTag']= empty($tag)?
 			null:
 			new System_Guid($tag);
 
-		$sourcePath							= $request->getParam('source-path');
-		$sourceFormat						=	$request->getParam('source-format');
+		$sourcePath							= $controller->getParam('source-path');
+		$sourceFormat						=	$controller->getParam('source-format');
 		if(isset($this->row['newSource'])) {
 			$this->row['newSource']->setPath($sourcePath);
 			$this->row['newSource']->setFormat($sourceFormat);
