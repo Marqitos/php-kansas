@@ -1,10 +1,9 @@
 <?php
 
-class Kansas_Enviroment {
+class Kansas_Environment {
 	
 	private $_status;
-	private $_public_folder;
-	private $_home_folder;
+	private $t_inicio;
 	protected static $instance;
 	
 	const CONSTRUCTION	= 'construction';
@@ -20,19 +19,27 @@ class Kansas_Enviroment {
 	const SF_COMPILE	= 0x0006;
 	const SF_FILES		= 0x0007;
 
-	protected function __construct($status) {
+	protected function __construct($status, float $t_inicio = null) {
 		$this->_status = $status;
+		$this->t_inicio = isset($t_inicio) ? (float)$t_inicio : microtime(true);
 	}
 	
-	public static function getInstance($status = null) {
+	public static function getInstance($status = null, $t_inicio = null) {
 		if(self::$instance == null) {
+			global $environment;
 			if(empty($status))
 				$status = getenv('APPLICATION_ENV');
-			if(empty($status) && defined('APP_ENVIROMENT'))
-				$status = APP_ENVIROMENT;
+			if(empty($status) && defined('APP_ENVIRONMENT'))
+				$status = APP_ENVIRONMENT;
 			if(empty($status))
 				$status = self::PRODUCTION;
-			self::$instance = new self($status);
+			$environment = self::$instance = new self($status, $t_inicio);
+			
+			if($status == self::DEVELOPMENT) {
+				error_reporting(E_ALL);
+				ini_set("display_errors", 1);
+			} else
+				error_reporting(E_ERROR);
 		}
 		return self::$instance;
 	}
@@ -41,8 +48,8 @@ class Kansas_Enviroment {
 		return $this->_status;
 	}
 	
-//	public function getSpecialFolder($specialFolder) {
-//		
-//	}
+	public function getExecutionTime() {
+		return microtime(true) - $this->t_inicio;
+	}
 	
 }

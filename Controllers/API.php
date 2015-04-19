@@ -29,7 +29,7 @@ class Kansas_Controllers_API
 			'host'				=> $this->getRequest()->getHttpHost(), //'webbioter.com',
 			'name'				=> $application->getTitle()->__toString(),
 			'username'		=> $auth->getIdentity()->getName(),
-			'enviroment'	=> $application->getEnviroment()
+			'environment'	=> $application->getEnvironment()
 		]);
 	}
 	

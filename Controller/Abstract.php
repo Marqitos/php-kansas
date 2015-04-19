@@ -19,7 +19,6 @@ abstract class Kansas_Controller_Abstract
 	protected function createPage($description = null, $keywords = null, Kansas_View_Page_Interface $parent = null) {
 		$router	= $this->getParam('router');
 		$page		= $description instanceof Kansas_Post_Interface	? new Kansas_View_Page_Post($description, $parent, $router)
-						//:	System_Guid::tryParse($keywords, $id)					?	new Kansas_View_Page_Db($id, $description, $url, $parent, $router)
 																														: new Kansas_View_Page_Static($description, $keywords, $this->getParam('url'),	$parent, $router);
 															
 		$this->_params['page'] = $page;
@@ -32,9 +31,9 @@ abstract class Kansas_Controller_Abstract
 	}
 	
 	protected function getParam($key, $default = null) {
-		return	isset($this->_params[$key])	? $this->_params[$key]
-		//				$this->_request->getParam($key, $default);				 
-																				: $default;
+		return	isset($this->_params[$key])	? $this->_params[$key] :
+					 (isset($_REQUEST[$key])      ? $_REQUEST[$key]				 
+																				: $default);
 	}
 	
 	protected function getRequest() {
