@@ -3,13 +3,16 @@
 class Kansas_Router_Image
 	extends Kansas_Router_Abstract {
 		
-	public function match(Kansas_Request $request) {
+	public function match() {
 		global $application;
-		$path = Kansas_Router_GetPartialPath($this, $request);
-
-		if($path === false || $path == '')
+    global $environment;
+		$params = false;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    
+    if(Kansas_String::startWith($this->getBasePath(), $path))
+      $path = substr($this->getBasePath(), strlen($this->getBasePath()));
+    else
 			return false;
-		
 		
 		$imageProvider = $application->getProvider('image');
 		$images = $imageProvider->getAll();

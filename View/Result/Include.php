@@ -1,7 +1,7 @@
 <?php 
 
 class Kansas_View_Result_Include
-  implements Kansas_View_Result_Interface {
+  extends Kansas_View_Result_Abstract {
     
   private $_filename;
   
@@ -10,7 +10,8 @@ class Kansas_View_Result_Include
   }
   
 
-	public function __construct($filename) {
+	public function __construct($filename, $mimeType) {
+    parent::__construct($mimeType);
 		$this->_filename	= $filename;
 	}
     
@@ -18,6 +19,7 @@ class Kansas_View_Result_Include
    * @see Kansas_View_Result_Interface::executeResult()
    */
   public function executeResult () {
+  	parent::sendHeaders();
 		include($this->_filename);
   }
     

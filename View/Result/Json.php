@@ -1,21 +1,18 @@
 <?php
 
 class Kansas_View_Result_Json
-	implements Kansas_View_Result_Interface {
+	extends Kansas_View_Result_String_Abstract {
 		
 	private $_data;
 	
 	public function __construct($data) {
-		$this->_data			= $data;
+    parent::__construct('application/json; charset: UTF-8');    
+		$this->_data = $data;
 	}
 		
-	/* (non-PHPdoc)
-   * @see Kansas_View_Result_Interface::executeResult()
-	 */
-	public function executeResult() {
-		echo(json_encode($this->_data));
-		return true;
+	public function getResult(&$noCache) {
+    $noCache = true;
+		return json_encode($this->_data);
 	}
-	
-		
+      
 }

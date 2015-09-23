@@ -2,35 +2,35 @@
 
 require_once('Phpsass/SassParser.php');
 
-class Kansas_Application_Module_Sass
-	extends Kansas_Application_Module_Abstract {
+class Kansas_Application_Module_Sass {
 		
 	private $_parser;
 	private $_cache = false;
 	private $_router;
+  protected $options;
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
+    $this->options = $options;
 		if(isset($options->cache))
 			$this->_cache = $options->cache;
 		global $application;
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
 	
-	public function appPreInit() { // añadir router
+	public function appPreInit() { // añadir rutas
 		global $application;
-		$application->getRouter()->addRouter($this->getRouter());
-	}
-
-	public function getRouter() {
-		if($this->_router == null)
-			$this->_router = new Kansas_Router_Theme(new Zend_Config(['basePath' => 'theme']));
-		return $this->_router;
+		$config = $application->getConfig();
+		if(isset($config['theme']))
+      $application->setRoute('css', [
+        'controller'  => 'index',
+        'action'      => 'sass',
+        'file'        => 'default.scss'
+      ]);
 	}
 
 	public function getParser() {
 		if($this->_parser == null) {
-			$options = $this->options->toArray();
+			$options = $this->options;
 			
 			if(isset($options['load_paths'])) {
 				if(is_string($options['load_paths']))
@@ -53,7 +53,7 @@ class Kansas_Application_Module_Sass
 	public function toCss($file) {
 		global $application;
 		if($application->hasModule('BackendCache') && $this->_cache) {
-			$cache = $application->getModule('BackendCache')->getCache();
+			$cache = $application->getModule('BackendCache');
 			$parser = $this->getParser();
 			$file = SassFile::get_file($file, $parser);
 			$md5 = md5_file($file[0]);

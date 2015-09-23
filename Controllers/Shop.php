@@ -129,7 +129,7 @@ class Kansas_Controllers_Shop
 		}
 		$shop = $application->getModule('Shop')->getShop();
 		$view = $this->createView();
-		$auth = Zend_Auth::getInstance();
+		$auth = $application->getModule('Auth');
 		$user = $auth->hasIdentity() ?
 			$auth->getIdentity():
 			null;
@@ -217,8 +217,9 @@ class Kansas_Controllers_Shop
 	
 	// Redirije a la pagina para finalizar la compra
 	public function checkout() {
+		global $application;
 		$count = null;
-		$auth = Zend_Auth::getInstance();
+		$auth = $application->getModule('Auth');
 		$cart = Kansas_Shop_Order::getCurrent($count, true);
 		$result = new Kansas_View_Result_Redirect();
 		if(!$auth->hasIdentity()) {
@@ -249,7 +250,7 @@ class Kansas_Controllers_Shop
 	public function shipAddress() {
 		global $application;
 		$count = null;
-		$auth			= Zend_Auth::getInstance();
+		$auth			= $application->getModule('Auth');
 		$shop			= $application->getModule('Shop')->getShop();
 		$cart			= Kansas_Shop_Order::getCurrent($count, true);
 		$generic	= $this->getParam('generic', true);
@@ -305,8 +306,9 @@ class Kansas_Controllers_Shop
 	
 	// Finaliza la compra mediante PayPal Express Checkout
 	public function expressCheckout() {
+		global $application;
 		$count		= null;
-		$auth			= Zend_Auth::getInstance();
+		$auth			= $application->getModule('Auth');
 		$cart			= Kansas_Shop_Order::getCurrent($count, true);
 		$result		= new Kansas_View_Result_Redirect();
 		if(count($cart->getItems()) == 0)	{ // NO hay compra
@@ -436,7 +438,7 @@ class Kansas_Controllers_Shop
 		if($this->isAuthenticated($result)) {
 			global $application;
 			$router = $this->getParam('router');
-			$auth			= Zend_Auth::getInstance();
+			$auth			= $application->getModule('Auth');
 			$user 		= $auth->getIdentity();
 			$shopProvider = $application->getProvider('shop');
 //			$orders		= new Kansas_Core_GuidItem_Collection();

@@ -1,12 +1,13 @@
 <?php
 
 class Kansas_View_Result_Css
-	extends Kansas_View_Result_File_Abstract {
+	extends Kansas_View_Result_String_Abstract {
 		
 	private $_files;
 	
 	public function __construct($files) {
 		$this->_files = (array)$files;
+    parent::__construct('text/css; charset: UTF-8');    
 	}
 	
 	public function compress($buffer) {
@@ -31,34 +32,17 @@ class Kansas_View_Result_Css
 		);
 	}
 	
-	public function getMimeType() {
-		return 'text/css';
-	}
-	
-  public function executeResult() {
-		if(extension_loaded('zlib'))
-			ob_start('ob_gzhandler');
-		parent::executeResult();
-//		header ("content-type: text/css; charset: UTF-8");
-		header ("cache-control: must-revalidate");
-		$offset = 60 * 60;
-		$expire = "expires: " . gmdate ("D, d M Y H:i:s", time() + $offset) . " GMT";
-		header ($expire);
-		
-		ob_start(array($this, "compress"));
+  public function getResult(&$noCache) {
+    $noCache = true;
+    $result = '';
 		foreach($this->_files as $file)
-			include($file);
-		
-		if(extension_loaded('zlib'))
-			ob_end_flush();
-
-	}
-	
-	public function getResult() {
-		$result = '';
-		foreach($this->_files as $file)
-			$result .= $this->compress(file_get_contents($file));
-		return $result;
-	}
-
+			$result .= file_get_contents($file);
+    
+    global $environment;
+    if($environment->getStatus() == Kansas_Environment::PRODUCTION)
+      return preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $result);
+    
+    return $result;
+  }
+  
 }

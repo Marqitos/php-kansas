@@ -1,12 +1,12 @@
 <?php
 
-class Kansas_Application_Module_Shop
-	extends Kansas_Application_Module_Abstract {
+class Kansas_Application_Module_Shop {
 		
 	private $_shop;
+  protected $options;
 	
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
+    $this->options = $options;
 	}
 		
 	public function providerCreated($provider, $providerName) {
@@ -26,7 +26,7 @@ class Kansas_Application_Module_Shop
 	
 	public function getShop() {
 		if($this->_shop == null)
-			$this->_shop = new $this->options->shopClass($this->options);
+			$this->_shop = new $this->options['shopClass']($this->options);
 		return $this->_shop;
 	}
 		

@@ -7,7 +7,7 @@ class Kansas_Db_SignIn
 		parent::__construct($db);
 	}
 	
-	public function addResult(Zend_Auth_Result $result) {
+	public function addResult(Kansas_Auth_Result $result) {
 		
 		
 	}

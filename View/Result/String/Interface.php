@@ -10,5 +10,5 @@ interface Kansas_View_Result_String_Interface
   /**
    * Devuelve el texto a enviar
    */	
-  public function getResult();
+  public function getResult(&$noCache);
 }

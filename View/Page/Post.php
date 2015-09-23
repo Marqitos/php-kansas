@@ -13,11 +13,6 @@ class Kansas_View_Page_Post
 		$this->_post = $post;
 	}
 
-	public function getTitle() {
-		global $application;
-		return (string)$application->getTitle();
-	}
-	
 	public function hasDescription() {
 		return true;
 	}

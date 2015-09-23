@@ -5,32 +5,31 @@ abstract class Kansas_Router_Abstract
 	
 	protected $options;
 
-	protected function __construct(Zend_Config $options) {
-		$this->options = $this->getDefaultOptions();
-		$this->options->merge($options);
+	protected function __construct() {
+    $this->options = $this->getDefaultOptions();
+  }
+	
+	public function setOptions(array $options) {
+		$this->options = array_replace_recursive($this->options, $options);
 	}
 	
-	public function setOptions(Zend_Config $options) {
-		$this->options->merge($options);
-	}
-	
-	protected function getDefaultOptions() {
-		return new Zend_Config([
-			'basePath'	=> '',
-			'params'		=> []
-		], true);
-	}
-
 	protected function getDefaultParams() {
-		return $this->options->params->toArray();
+		return $this->options['params'];
 	}
+  
+  protected function getDefaultOptions() {
+    return [
+  		'basePath'	=> '',
+  		'params'		=> []
+  	];
+  }
 	
 	/* Miembros de Kansas_Router_Interface */
 	public function getBasePath() {
-		return $this->options->basePath;
+		return $this->options['basePath'];
 	}
 	public function setBasePath($basePath) {
-		$this->options->basePath = trim((string) $basePath, '/');
+		$this->options['basePath'] = trim((string) $basePath, '/');
 	}
 	
   public function assemble($data = [], $reset = false, $encode = false) {
@@ -41,11 +40,11 @@ abstract class Kansas_Router_Abstract
 	
 	/* Miembros de Serializable */
 	public function serialize() {
-		return serialize($this->options->toArray());
+		return serialize($this->options);
 	}
 	
 	public function unserialize($serialized) {
-		$this->options = new Zend_Config(unserialize($serialized), true);
+		$this->options = unserialize($serialized);
 	}
 	
 }
