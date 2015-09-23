@@ -7,9 +7,10 @@ class Kansas_Controllers_API
 		parent::init($request);
 		// Cargar autenticación
 		global $application;
-		$application->setModule('Digest', new Zend_Config([]));
-		$authAdapter 	= $application->getModule('Users')->createAuthMembership('digest', ['API']);
-		$authResult		= Zend_Auth::getInstance()->authenticate($authAdapter);
+		$application->setModule('Digest', []);
+		$auth					= $application->getModule('Auth');
+		$authAdapter 	= $auth->createAuthMembership('digest', ['API']);
+		$authResult		= $auth->authenticate($authAdapter);
 		if(!$authResult->isValid()) {
 			try {
 				$result = $application->createErrorResult(new System_Net_WebException(403));
@@ -22,10 +23,10 @@ class Kansas_Controllers_API
 		
 	public function index() { // Devuelve los datos basicos de la aplicación y usuario
 		global $application;
-		$auth = Zend_Auth::getInstance();
+		$auth = $application->getModule('Auth');
 		return new Kansas_View_Result_Json([
 			'host'				=> $this->getRequest()->getHttpHost(),
-			'name'				=> $application->getTitle()->__toString(),
+			'name'				=> $application->createTitle()->__toString(),
 			'username'		=> $auth->getIdentity()->getName(),
 			'environment'	=> $application->getEnvironment()
 		]);

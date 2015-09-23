@@ -9,24 +9,18 @@ class Kansas_View_Result_File
 	private $_mimeType;
 		
 	public function __construct($filename, $retbytes=true) {
+    parent::__construct(null, $filename);
 		$this->_filename	= $filename;
 		$this->_retbytes	= $retbytes;
 		$this->_chunksize	= 1*(1024*1024);
-	}
-	
-	public function getMimeType() {
-		if(!$this->hasMimeType()) {
-			$finfo = new finfo(FILEINFO_MIME_TYPE);
-			$this->setMimeType($finfo->file($this->_filename));
-		}
-		return parent::getMimeType();
+    
 	}
 	
   /* (non-PHPdoc)
    * @see Kansas_View_Result_Interface::executeResult()
    */
   public function executeResult () {
-		parent::executeResult();
+  	parent::sendHeaders();
 		
 		if($this->getUseXSendFile()) {
 			if(strtolower(substr(php_uname('s'), 0, 3)) == 'win')

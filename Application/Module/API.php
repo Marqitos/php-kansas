@@ -1,34 +1,32 @@
 <?php
 
-require_once('Kansas/Application/Module/Abstract.php');
-
-class Kansas_Application_Module_API
-	extends Kansas_Application_Module_Abstract {
+class Kansas_Application_Module_API {
 	
 	private $_router;
+  protected $options;
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
+    $this->options = $options;
 		global $application;
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
 	
 	public function appPreInit() { // añadir router
 		global $application;
-		$application->getRouter()->addRouter($this->getRouter());
+		$application->addRouter($this->getRouter());
 	}
 
 	public function getRouter() {
 		if($this->_router == null)
-			$this->_router = new Kansas_Router_API($this->options->router);
+			$this->_router = new Kansas_Router_API($this->options['router']);
 		return $this->_router;
 	}
 		
 	public function getBasePath() {
-		return $this->options->router->basePath;
+		return $this->options['router']['basePath'];
 	}
 
-	public function ApiMatch(Kansas_Request $request) {
+	public function ApiMatch() {
 		throw new System_NotSupportedException();
 	}
 

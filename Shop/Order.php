@@ -218,7 +218,8 @@ class Kansas_Shop_Order
 	}
 	
 	public static function create() {
-		$auth = Zend_Auth::getInstance();
+		global $application;
+		$auth = $application->getModule('Auth');
 		if($auth->hasIdentity()) {
 			$user = $auth->getIdentity();
 			$order = Kansas_Application::getInstance()->getProvider('Shop')->createOrder($user->getId());
@@ -263,7 +264,8 @@ class Kansas_Shop_Order
 	}
 	
 	public function save() {
-		$auth = Zend_Auth::getInstance();
+		global $application;
+		$auth = $application->getModule('Auth');
 		if($auth->hasIdentity()) {
 			if($this->getUserId() == System_Guid::getEmpty())
 				$this->row['User'] = $auth->getIdentity()->getId();
@@ -291,8 +293,8 @@ class Kansas_Shop_Order
 	 * @var bool:$force Indica si se debe crear un carro de compra en caso de que no exista.
 	 */
 	public static function getCurrent(&$count, $force = false) {
-		$auth = Zend_Auth::getInstance();
-		$application = Kansas_Application::getInstance();
+		global $application;
+		$auth = $application->getModule('Auth');
 		$order = null;
 		// Obtener de Models
 		if(Zend_Session::namespaceIsset('Shop')) {

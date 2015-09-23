@@ -5,18 +5,21 @@ class Kansas_Router_Shop_Order
 		
 	private $_orders;
 		
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
+		parent::__construct();
+    $this->setOptions($options);
 	}
 		
-	public function match(Kansas_Request $request) {
-		$path = Kansas_Router_GetPartialPath($this, $request);
-
-		if($path === false)
-			return false;
-			
+	public function match() {
+    global $environment;
 		$params = false;
-			
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    
+    if(Kansas_String::startWith($this->getBasePath(), $path))
+      $path = substr($this->getBasePath(), strlen($this->getBasePath()));
+    else
+			return false;
+    			
 		switch($path) {
 			case '':
 				$count = 0;
@@ -64,7 +67,7 @@ class Kansas_Router_Shop_Order
 	public function getOrders() {
 		if($this->_orders == null) {
 			global $application;
-			$auth = Zend_Auth::getInstance();
+			$auth = $application->getModule('Auth');
 			$this->_orders = $auth->hasIdentity()?
 				$application->getProvider('shop')->getOrdersByUser($auth->getIdentity()):
 				new Kansas_Core_GuidItem_Collection();

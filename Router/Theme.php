@@ -2,15 +2,15 @@
 
 class Kansas_Router_Theme
 	extends Kansas_Router_Abstract {
-	use Router_PartialPath;
 
-	public function __construct(Zend_Config $options) {
+	public function __construct(array $options) {
 		parent::__construct($options);
 	}
 		
-	public function match(Kansas_Request $request) {
-		$path = $this->getPartialPath($this, $request);
+	public function match() {
+    global $environment;
 		$params = false;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
 
   	if($path === false || strstr($path, '..'))
 			return false;

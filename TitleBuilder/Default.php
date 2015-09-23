@@ -10,35 +10,34 @@ class Kansas_TitleBuilder_Default
 	protected $options;
 	protected $_items = [];
 
-	public function __construct(Zend_Config $options) {
-		$this->options = $this->getDefaultOptions();
-		$this->options->merge($options);
+	public function __construct(array $options) {
+		$this->options = array_merge($this->getDefaultOptions(), $options);
 	}
 	
 	protected function getDefaultOptions() {
-		return new Zend_Config([
+		return [
 			'separator'		=> ' : ',
 			'attachOrder'	=> self::PREPEND,
 			'title'				=> ''
-		], true);
+		];
 	}
 
 	public function getSeparator() {
-		return $this->options->separator;
+		return $this->options['separator'];
 	}
 	public function setSeparator($separator) {
-		$this->options->separator = (string) $separator;
+		$this->options['separator'] = (string) $separator;
 	}
 	
 	public function getAttachOrder() {
-		return $this->options->attachOrder;
+		return $this->options['attachOrder'];
 	}
 	public function setAttachOrder($order) {
-		$this->options->attachOrder = $order;
+		$this->options['attachOrder'] = $order;
 	}
 	
 	public function attach($title) {
-		switch($this->options->attachOrder) {
+		switch($this->options['attachOrder']) {
 			case self::APPEND:
 				$this->_items[] = $title;
 				break;
@@ -51,21 +50,21 @@ class Kansas_TitleBuilder_Default
 		}
 	}
 	public function setTitle($title) {
-		$this->options->title = $title;
+		$this->options['title'] = $title;
 	}
 	
 	public function __toString() {
 		if(count($this->_items) == 0)
-			$result = [$this->options->title];
-		elseif(empty($this->options->title))
+			$result = [$this->options['title']];
+		elseif(empty($this->options['title']))
 			$result = $this->_items;
 		else {
-			switch($this->options->attachOrder) {
+			switch($this->options['attachOrder']) {
 				case self::APPEND:
-					$result = array_merge((array)$this->options->title, $this->_items);
+					$result = array_merge((array)$this->options['title'], $this->_items);
 					break;
 				default:
-					$result = array_merge($this->_items, (array)$this->options->title);
+					$result = array_merge($this->_items, (array)$this->options['title']);
 					break;
 			}
 		}

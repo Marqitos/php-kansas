@@ -9,22 +9,24 @@ class Kansas_View_Page_Static
 	private $_description;
 	private $_keywords;
 	private $_url;
+  private $_title;
 	
 	public function __construct(
+    $title, // string | array
 		$description = null,
 		$keywords = [],
 		$url = null,
 		Kansas_View_Page_Interface $parent = null,
 		Kansas_Router_Interface $router = null) {
 		parent::__construct($parent, $router);
+    $this->_title       = $title;
 		$this->_description = $description;
 		$this->_keywords		= (array) $keywords;
 		$this->_url					= $url;
 	}
 		
 	public function getTitle() {
-		global $application;
-		return (string)$application->getTitle();
+    return $this->_title;
 	}
 	public function hasDescription() {
 		return !empty($this->_description);

@@ -1,11 +1,9 @@
 <?php
 
 class Kansas_Application_Module_Digest
-	extends Kansas_Application_Module_Abstract
 	implements Kansas_Auth_Service_Interface {
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
 		global $application;
 		$usersModule = $application->getModule('Users');
 		$usersModule->setAuthService('digest', $this);
