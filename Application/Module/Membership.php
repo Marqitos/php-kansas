@@ -1,20 +1,33 @@
 <?php
 
 class Kansas_Application_Module_Membership
-	extends Kansas_Application_Module_Abstract
 	implements Kansas_Auth_Service_Interface {
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+  protected $options;
+  
+	public function __construct(array $options) {
 		global $application;
-		$usersModule = $application->getModule('Users');
-		$usersModule->setAuthService('membership', $this);
+    $this->options = array_replace_recursive([
+  			'path'		  => [
+  				'signin'    => 'signin'], // iniciar sesión
+  			'action'  => [
+  				'signin'	=> [
+  					'controller'	=> 'Membership',
+  					'action'			=> 'signIn']]
+  		], $options);
+		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
 
-	public function factory($email, $password) {
+	public function appPreInit() { // añadir proveedor de inicio de sesión
+		global $application;
+		$usersModule = $application->getModule('Auth');
+		$usersModule->setAuthService('membership', $this);
+		$usersModule->getRouter()->setOptions($this->options);
+	}
+	
+	public static function factory($email, $password) {
 		global $application;
 		return new Kansas_Auth_Membership(
-			$application->getProvider('SignIn'),
 			$application->getProvider('Auth_Membership'),
 			$email,
 			$password
@@ -25,4 +38,8 @@ class Kansas_Application_Module_Membership
 		return 'form';
 	}
 	
+  public function getVersion() {
+		global $environment;
+		return $environment->getVersion();
+	}
 }

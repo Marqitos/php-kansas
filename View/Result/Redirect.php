@@ -19,13 +19,13 @@ class Kansas_View_Result_Redirect
   /**
    * Establece el tipo de redirección
    * @param int $code Codigo de redirección
-   * @throws Zend_Controller_Action_Exception Si se indica un codigo de redirección no válido.
+   * @throws System_Net_WebException Si se indica un codigo de redirección no válido.
    */
   public function setCode($code) {
     $this->_code      = (int)$code;
     if ((300 > $this->_code) || (307 < $this->_code) || (304 == $this->_code) || (306 == $this->_code)) {
-      require_once 'Zend/Controller/Action/Exception.php';
-      throw new Zend_Controller_Action_Exception('Invalid redirect HTTP status code (' . $code  . ')');
+      require_once 'System/Net/WebException.php';
+      throw new System_Net_WebException($code, 'Invalid redirect HTTP status code (' . $code  . ')');
     }
   }
   
@@ -36,16 +36,8 @@ class Kansas_View_Result_Redirect
    * @return void
    */
   public function setGotoUrl($url) {
-        // prevent header injections
-        $url = str_replace(array("\n", "\r"), '', $url);
-
-        // If relative URL, decide if we should prepend base URL
-      /*  if (!preg_match('|^[a-z]+://|', $url)) {
-            $url = $this->_prependBase($url);
-        }*/
-
-        $this->_location = $url;
-    }
+    $this->_location = str_replace(["\n", "\r"], '', $url);
+  }
     
   /* (non-PHPdoc)
    * @see Kansas_View_Result_Interface::executeResult()

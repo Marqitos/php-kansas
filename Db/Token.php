@@ -52,11 +52,11 @@ class Kansas_Db_Token
 		}
 		$row = $this->db->fetchRow($sql, $params);
 		if($row == null) {
-			return new Zend_Auth_Result(Zend_Auth_Result::FAILURE_CREDENTIAL_INVALID, null);
+			return Kansas_Auth_Result::Failure(Kansas_Auth_Result::FAILURE_CREDENTIAL_INVALID);
 		} elseif($row['IsLockedOut'] == 0) {
-			return new Zend_Auth_Result(Zend_Auth_Result::SUCCESS, new Kansas_User($row));
+			return Kansas_Auth_Result::Success(new Kansas_User($row));
 		} else {
-			return new Zend_Auth_Result(Zend_Auth_Result::FAILURE, null);
+			return Kansas_Auth_Result(Kansas_Auth_Result::FAILURE);
 		}
 	}
 

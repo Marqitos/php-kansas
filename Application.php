@@ -3,75 +3,88 @@
 class Kansas_Application
 	implements Kansas_Application_Interface {
 
-	private $_providerLoader;
 	private $_providers = [];
 	private $_db;
 	private $_config;
 
-	private $_moduleLoader;
+	private $_loaders = [
+		'controller' => ['Kansas_Controllers_' => 'Kansas/Controllers/'],
+		'helper'     => ['Kansas_Helpers_' => 'Kansas/Helpers/'],
+		'module'     => ['Kansas_Application_Module_'	=> 'Kansas/Application/Module/'],
+		'provider'	 => ['Kansas_Db_' => 'Kansas/Db/']
+	];
+
 	private $_modules	= [];
 	private $_modulesLoaded = false;
 
-	private $_controllerLoader;
-	private $_helperLoader;
-
-	private $_request;
+	private $_routers;
+	private $_pages	= [];  
 	
-	private $_errorPlugin;
-	private $_constructionPage;
-	private $_router;
-	
-	private $_log;
-	private $_logWriter;
-	
-	private $_viewClass = 'Smarty_View';
+	private $_viewClass = 'Kansas_View_Smarty';
 	private $_viewOptions;
 	
-	private $_title;
 	private $_titleClass = 'Kansas_TitleBuilder_Default';
 	private $_titleOptions;
+  
+  private $_theme;
 	
+  private $_logCallback = ['Kansas_Environment', 'log'];
+  private $_errorCallback;
+  
 	// Eventos
 	private $_preinitCallbacks = [];
 	private $_routeCallbacks = [];
 	private $_renderCallbacks = [];
 	private $_dispatchCallbacks = [];
 	private $_createProviderCallbacks = [];
+  private $_createViewCallbacks = [];
 	
 	protected static $_instance;
-	
+
+	protected function __construct() {
+		set_error_handler([$this, 'error_handler']);
+		set_exception_handler([$this, 'exception_handler']);
+    $this->_errorCallback = [$this, 'errorManager'];
+    $this->_routers = new SplPriorityQueue();
+    Kansas_Environment::getInstance();
+	}
+
 	/* Miembros de Kansas_Application_Interface */
+
+	public function getLoader($loaderName) {
+		if(!isset($this->_loaders[$loaderName]))
+			return false;
+		if(!($this->_loaders[$loaderName] instanceof Kansas_PluginLoader_Interface))
+			$this->_loaders[$loaderName] = new Kansas_PluginLoader($this->_loaders[$loaderName]);
+		return $this->_loaders[$loaderName];
+	}
 
 	private function loadModules() {
 		foreach($this->_modules as $moduleName => $options)
 			$this->getModule($moduleName);
 		$this->_modulesLoaded = true;
 	}
-	public function getModuleLoader() {
-		if($this->_moduleLoader == null)
-			$this->_moduleLoader = new Zend_Loader_PluginLoader(['Kansas_Application_Module'	=> 'Kansas/Application/Module']);
-		return $this->_moduleLoader;
-	}
-	public function getModule($moduleName) {
+	public function getModule($moduleName) { // Obtiene el modulo seleccionado, lo carga si es necesario
+		global $environment;
 		if(!is_string($moduleName))
 			throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
 		$moduleName = ucfirst($moduleName);
 		if(!isset($this->_modules[$moduleName]) || !($this->_modules[$moduleName] instanceof Kansas_Application_Module_Interface)) {
 			try {
-				$moduleClass = $this->getModuleLoader()->load($moduleName);
-				$options = isset($this->_modules[$moduleName]) && $this->_modules[$moduleName] instanceof Zend_Config ?
+				$moduleClass = $this->getLoader('module')->load($moduleName);
+				$options = isset($this->_modules[$moduleName]) && is_array($this->_modules[$moduleName]) ?
 					$this->_modules[$moduleName]:
-					new Zend_Config([]);
+					[];
 				$module = new $moduleClass($options);
 			} catch(Exception $e) {
-				trigger_error($e->getMessage());
+				$environment->log(E_USER_NOTICE, $e);
 				$module = false;
 			}
 			$this->_modules[$moduleName] = $module;
 		}
 		return $this->_modules[$moduleName];
 	}
-	public function setModule($moduleName, $options = []) {
+	public function setModule($moduleName, $options = []) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
 		if(!is_string($moduleName))
 			throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
 		$moduleName = ucfirst($moduleName);
@@ -82,9 +95,11 @@ class Kansas_Application
 		if($this->_modulesLoaded)
 			$this->getModule($moduleName);
 	}
-	public function hasModule($moduleName) {
+	public function hasModule($moduleName) { // Obtiene el modulo seleccionado si está cargado o false en caso contrario
 		$moduleName = ucfirst($moduleName);
-		return isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof Kansas_Application_Module_Interface);
+		return isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof Kansas_Application_Module_Interface) ?
+      $this->_modules[$moduleName]:
+      false;
 	}
 	public function getModules() {
 		$result = [];
@@ -96,17 +111,12 @@ class Kansas_Application
 		return $result;
 	}
 	
-	public function getProviderLoader() {
-		if($this->_providerLoader == null)
-			$this->_providerLoader = new Zend_Loader_PluginLoader(['Kansas_Db_' => 'Kansas/Db/']);
-		return $this->_providerLoader;
-	}
 	public function getProvider($providerName) {
 		if(!is_string($providerName))
 			throw new System_ArgumentOutOfRangeException('providerName', $providerName, 'Se esperaba una cadena');
 		$providerName = ucfirst($providerName);
 		if(!array_key_exists($providerName, $this->_providers)) {
-			$providerClass = $this->getProviderLoader()->load($providerName);
+			$providerClass = $this->getLoader('provider')->load($providerName);
 			$provider = new $providerClass($this->getDb());
 			$this->_providers[$providerName] = $provider;
 			$this->fireCreateProvider($provider, $providerName);
@@ -115,25 +125,11 @@ class Kansas_Application
 	}
 	
 	public function getRequest() {
-		if($this->_request == null)
-			$this->_request = new Zend_Controller_Request_Http();
-		return $this->_request;
-	}
-	
-	public function getControllerLoader() {
-		if($this->_controllerLoader == null)
-			$this->_controllerLoader = new Zend_Loader_PluginLoader(['Kansas_Controllers_' => 'Kansas/Controllers/']);
-		return $this->_controllerLoader;
-	}
-	public function getHelperLoader() {
-		if($this->_helperLoader == null)
-			$this->_helperLoader = new Zend_Loader_PluginLoader(['Kansas_Helpers_' => 'Kansas/Helpers/']);
-		return $this->_helperLoader;
+		global $environment;
+		return $environment->getRequest();
 	}
 	
 	public function dispatch($params) {
-		$request = $this->getRequest();
-		// Dispatch
 		$params = $this->fireDispatch($params);
 		$controller = isset($params['controller']) ?
 			ucfirst($params['controller']):
@@ -141,69 +137,64 @@ class Kansas_Application
 		$action = isset($params['action']) ?
 			$params['action']:
 			'Index';
-		$controllerClass = $this->getControllerLoader()->load($controller);
+		$controllerClass = $this->getLoader('controller')->load($controller);
 		$class = new $controllerClass();
-		$class->init($request);
+		$class->init($params);
 		if(!is_callable([$class, $action]))
 			throw new System_NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($class));
 		return $class->$action($params);
 	}
 	
 	public function run() {
-		if(Kansas_Enviroment::getInstance()->getStatus() ==  Kansas_Enviroment::DEVELOPMENT) {
-			error_reporting(E_ALL);
-			ini_set("display_errors", 1);
-		} else
-			error_reporting(E_ERROR);
-
-			error_reporting(E_ALL);
-			ini_set("display_errors", 1);
-
+    global $environment;
+    
 		$this->loadModules();
-		// PreInit
-		$this->firePreInit();
-		try {
-			$params = [];
-			if($params = $this->getRouter()->match($this->getRequest())) {
-				// Route
-				$params = $this->fireRoute($params);
-				$this->setRequestParams($params);
-				$result = $this->dispatch($params);
-			}
-			if(!isset($result) || $result == null)
-				$result = $this->createErrorResult(new System_Net_WebException(404));
-		} catch(Exception $e) {
-			$result = $this->createErrorResult($e);
+ 		$params = false;
+    if($this->getEnvironment() == 'install') {
+      $router = new Kansas_Router_Install();
+      $params = $router->match();
+    } else {
+      // PreInit
+  		$this->firePreInit();
+  		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+      if($path == '' && isset($this->_pages['.']))
+  			$params = $this->_pages['.'];
+  		elseif(isset($this->_pages[$path]))
+  			$params = $this->_pages[$path];
+  		else	
+  			foreach($this->_routers as $router)
+  				if($params = $router->match()) break;
+    }
+		if($params) {
+			// Route event
+			$params = array_merge($this->fireRoute($params), $this->getDefaultParams());
+			$result = $this->dispatch($params);
 		}
+		if(!isset($result) || $result == null)
+			throw new System_Net_WebException(404);
 		// Render
 		$this->fireRender($result);
 		$result->executeResult();
 	}
 	
 	// Asocia los parametros indicados y los básicos a la petición actual
-	public function setRequestParams($params) {
-		$request = $this->getRequest();
-		$params['application']	= $this;
-		$params['url'] 					= trim($request->getPathInfo(), '/');
-		$params['uri'] 					= $request->getRequestUri();
-		$request->setParams($params);
+	public static function getDefaultParams() {
+    global $application;
+    global $environment;
+		$request = $environment->getRequest();
+		return [
+			'application'	=> $application,
+			'url'					=> trim($request->getUri()->getPath(), '/'),
+			'uri'					=> $request->getUriString(),
+			'requestType' => $request->isXmlHttpRequest() ? 'XMLHttpRequest' : 
+											 $request->isFlashRequest()   ? 'flash'
+											                              : 'HttpRequest'
+		];
 	}
 	
-	public function getEnviroment() {
-		return Kansas_Enviroment::getInstance()->getStatus();
-	}
-	
-	public function getErrorPlugin() {
-		if($this->_errorPlugin == null)
-			$this->_errorPlugin = new Kansas_Router_Error([
-				'controller'	=> 'Error',
-				'action'			=> 'Index',
-			]);				
-		return $this->_errorPlugin;
-	}
-	
-	public function setErrorPlugin(Kansas_Router_Error_Plugin_Interface $errorPlugin) {
-		$this->_errorPlugin = $errorPlugin;
+	public function getEnvironment() {
+		global $environment;
+		return $environment->getStatus();
 	}
 	
 	/* Eventos */
@@ -228,7 +219,11 @@ class Kansas_Application
 		if(is_callable($callback))
 			$this->_createProviderCallbacks[] = $callback;
 	}
-	
+	public function registerCreateViewCallbacks($callback) {
+		if(is_callable($callback))
+			$this->_createViewCallbacks[] = $callback;
+	}
+  	
 	protected function firePreInit() {
 		foreach ($this->_preinitCallbacks as $callback)
 			call_user_func($callback);
@@ -253,22 +248,22 @@ class Kansas_Application
 		foreach ($this->_createProviderCallbacks as $callback)
 			$params = call_user_func($callback, $provider, $providerName);
 	}
-
-	public function setConstructionPage($constructionPage) {
-		$this->_constructionPage = $constructionPage;
-		return $this;
+  protected function fireCreateView($view) {
+		foreach ($this->_createViewCallbacks as $callback)
+			$params = call_user_func($callback, $view);
 	}
 
+
 	public function getDb() {
-		if($this->_db instanceof Zend_Config)
+		if(is_array($this->_db))
 			$this->_db = Zend_Db::factory($this->_db);
 		return $this->_db;
 	}
 	public function setDb($value) {
-		if($value instanceof Zend_Db || $value instanceof Zend_Config)
+		if($value instanceof Zend_Db || is_array($value))
 			$this->_db = $value;
 		else
-			throw new System_ArgumentOutOfRangeException(); 
+			throw new System_ArgumentOutOfRangeException('db'); 
 	}
 
 	/* Miembros de singleton */
@@ -279,8 +274,11 @@ class Kansas_Application
 		return self::$_instance;
 	}
 	
+  public function loadIni($filename, array $options = []) {
+    $this->set(Kansas_Config::ParseIni($filename, $options, Kansas_Environment::getInstance()->getStatus()));
+  }
 	public function set($key, $value = null) {
-		if($key instanceof Zend_Config) {
+		if(is_array($key)) {
 			foreach($key as $item => $value)
 				$this->set($item, $value);
 			$this->_config = $key;
@@ -292,121 +290,117 @@ class Kansas_Application
 					break;
 				case 'loader':
 					foreach($value as $loaderName => $options) {
-						$loader = null;
-						switch($loaderName) {
-							case 'controller':
-								$loader = $this->getControllerLoader();
-								break;
-							case 'provider':
-								$loader = $this->getProviderLoader();
-								break;
-							case 'module':
-								$loader = $this->getModuleLoader();
-								break;
-						}
-						if($loader == null)
+						if($loader = $this->getLoader($loaderName)) {
+							foreach($options as $prefix => $path)
+								$loader->addPrefixPath($prefix, realpath($path));
+						} else
 							throw new System_ArgumentOutOfRangeException();
-							
-						foreach($options->toArray() as $prefix => $path)
-							$loader->addPrefixPath($prefix, realpath($path));
 					}
 					break;
 				case 'module':
 					foreach($value as $module => $options)
-						if(empty($options)) $this->setModule($module, new Zend_Config([]));
-						else $this->setModule($module, $options);
+						if(empty($options)) $this->setModule($module, []);
+						else $this->setModule($module, (array) $options);
 					break;
 				case 'route':
 					foreach($value as $route => $params)
-						if($route == 'index') $this->getRouter()->setRoute('', $params->toArray());
-						else $this->getRouter()->setRoute($route, $params->toArray());
-					break;
-				case 'router':
-					if($this->_router instanceof Zend_Config)
-						$this->_router->merge($value);
-					elseif($this->_router instanceof Kansas_Router_Interface)
-						$this->_router->setOptions($value);
-					else
-						$this->_router = new Zend_Config($value->toArray(), true);
-					break;
-				case 'log':
-					$this->_log = Zend_Log::factory($value);
+						$this->setRoute($route, $params);
 					break;
 				case 'view':
-					$this->_viewClass = $value->class;
-					$options = $value->toArray();
-					unset($options['class']);
-					$this->_viewOptions = $options;
+					if(isset($value['class']))
+						$this->_viewClass = $value['class'];
+					unset($value['class']);
+					$this->_viewOptions = $value;
 					break;
 				case 'title':
-					if($value->class)
-						$this->_titleClass = $value->class;
-					$options = $value->toArray();
-					unset($options['class']);
-					$this->_titleOptions = $options;
-					break;
-				default:
-					var_dump($key);
-					break;
+					if(isset($value['class']))
+						$this->_titleClass = $value['class'];
+					unset($value['class']);
+					$this->_titleOptions = $value;
+          break;
+        case 'log':
+          if(is_callable($value))
+            $this->_logCallback = $value;
+          break;
+        case 'error':
+          if(is_callable($value))
+            $this->_errorCallback = $value;
+          break;
 			}
 			
 		}
 	}
 	
-	public function setWriter(Zend_Log_Writer_Abstract $writer) {
-		if($this->_log != null)
-			$this->_log->addWriter($writer);
-		else
-			$this->_writer = $writer;
-	}
-	
-	public function log($message, $priority) {
-		if($this->_log == null) {
-			if($this->_writer == null) 
-				$this->_writer = new Zend_Log_Writer_Null();
-			$this->_log = new Zend_Log($this->_writer);
-		}
-		$time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
-		$this->_log->log($time . '> ' . $message, $priority);
-	}
-	
 	public function createView() {
 		if($this->_viewOptions == null)
-			$this->_viewOptions = new Zend_Config([]);
-		$view = new $this->_viewClass($this->_viewOptions);
+			$this->_viewOptions = [];
+    $defaultScriptPaths = [];
+    if(isset($this->_config['theme']) && file_exists(BASE_PATH . './layout/' . $this->_config['theme'] . '/') && is_dir(BASE_PATH . './layout/' . $this->_config['theme'] . '/'))
+      $defaultScriptPaths[] = realpath(BASE_PATH . './layout/' . $this->_config['theme'] . '/');
+    $defaultScriptPaths[] = realpath(BASE_PATH . './layout/shared/');
+		$view = new $this->_viewClass(array_replace_recursive(['scriptPath' => $defaultScriptPaths], $this->_viewOptions));
 		if($view->getCaching())
 			$view->setCacheId($this->getRequest()->getRequestUri());
+    $this->fireCreateView($view);
 		return $view;
 	}
 	
-	public function getTitle() {
-		if($this->_title == null) {
-			if($this->_titleOptions == null) $this->_titleOptions = [];
-			$this->_title = new $this->_titleClass(new Zend_Config($this->_titleOptions));
-		}
-		return $this->_title;
+	public function createTitle() {
+    return new $this->_titleClass((array)$this->_titleOptions ?: []);
 	}
 
-	public function getRouter() {
-		if($this->_router == null || !($this->_router instanceof Kansas_Router_Interface)) {
-				$class = isset($this->_router->class) ? $this->_router->class:
-																								'Kansas_Router_Default';
-				unset($this->_router->class);
-			$this->_router = new $class($this->_router);
-		}
-		return $this->_router;
-	}
-	
 	public function getConfig() {
-		return $this->_config->toArray();
+		return $this->_config;
+	}
+  
+  /* Gestion de errores */
+	public function error_handler($errno, $errstr, $errfile, $errline, $errcontext) {
+		if (!(error_reporting() & $errno))
+				return false; // Este código de error no está incluido en error_reporting
+
+    call_user_func($this->_logCallback, E_USER_ERROR, $errstr);
+		if($errno == E_USER_ERROR)
+      call_user_func($this->_errorCallback, [
+				'exception'   => null,
+				'errorLevel'	=> $errno,
+				'code'				=> 500,
+				'message'			=> $errstr,
+				'trace'				=> debug_backtrace(),
+				'line'				=> $errline,
+				'file'				=> $errfile,
+				'context'			=> $errcontext
+			]);
+    return true; // No ejecutar el gestor de errores interno de PHP
 	}
 	
-	// devuelve una respuesta de solicitud, correspondiente al error indicado
-	public function createErrorResult(Exception $e) {
-		$params = $this->getErrorPlugin()->getParams($e);
-		$params = $this->fireRoute($params);
-		$this->setRequestParams($params);
-		return $this->dispatch($params);
+	public function exception_handler(Exception $ex) {
+    call_user_func($this->_logCallback, E_USER_ERROR, $ex);
+    call_user_func($this->_errorCallback, [
+			'exception'   => get_class($ex),
+			'errorLevel'	=> E_USER_ERROR,
+			'code'				=> ($ex instanceof System_Net_WebException ? $ex->getStatus() : 500),
+			'message'			=> $ex->getMessage(),
+			'trace'				=> $ex->getTrace(),
+			'line'				=> $ex->getLine(),
+			'file'				=> $ex->getFile()
+		]);
+		exit(1);
 	}
-
+  
+  public function errorManager($params) {
+		$result = $this->dispatch(array_merge($params, [
+			'controller'	=> 'Error',
+			'action'			=> 'Index'
+    ]));
+		$result->executeResult();
+  }
+  
+	/* Enrutamiento */
+	public function addRouter(Kansas_Router_Interface $router, $priority = 0) {
+		$this->_routers->insert($router, $priority);
+	}
+	
+	public function setRoute($page, array $params) {
+		$this->_pages[$page] = $params;
+	}  
 }

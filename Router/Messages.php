@@ -2,64 +2,63 @@
 
 class Kansas_Router_Messages
 	extends Kansas_Router_Abstract {
-	use Router_PartialPath;
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
+		parent::__construct();
+    $this->setOptions($options);
 	}
 		
-	public function match(Zend_Controller_Request_Abstract $request) {
-		$path = $this->getPartialPath($this, $request);
+	public function match() {
+    global $environment;
 		$params = false;
-
-  	if($path === false)
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    
+    if(Kansas_String::startWith($this->getBasePath(), $path))
+      $path = substr($this->getBasePath(), strlen($this->getBasePath()));
+    else
 			return false;
+      
 		switch($path) {
 			case '':
-				$params = array(
+				$params = [
 					'controller'	=> 'messages',
 					'action'			=> 'index'
-				);
+        ];
 				break;
 			case 'enviar':
-				$params = array(
+				$params = [
 					'controller'	=> 'messages',
 					'action'			=> 'send'
-				);
+        ];
 				break;
 			case 'captcha':
-				$params = array(
+				$params = [
 					'controller'	=> 'messages',
 					'action'			=> 'captcha'
-				);
+        ];
 				break;
 			case 'send-approve':
-				$params = array(
+				$params = [
 					'controller'	=> 'messages',
 					'action'			=> 'approve'
-				);
+        ];
 				break;
 			case 'reply':
-				$params = array(
+				$params = [
 					'controller'	=> 'messages',
 					'action'			=> 'reply'
-				);
+        ];
 				break;
 			default:
-				$application = Kansas_Application::getInstance();
-				if($application->hasModule('users') && $user = $application->getModule('users')->getIdentity()) {
-					try {
-						$id = new System_Guid($path);
-						$thread = $application->getProvider('messages')->getThreadById($id, $user->getId());
-						if($thread != null) {
-							$params = [
-								'controller'	=> 'messages',
-								'action'			=> 'show',
-								'thread'			=> $thread
-							];
-						}
-					} catch(Exception $ex) {
-						break;
+				global $application;
+				if($application->hasModule('users') && $user = $application->getModule('users')->getIdentity() && $id = System_Guid::tryParse($path)) {
+					$thread = $application->getProvider('messages')->getThreadById($id, $user->getId());
+					if($thread != null) {
+						$params = [
+							'controller'	=> 'messages',
+							'action'			=> 'show',
+							'thread'			=> $thread
+						];
 					}
 				}
 				break;
@@ -73,13 +72,7 @@ class Kansas_Router_Messages
   public function assemble($data = [], $reset = false, $encode = false) {
 		$basepath = parent::assemble($data, $reset, $encode);
 		switch($data['action']) {
-			
-			
-		}
-	}
-	
-	public function getTitle($partial = '') {
-		return Kansas_Application::getInstance()->getRouter()->getTitle($partial);
-	}
-		
+    }
+  }
+
 }

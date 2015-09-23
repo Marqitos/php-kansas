@@ -1,18 +1,18 @@
 <?php
 
-class Kansas_Application_Module_Google
-	extends Kansas_Application_Module_Abstract {
+class Kansas_Application_Module_Google {
 		
 	private $_client;
+  protected $options;
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
+    $this->options = $options;
 		global $application;
 		$application->registerRenderCallbacks([$this, 'appRender']);
 	}
 
 	public function appRender(Kansas_View_Result_Interface $result)	{
-		if($result instanceof Kansas_View_Result_Page) {
+		if($result instanceof Kansas_View_Result_Template) {
 			// analitics
 			if($this->options->GaTracker) {
 				$javascript = Kansas_Helpers::getHelper('javascript');
@@ -26,28 +26,28 @@ class Kansas_Application_Module_Google
 	}
 	
 	public function customSearch($query) {
-		if(!$this->options->CseCx)
+		if(!$this->options['CseCx'])
 			throw new System_ArgumentException('Google::CseCx');
 			
 		require_once 'Google/Google_Client.php';
 		require_once 'Google/contrib/Google_CustomsearchService.php';
 
 		$search = new Google_CustomsearchService($this->getClient());
-		return $search->cse->listCse($query, ['cx' => $this->options->CseCx]);
+		return $search->cse->listCse($query, ['cx' => $this->options['CseCx']]);
 	}
 	
 	protected function getClient() {
 		if($this->_client == null) {
-			if(!$this->options->AppName)
+			if(!$this->options['AppName'])
 				throw new System_ArgumentException('Google::AppName');
-			if(!$this->options->ApiKey)
+			if(!$this->options['ApiKey'])
 				throw new System_ArgumentException('Google::ApiKey');
 	
 			require_once 'Google/Google_Client.php';
 	
 			$this->_client = new Google_Client();
-			$this->_client->setApplicationName($this->options->AppName);
-			$this->_client->setDeveloperKey($this->options->ApiKey);
+			$this->_client->setApplicationName($this->options['AppName']);
+			$this->_client->setDeveloperKey($this->options['ApiKey']);
 		}
 		return $this->_client;
 	}

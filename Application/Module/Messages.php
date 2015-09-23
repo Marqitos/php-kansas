@@ -5,41 +5,44 @@ class Kansas_Application_Module_Messages
 
 	private $_router;
 
-	public function __construct(Zend_Config $options) {
+	public function __construct(array $options) {
 		parent::__construct($options);
 		global $application;
+    $this->options = array_replace_recursive([
+      'router' => [
+        'basepath' => 'contacto'
+      ]
+    ], $options);
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
 	
 	public function appPreInit() { // añadir router
 		global $application;
-		$application->getRouter()->addRouter($this->getRouter());
+		$application->addRouter($this->getRouter());
 	}
 	
 	public function getRouter() {
 		if($this->_router == null)
-			$this->_router = new Kansas_Router_Messages($this->options->router);
+			$this->_router = new Kansas_Router_Messages($this->options['router']);
 		return $this->_router;
 	}
 	
 	public function getBasePath() {
-		return $this->options->router->basePath;
+		return $this->options['router']['basePath'];
 	}
 
-	public function fillContactForm(Zend_Controller_Request_Http $request, Zend_View_Abstract $view, System_Guid $target) {
-		$error = $request->getParam('err', null);
-		if($error !== null)
-			$error = (int)$error;
+	public function fillContactForm(Kansas_Request $request, Zend_View_Interface $view, System_Guid $target) {
+		$error = isset($_REQUEST['err']) ? (int)$_REQUEST['err'] : null;
 		$view->assign('msg',		Bioter_Model_Message::getModel($mId));
 		$view->assign('error',	$error);
 		$view->assign('target',	$target->getHex());
 		$view->assign('action',	'/mensajes/enviar');
 	}
 
-	public function ApiMatch(Zend_Controller_Request_Abstract $request) {
+	public function ApiMatch() {
 		$apiRouter = new Kansas_Router_API_Messages();
 		$apiRouter->setBasePath("api/messages");
-		return $apiRouter->match($request);
+		return $apiRouter->match();
 	}
 	
 }

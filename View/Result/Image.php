@@ -25,7 +25,7 @@ class Kansas_View_Result_Image
    * @see Kansas_View_Result_Interface::executeResult()
    */
   public function executeResult () {
-		parent::executeResult();
+  	parent::sendHeaders();
 		switch($this->_format) {
 			case 'gif':
 				return imagegif($this->_image);

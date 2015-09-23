@@ -13,17 +13,20 @@ class Kansas_Router_Shop
 	
 	private $_families;
 		
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
+		parent::__construct();
+    $this->setOptions($options);
 	}
 		
-	public function match(Zend_Controller_Request_Abstract $request) {
-		$path = Kansas_Router_GetPartialPath($this, $request);
-
-		if($path === false)
-			return false;
-		
+	public function match() {
+    global $environment;
 		$params = false;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    
+    if(Kansas_String::startWith($this->getBasePath(), $path))
+      $path = substr($this->getBasePath(), strlen($this->getBasePath()));
+    else
+			return false;
 			
 		switch($path) {
 			case '':
@@ -225,26 +228,25 @@ class Kansas_Router_Shop
 	}
 	
 	protected function getFamilies() {
+		global $application;
 		if($this->_families == null)
-			$this->_families = Kansas_Application::getInstance()->getProvider('shop')->getFamilies();
+			$this->_families = $application->getProvider('shop')->getFamilies();
 		return $this->_families;
 	}
 	
 	protected function getFamilyParams() {
-		return array_merge(parent::getDefaultParams(), $this->options->family->toArray());
+		return array_merge(parent::getDefaultParams(), $this->options['family']);
 	}
 
 	protected function getProductParams() {
-		return array_merge(parent::getDefaultParams(), $this->options->product->toArray());
+		return array_merge(parent::getDefaultParams(), $this->options['product']);
 	}
 	
 	public function getDefaultOptions() {
-		return parent::getDefaultOptions()->merge(new Zend_Config(array(
-			'family'		=> array(
-				'body_class'	=> 'family'),
-			'product'			=> array(
-				'template'		=> 'page.shop-product.tpl')
-		)));
+		return array_replace_recursive(parent::getDefaultOptions(), [
+			'family'		=> ['body_class'	=> 'family'],
+			'product'		=> ['template'		=> 'page.shop-product.tpl']
+    ]);
 	}
 	
 }

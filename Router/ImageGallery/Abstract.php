@@ -3,8 +3,15 @@
 abstract class Kansas_Router_ImageGallery_Abstract
 	extends Kansas_Router_Abstract {
 		
-	public function match(Zend_Controller_Request_Abstract $request) {
-		$path = Kansas_Router_GetPartialPath($this, $request);
+	public function match() {
+    global $environment;
+		$params = false;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    
+    if(Kansas_String::startWith($this->getBasePath(), $path))
+      $path = substr($this->getBasePath(), strlen($this->getBasePath()));
+    else
+			return false;
 
 		if($path === false)
 			return false;

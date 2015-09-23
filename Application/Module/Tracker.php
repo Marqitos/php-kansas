@@ -9,7 +9,7 @@ class Kansas_Application_Module_Tracker
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
 	
-	public function appPreInit(Zend_Controller_Request_Abstract $request, $params) {
+	public function appPreInit(Kansas_Request $request, $params) {
 		// Comprobar sesion, dispositivo y petición
 		$track = Zend_Session::namespaceIsset('track')	? $this->verifyDevice()	// verificar dispositivo
 																										: $this->createSession();	// crear sesión y dispositivo

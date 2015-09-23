@@ -1,10 +1,11 @@
 <?php
 
-class Kansas_Application_Module_Token
-	extends Kansas_Application_Module_Abstract {
+class Kansas_Application_Module_Token {
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+  protected $options;
+  
+	public function __construct(array $options) {
+    $this->options = $options;
 		global $application;
 		$usersModule = $application->getModule('Users');
 		$usersModule->setAuthService('token', $this);
@@ -25,7 +26,8 @@ class Kansas_Application_Module_Token
 	}
 	
 	public function getToken($device = true) {
-		$auth = Zend_Auth::getInstance();
+		global $application;
+		$auth = $application->getModule('auth');
 		if(!$auth->hasIdentity())
 			return false;
 		
@@ -40,7 +42,8 @@ class Kansas_Application_Module_Token
 	}
 	
 	public function getAuthTokenUrl($url, $device = true) {
-		return $_SERVER['SERVER_NAME'] . '/' . $this->getApplication()->getModule('Users')->getBasePath() . 'token' . Kansas_Responde::buildQueryString([
+		global $application;
+		return $_SERVER['SERVER_NAME'] . '/' . $application->getModule('Users')->getBasePath() . 'token?' . http_build_query([
 			'token' => $this->getToken($device),
 			'ru'		=> $url
 		]);

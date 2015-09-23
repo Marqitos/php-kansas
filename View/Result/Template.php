@@ -8,7 +8,8 @@ class Kansas_View_Result_Template
 	private $_template;
 	private $_view;
 	
-	public function __construct(Zend_View_Abstract $view, $template) {
+	public function __construct(Zend_View_Interface $view, $template, $mimeType) {
+    parent::__construct($mimeType);
 		$this->_view			= $view;
 		$this->_template	= $template;
 	}
@@ -17,7 +18,8 @@ class Kansas_View_Result_Template
 		return $this->_view;
 	}
 	
-	public function getResult() {
+	public function getResult(&$noCache) {
+    $noCache = true;
 		return $this->_view->render($this->_template);
 	}
 }

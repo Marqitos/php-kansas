@@ -35,17 +35,17 @@ class Kansas_Db_Auth_Membership
 	 * Performs an authentication attempt
 	 *
 	 * @throws Zend_Auth_Adapter_Exception If authentication cannot be performed
-	 * @return Zend_Auth_Result
+	 * @return Kansas_Auth_Result
 	 */
 	public function validate($email, $password) {
 		$sql = 'SELECT HEX(USR.Id) as id, USR.name, USR.email, USR.subscriptions, USR.isApproved, USR.isLockedOut, USR.lastLockOutDate, USR.comment FROM `Users` AS USR INNER JOIN `Membership` AS MBS ON USR.Id = MBS.Id WHERE USR.Email = ? AND MBS.Password = UNHEX(SHA1(?));';
 		$row = $this->db->fetchRow($sql, array(strtolower($email), $password));
 		if($row == null) {
-			return new Zend_Auth_Result(Zend_Auth_Result::FAILURE_CREDENTIAL_INVALID, null);
+			return Kansas_Auth_Result::Failure(Kansas_Auth_Result::FAILURE_CREDENTIAL_INVALID);
 		} elseif($row['isApproved'] == 1 && $row['isLockedOut'] == 0) {
-			return new Zend_Auth_Result(Zend_Auth_Result::SUCCESS, new Kansas_User_Db($row));
+			return Kansas_Auth_Result::Success(new Kansas_User_Db($row));
 		} else {
-			return new Zend_Auth_Result(Zend_Auth_Result::FAILURE, null);
+			return Kansas_Auth_Result::Failure(Kansas_Auth_Result::FAILURE);
 		}
 	}
 

@@ -7,22 +7,23 @@ class Kansas_Router_ImageAlbum
 	private $_album;
 	private $_gallery;
 
-	public function __construct(Kansas_Media_Group_Image_Album_Interface $album, Zend_Config $options, $galleryRouter = null) {
-		parent::__construct($options);
+	public function __construct(Kansas_Media_Group_Image_Album_Interface $album, array $options, $galleryRouter = null) {
+		parent::__construct();
+    $this->setOptions($options);
 		$this->_galleryRouter = $galleryRouter;
 		$this->_album	= $album;
 	}
 		
 	public function getDefaultOptions() {
-		return parent::getDefaultOptions()->merge(new Zend_Config(array(
-			'album'			=> array(
+		return array_replace_recursive(parent::getDefaultOptions(), [
+			'album'			=> [
 				'controller'	=> 'image',
 				'action'			=> 'album',
-				'body_class'	=> 'album-full'),
-			'photo'			=> array(
+				'body_class'	=> 'album-full'],
+			'photo'			=> [
 				'controller'	=> 'image',
-				'action'			=> 'image')
-			)));
+				'action'			=> 'image']
+      ]);
 	}
 	
 	public function getGallery() {
@@ -40,32 +41,34 @@ class Kansas_Router_ImageAlbum
 		return $this->_galleryRouter;
 	}
 		
-	public function match(Zend_Controller_Request_Abstract $request) {
-		$path = Kansas_Router_GetPartialPath($this, $request);
-
-		if($path === false)
+	public function match() {
+    global $environment;
+		$params = false;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    
+    if(Kansas_String::startWith($this->getBasePath(), $path))
+      $path = substr($this->getBasePath(), strlen($this->getBasePath()));
+    else
 			return false;
 			
 		if($path == '') {
-			return array_merge($this->getDefaultAlbumParams(),
-				array(
+			return array_merge($this->getDefaultAlbumParams(), [
 					'gallery'				=> $this->getGallery(),
 					'album'					=> $this->getAlbum(),
 					'router'				=> $this,
 					'galleryRouter'	=> $this->getGalleryRouter()
-				));
+      ]);
 		}
 			
 		foreach($this->getAlbum() as $image) {
 			if($image->getSlug() == $path) {
-				return array_merge($this->getDefaultPhotoParams(),
-					array(
+				return array_merge($this->getDefaultPhotoParams(), [
 						'gallery'				=> $this->getGallery(),
 						'album'					=> $this->getAlbum(),
 						'image'					=> $image,
 						'router'				=> $this,
 						'galleryRouter'	=> $this->getGalleryRouter()
-					));
+        ]);
 				
 			}
 		}
@@ -95,11 +98,11 @@ class Kansas_Router_ImageAlbum
 	}
 	
 	public function getDefaultAlbumParams() {
-		return array_merge(parent::getDefaultParams(), $this->options->album->toArray());
+		return array_merge(parent::getDefaultParams(), $this->options['album']);
 	}
 	
 	public function getDefaultPhotoParams() {
-		return array_merge(parent::getDefaultParams(), $this->options->photo->toArray());
+		return array_merge(parent::getDefaultParams(), $this->options['photo']);
 	}
 	
 }

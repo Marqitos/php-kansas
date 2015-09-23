@@ -3,64 +3,50 @@
 abstract class Kansas_Controller_Abstract
 	implements Kansas_Controller_Interface {
 		
-	private $_request;
+	private $_params;
 		
-	protected function getApplication() {
-		return Kansas_Application::getInstance();
-	}
-	
 	protected function createView() {
 		global $view;
 		global $application;
-		if(!$view instanceof Zend_View_Abstract)
-			$view = Kansas_Application::getInstance()->createView();
-		$view->assign($this->_request->getParams());
+		if(!$view instanceof Zend_View_Interface)
+			$view = $application->createView();
+		$view->assign($this->_params);
 		return $view;
 	}
-	protected function createPage($description = null, $keywords = null, Kansas_View_Page_Interface $parent = null) {
-		$id;
-		$router	= $this->getParam('router');
-		$url		= trim($this->getRequest()->getPathInfo(), '/');
-		$page		= $description instanceof Kansas_Post_Interface	? new Kansas_View_Page_Post($description, $parent, $router)
-						//:	System_Guid::tryParse($keywords, $id)					?	new Kansas_View_Page_Db($id, $description, $url, $parent, $router)
-																														: new Kansas_View_Page_Static($description, $keywords, $url,	$parent, $router);
-															
-		$this->_request->setParam('page', $page);
-		return $this->createView();
-	}
 	
-	public function init(Zend_Controller_Request_Http $request) {
-		$this->_request = $request;
+	public function init(array $params) {
+		$this->_params 	= $params;
 	}
 	
 	protected function getParam($key, $default = null) {
-		return $this->_request->getParam($key, $default);
+		return	isset($this->_params[$key])	? $this->_params[$key] :
+					 (isset($_REQUEST[$key])      ? $_REQUEST[$key]				 
+																				: $default);
 	}
 	
-	protected function getRequest() {
-		return $this->_request;
-	}
-	
-	protected function createResult($view, $defaultTemplate) {
+	protected function createResult($view, $defaultTemplate, $mimeType = 'text/html') {
+		global $application;
 		$template = $this->getParam('template', $defaultTemplate);
-		$page			= $this->getParam('page');
-		return $page != null?	new Kansas_View_Result_Page(		$view, $template, $page)
-												:	new Kansas_View_Result_Template($view, $template);
+		return new Kansas_View_Result_Template($view, $template, $mimeType);
 	}
 	protected function isCached($view, $defaultTemplate) {
 		$template = $this->getParam('template', $defaultTemplate);
 		return $view->isCached($template);
 	}
 	protected function isAuthenticated(&$result, $ru = null) {
-		$auth			= Zend_Auth::getInstance();
+		global $application;
+    global $environment;
+		$auth			= $application->getModule('auth');
 		if($auth->hasIdentity()) {
 			$result = $auth->getIdentity();
 			return true;
 		} else {
 			if($ru  == null)
-				$ru = $this->getRequest()->getRequestUri();
+				$ru = $environment->getRequest()->getRequestUri();
 			$result	= new Kansas_View_Result_Redirect();
-			$result->setGotoUrl('/account/signin' . Kansas_Response::buildQueryString(array('ru', $ru)));
+			$result->setGotoUrl(
+				$auth->getRouter()->assemble(['action' => 'signin', 'ru' => $ru])
+			);
 			return false;
 		}
 	}

@@ -9,22 +9,18 @@ class Kansas_View_Result_File
 	private $_mimeType;
 		
 	public function __construct($filename, $retbytes=true) {
+    parent::__construct(null, $filename);
 		$this->_filename	= $filename;
 		$this->_retbytes	= $retbytes;
 		$this->_chunksize	= 1*(1024*1024);
-	}
-	
-	public function getMimeType() {
-		if(!$this->hasMimeType())
-			$this->setMimeType(mime_content_type($this->_filename));
-		return parent::getMimeType();
+    
 	}
 	
   /* (non-PHPdoc)
    * @see Kansas_View_Result_Interface::executeResult()
    */
   public function executeResult () {
-		parent::executeResult();
+  	parent::sendHeaders();
 		
 		if($this->getUseXSendFile()) {
 			if(strtolower(substr(php_uname('s'), 0, 3)) == 'win')
@@ -35,7 +31,6 @@ class Kansas_View_Result_File
 		} else {
 			$buffer = ''; 
 			$cnt =0; 
-			// $handle = fopen($filename, 'rb'); 
 			$handle = fopen($this->_filename, 'rb'); 
 			if ($handle === false) 
 				return false; 
@@ -55,8 +50,7 @@ class Kansas_View_Result_File
 	}
  
 	public function getUseXSendFile() {
-		return true;
-//		if(array_search('mod_xsendfile', apache_get_modules())) {
+		return array_search('mod_xsendfile', apache_get_modules());
 	}
 
 }

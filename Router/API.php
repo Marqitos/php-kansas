@@ -11,10 +11,11 @@ class Kansas_Router_API
 		$this->_routers = [];
 	}
 	
-	public function match(Zend_Controller_Request_Abstract $request) {
+	public function match() {
 		global $application;
-		$path = $this->getPartialPath($this, $request);
+    global $environment;
 		$params = false;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
 
   	if($path === false)
 			return false;

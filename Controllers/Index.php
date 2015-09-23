@@ -5,7 +5,7 @@ class Kansas_Controllers_Index
 
 	public function Index($vars = []) {
 		$template = $this->getParam('template', 'page.default.tpl');
-		$view = $this->createPage();
+		$view = $this->createView();
 		$view->assign($vars);
 		return $this->createResult($view, $template);
 	}
@@ -18,17 +18,17 @@ class Kansas_Controllers_Index
 	}
 	
 	public function Css() {
+		global $application;
 		$files = $this->getParam('files');
 		$cssResult = new Kansas_View_Result_Css($files);
-		$backendCache = Kansas_Application::getInstance()->getModule('BackendCache');
+		$backendCache = $application->getModule('BackendCache');
 		if($backendCache) {
-			$cache = $backendCache->getCache();
 			$cacheId = $cssResult->getCacheId();
-			if($cache->test($cacheId)) {
-				$content = $cache->load($cacheId);
+			if($backendCache->test($cacheId)) {
+				$content = $backendCache->load($cacheId);
 			} else {
 				$content = $cssResult->getResult();
-				$cache->save($content, $cacheId);
+				$backendCache->save($content, $cacheId);
 			}
 			$contentResult = new Kansas_View_Result_Content($content);
 			$contentResult->setMimeType('text/css');
@@ -42,6 +42,21 @@ class Kansas_Controllers_Index
 		$file				= $this->getParam('file');
 		return new Kansas_View_Result_Sass($file);
 	}
+	
+	public function Scss() {
+		$file				= $this->getParam('file');
+		return new Kansas_View_Result_Scss($file);
+	}
+	
+	public function File() {
+		$file				= $this->getParam('file');
+		return new Kansas_View_Result_File($file);
+	}
+  
+  public function Javascript() {
+    $components = (array)$this->getParam('component');
+    return new Kansas_View_Result_Javascript($components);
+  }		
 	
 	public function clearCache() {
 		$ru = $this->getParam('ru', '/');

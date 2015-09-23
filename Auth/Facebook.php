@@ -1,47 +1,56 @@
 <?php
 
+use Facebook\FacebookSession;
+use Facebook\FacebookRedirectLoginHelper;
+use Facebook\FacebookRequest;
+use Facebook\GraphUser;
+
 class Kansas_Auth_Facebook
-	implements Zend_Auth_Adapter_Interface {
+	implements Kansas_Auth_Adapter_Interface {
 	
-	private $_signIn;
-	private $_core;
-	private $_provider;
+	private $_fbSession;
 	
-	public function __construct(Kansas_Db_SignIn $signIn, Kansas_Db_Auth_Facebook $provider, Facebook_Core $core) {
-		$this->_signIn		= $signIn;
-		$this->_provider	= $provider;
-		$this->_core			= $core;
+	public function __construct(FacebookSession $session = null) {
+		$this->_fbSession = $session;
 	}
 	
 	/**
 	 * Performs an authentication attempt
-	 *
-	 * @throws Zend_Auth_Adapter_Exception If authentication cannot be performed
 	 * @return Zend_Auth_Result
 	 */
 	public function authenticate() {
-		if($this->_core->getUser() == 0)
-			$result = new Zend_Auth_Result(Zend_Auth_Result::FAILURE_CREDENTIAL_INVALID, null);
-		elseif($user = $this->isRegistered())
-			$result = new Zend_Auth_Result(Zend_Auth_Result::SUCCESS, $user);
-		else
-			$result = new Zend_Auth_Result(Zend_Auth_Result::FAILURE, null);
-		// Log intento de inicio de sesión
-		$this->_signIn->addResult($result);
-		return $result;
+		global $application;
+		if(!isset($this->_fbSession)) {
+			if(!isset($_SESSION['fb-token']))
+				return Kansas_Auth_Result::Failure(['No se ha obtenido la sesión de facebook']);
+			$this->_fbSession =  new FacebookSession($_SESSION['fb-token']);
+		}
+		$userId = $this->_fbSession->getUserId();
+		$fbUser = false;
+		if($userId == null) {
+			$fbUser = (new FacebookRequest($this->_fbSession, 'GET', '/me'))->execute()->getGraphObject(GraphUser::class);
+			$userId = $fbUser->getId();
+		}
+		if($user = $application->getProvider('Auth_Facebook')->getUser($userId))
+			return Kansas_Auth_Result::Success($user);
+		if(!$fbUser)
+			$fbUser = (new FacebookRequest($this->_fbSession, 'GET', '/me'))->execute()->getGraphObject(GraphUser::class);
+		if($user = $application->getProvider('Users')->getByEmail($fbUser->getEmail())) // Conectar usuario
+			return Kansas_Auth_Result::Failure(['No se ha conectado el usuario con la cuenta de facebook'], Kansas_Auth_Result::FAILURE_CREDENTIAL_INVALID);
+		else // Nuevo usuario
+			return Kansas_Auth_Result::Failure(['No hay ningun usuario con ese email'], Kansas_Auth_Result::FAILURE_IDENTITY_NOT_FOUND);				
 	}
 	
-	
-	public function isRegistered() {
-		$userId = $this->_core->getUser();
-		return $userId != 0 && $user = $this->_provider->getUser($userId) ? $user:
-																																				false;
+	public static function getRedirectLoginHelper($ru) {
+		global $application;
+		return new FacebookRedirectLoginHelper('http://' . $_SERVER['HTTP_HOST'] . $application->getModule('Auth')->getRouter()->assemble(['action' => 'fb-signin']) . http_build_query(['ru' => $ru]));
 	}
-	
-	public function register($regData = null) {
-		if($regData == null)
-			$regData = $this->_core->getSignedRequest();
-		$this->_provider->createUser($regData['user_id'], $regData['registration']['name'], $regData['registration']['email']);
+		
+	public static function getSessionFromRedirect($ru) {
+		$loginHelper = self::getRedirectLoginHelper($ru);
+		$fbSession = $loginHelper->getSessionFromRedirect();
+		$_SESSION['fb-token'] = $fbSession->getToken();
+		return $fbSession;	
 	}
 	
 }

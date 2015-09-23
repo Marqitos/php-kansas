@@ -13,8 +13,8 @@ class Kansas_Controllers_Shop
 	
 	// Muestra la portada de la tienda
 	public function index() {
+		global $application;
 		$router = $this->getParam('router');
-		$application = $this->getApplication();
 		$show		= (int)$this->getParam('show', Kansas_Router_Shop::SHOW_ALL);
 		$families = $application->getProvider('shop')->getFamilies(false);
 		if(count($families) == 1) {
@@ -53,10 +53,9 @@ class Kansas_Controllers_Shop
 		
 	/// Muestra la pagina de gategorias	
 	public function categories() {
-		
+		global $application;
 		$view = $this->createView();
 		$router = $this->getParam('router');
-		$application = $this->getApplication();
 		$view->assign('categories', $application->getProvider('shop')->getCategories());
 
 		return $this->createResult($view, 'page.shop-categories.tpl');
@@ -64,9 +63,9 @@ class Kansas_Controllers_Shop
 	
 	// Muestra la pagina de una familia de productos
 	public function family() {
+		global $application;
 		$view = $this->createView();
 		$router = $this->getParam('router');
-		$application = $this->getApplication();
 		$family	= $this->getParam('family');
 		$view->setCacheId('shop-family-' . $family->getId()->__toString());
 		if(!$this->isCached($view, 'page.shop-family.tpl')) {
@@ -92,8 +91,8 @@ class Kansas_Controllers_Shop
 		$imageId = $this->getParam('img');
 		$view->setCacheId('shop-product-' . $product->getId()->__toString() . '-' . $imageId);
 		if(!$this->isCached($view, 'page.shop-product.tpl')) {
+			global $application;
 			$router = $this->getParam('router');
-			$application = $this->getApplication();
 			$view->assign('family', $product->getFamily());
 			$families = array(
 				$product->getFamily()
@@ -107,7 +106,7 @@ class Kansas_Controllers_Shop
 				'product'		=> $product
 			)));
 			
-			$images = Kansas_Application::getInstance()->getProvider('Image')->getTagPhotos($product->getId());
+			$images = $application->getProvider('Image')->getTagPhotos($product->getId());
 			$image = empty($imageId) || !isset($images[$imageId])?
 				Kansas_Core_Collection_first($images):
 				$image = $images[$imageId];
@@ -119,6 +118,7 @@ class Kansas_Controllers_Shop
 	
 	/// Muestra el pedido actual
 	public function order() {
+		global $application;
 //		$count = 0;
 //		$cart = Kansas_Shop_Order::getCurrent($count, true);
 		$cart = $this->getParam('order');
@@ -127,9 +127,9 @@ class Kansas_Controllers_Shop
 			$result->setGotoUrl('/tienda/order/checkout/review');
 			return $result;
 		}
-		$shop = Kansas_Application::getInstance()->getModule('Shop')->getShop();
+		$shop = $application->getModule('Shop')->getShop();
 		$view = $this->createView();
-		$auth = Zend_Auth::getInstance();
+		$auth = $application->getModule('Auth');
 		$user = $auth->hasIdentity() ?
 			$auth->getIdentity():
 			null;
@@ -217,8 +217,9 @@ class Kansas_Controllers_Shop
 	
 	// Redirije a la pagina para finalizar la compra
 	public function checkout() {
+		global $application;
 		$count = null;
-		$auth = Zend_Auth::getInstance();
+		$auth = $application->getModule('Auth');
 		$cart = Kansas_Shop_Order::getCurrent($count, true);
 		$result = new Kansas_View_Result_Redirect();
 		if(!$auth->hasIdentity()) {
@@ -247,10 +248,11 @@ class Kansas_Controllers_Shop
 	
 	// Permite seleccionar la direccion de envio
 	public function shipAddress() {
+		global $application;
 		$count = null;
-		$auth			= Zend_Auth::getInstance();
-		$shop			= Kansas_Application::getInstance()->getModule('Shop')->getShop();
-		$cart = Kansas_Shop_Order::getCurrent($count, true);
+		$auth			= $application->getModule('Auth');
+		$shop			= $application->getModule('Shop')->getShop();
+		$cart			= Kansas_Shop_Order::getCurrent($count, true);
 		$generic	= $this->getParam('generic', true);
 		$url			= $this->getParam('url', '/tienda/order/ship-address');
 		$view			= $this->createView();
@@ -258,7 +260,7 @@ class Kansas_Controllers_Shop
 		$shipAddress = array();
 		if($auth->hasIdentity()) {
 			$user = $auth->getIdentity();
-			$placesProvider = Kansas_Application::getInstance()->getProvider('places');
+			$placesProvider = $application->getProvider('places');
 			$shipAddress = $placesProvider->getAddressByUser($user->getId());
 			$view->assign('shipAddress', $shipAddress);
 		} elseif(!$generic) {
@@ -304,8 +306,9 @@ class Kansas_Controllers_Shop
 	
 	// Finaliza la compra mediante PayPal Express Checkout
 	public function expressCheckout() {
+		global $application;
 		$count		= null;
-		$auth			= Zend_Auth::getInstance();
+		$auth			= $application->getModule('Auth');
 		$cart			= Kansas_Shop_Order::getCurrent($count, true);
 		$result		= new Kansas_View_Result_Redirect();
 		if(count($cart->getItems()) == 0)	{ // NO hay compra
@@ -322,11 +325,12 @@ class Kansas_Controllers_Shop
 	
 	// Autoriza un pago realizado mediante paypal
 	public function paymentPaypal() {
+		global $application;
 		$result		= null;
 		if($this->isAuthenticated($result)) {
 			$result		= new Kansas_View_Result_Redirect();
 			// Grabar pago como autorizado
-			$shop		= Kansas_Application::getInstance()->getModule('Shop')->getShop();
+			$shop		= $application->getModule('Shop')->getShop();
 			$token	= $this->getParam('token');
 			
 			$payment = $shop->getPaymentByToken($token);
@@ -364,9 +368,10 @@ class Kansas_Controllers_Shop
 	public function paymentVoid() {
 		$result		= null;
 		if($this->isAuthenticated($result)) {
+			global $application;
 			$result		= new Kansas_View_Result_Redirect();
 			// Grabar pago como cancelado
-			$shop	= Kansas_Application::getInstance()->getModule('Shop')->getShop();
+			$shop	= $application->getModule('Shop')->getShop();
 			$params = $this->getRequest()->getParams();
 			
 			if(isset($params['token'])) {
@@ -431,10 +436,11 @@ class Kansas_Controllers_Shop
 	public function orderList() {
 		$result = null;
 		if($this->isAuthenticated($result)) {
+			global $application;
 			$router = $this->getParam('router');
-			$auth			= Zend_Auth::getInstance();
+			$auth			= $application->getModule('Auth');
 			$user 		= $auth->getIdentity();
-			$shopProvider = Kansas_Application::getInstance()->getProvider('shop');
+			$shopProvider = $application->getProvider('shop');
 //			$orders		= new Kansas_Core_GuidItem_Collection();
 			$orders		= $shopProvider->getOrdersByUser($user, false);
 			// remove empty

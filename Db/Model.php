@@ -8,9 +8,10 @@ class Kansas_Db_Model
 	}
 	
 	public function getModel(System_Guid $modelId) {
-		if(Zend_Auth::getInstance()->hasIdentity()) {
+		global $application;
+		if($application->getModule('Auth')->hasIdentity()) {
 			$sql = 'SELECT `Data` FROM `Models` WHERE `Id` = UNHEX(?) AND (`User` = UNHEX(?) OR `User` = UNHEX(?));';
-			$userId = Zend_Auth::getInstance()->getIdentity()->getId();
+			$userId = $application->getModule('Auth')->getId();
 			$modelData = $this->db->fetchOne($sql, array(
 				$modelId->getHex(),
 				$userId->getHex(),
@@ -32,8 +33,9 @@ class Kansas_Db_Model
 	}
 	
 	public function updateModel(System_Guid $modelId, $modelData) {
-		$userId = Zend_Auth::getInstance()->hasIdentity()?
-			Zend_Auth::getInstance()->getIdentity()->getId():
+		global $application;
+		$userId = $application->getModule('Auth')->hasIdentity()?
+			$application->getModule('Auth')->getIdentity()->getId():
 			System_Guid::getEmpty();
 		$sql = 'REPLACE INTO `Models` (`Id`, `User`, `Data`) VALUES (UNHEX(?), UNHEX(?), ?);';
 		$this->db->query($sql, array($modelId->getHex(), $userId->getHex(), serialize($modelData)));
@@ -45,8 +47,9 @@ class Kansas_Db_Model
 	}
 	
 	public function createModel($modelData) {
+		global $application;
 		$id = System_Guid::NewGuid();
-		$auth = Zend_Auth::getInstance();
+		$auth = $application->getModule('Auth');
 		$userHex = $auth->hasIdentity()	?	$auth->getIdentity()->getHex()
 																		:	System_Guid::getEmpty()->getHex();
 		$sql = 'INSERT INTO `Models` (`Id`, `User`, `Data`) VALUES (UNHEX(?), UNHEX(?), ?);';

@@ -13,7 +13,7 @@ class Kansas_Helpers {
 	
 	public static function createHelper($name) {
 		global $application;
-		$helperClass = $application->getHelperLoader()->load($name, false);
+		$helperClass = $application->getLoader('helper')->load($name, false);
 		$helper = $helperClass != false ?	new $helperClass
 																		:	false;
 		if($helper != null) {
