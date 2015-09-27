@@ -2,6 +2,7 @@
 
 class Kansas_Router_Messages
 	extends Kansas_Router_Abstract {
+	use Router_PartialPath;
 
 	public function __construct(array $options) {
 		parent::__construct();
@@ -72,7 +73,9 @@ class Kansas_Router_Messages
   public function assemble($data = [], $reset = false, $encode = false) {
 		$basepath = parent::assemble($data, $reset, $encode);
 		switch($data['action']) {
-    }
-  }
-
+			
+			
+		}
+	}
+	
 }
