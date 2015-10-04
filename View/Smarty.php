@@ -1,6 +1,6 @@
 <?php
 
-require_once 'Smarty/Smarty.php';
+require_once 'Smarty/Smarty.class.php';
 require_once 'Zend/View/Interface.php';
 
 class Kansas_View_Smarty
@@ -110,8 +110,6 @@ class Kansas_View_Smarty
   }
   
   public function render($file) {
-    //$this->getEngine()->assignByRef('this', $this);
-    
     $file = substr($file, strrpos($file, '/'));
     $this->getEngine()->setTemplateDir($this->getScriptPaths());
     return $this->getEngine()->fetch($file, $this->_cacheId);

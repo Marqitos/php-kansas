@@ -965,5 +965,12 @@ class Kansas_Request implements Kansas_Request_Interface {
 		foreach($model as $key => $value)
 			$model[$key] = self::getParam($key, $value);
 	}
+  
+	public function getPartialPath(string $basePath) {
+		$path = trim($this->getUri()->getPath(), '/');
+		if(Kansas_String::startWith($path, $basePath))
+			return trim(substr($path, strlen($basePath)), '/');
+		return false;
+	}    
 
 }

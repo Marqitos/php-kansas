@@ -5,13 +5,10 @@ class Kansas_Controllers_Error
 	
 	public function Index(array $params) {
 		global $application;
-		$error;
-		$code			= $this->getErrorCode($error);
-		$message	= $error instanceof System_Net_WebException ?
-									$error->getMessage():
-									'Error en la aplicación';
-
-		$view = $this->createPage('Error');
+		global $environment;
+		$code	= $this->getParam('code');
+		$view = $this->createView();
+    $view->assign('title', 'Error');
 		$view->setCaching(false);
 		
 		switch($code) {
@@ -26,19 +23,11 @@ class Kansas_Controllers_Error
 		}
 		
 		$view->assign($params);
-		$view->assign('errorCode',	$code);
-		$view->assign('exception',	$error);
 		$view->assign('env', 				$application->getEnvironment());
-		$view->assign('pageTitle',	$message);
-		$view->assign('requestUri', $this->getRequest()->getPathInfo());
+		$view->assign('pageTitle',  $this->getParam('message'));
+		$view->assign('requestUri', $environment->getRequest()->getUriString());
 		
 		return $this->createResult($view, 'page.error.tpl');
 	}
 	
-	protected function getErrorCode(&$error) {
-		$error		= $this->getParam('error');
-		return $error instanceof System_Net_WebException ? $error->getStatus():
-																											 500;
-	}
 }
-	

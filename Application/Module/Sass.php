@@ -3,34 +3,38 @@
 require_once('Phpsass/SassParser.php');
 
 class Kansas_Application_Module_Sass
-	extends Kansas_Application_Module_Abstract {
+  extends Kansas_Application_Module_Abstract {
 		
 	private $_parser;
-	private $_cache = false;
 	private $_router;
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
-		if(isset($options->cache))
-			$this->_cache = $options->cache;
+	public function __construct(array $options) {
 		global $application;
+    parent::__construct($options);
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
+  
+  public function getDefaultOptions() {
+    global $environment;
+    return [
+      'cache' => ($environment->getStatus() == Kansas_Environment::DEVELOPMENT ? FALSE: TRUE)
+    ];
+  }
 	
-	public function appPreInit() { // añadir router
+	public function appPreInit() { // añadir rutas
 		global $application;
-		$application->getRouter()->addRouter($this->getRouter());
-	}
-
-	public function getRouter() {
-		if($this->_router == null)
-			$this->_router = new Kansas_Router_Theme(new Zend_Config(['basePath' => 'theme']));
-		return $this->_router;
+		$config = $application->getConfig();
+		if(isset($config['theme']))
+      $application->setRoute('css', [
+        'controller'  => 'index',
+        'action'      => 'sass',
+        'file'        => 'default.scss'
+      ]);
 	}
 
 	public function getParser() {
 		if($this->_parser == null) {
-			$options = $this->options->toArray();
+			$options = $this->getOptions();
 			
 			if(isset($options['load_paths'])) {
 				if(is_string($options['load_paths']))
@@ -52,8 +56,8 @@ class Kansas_Application_Module_Sass
 	
 	public function toCss($file) {
 		global $application;
-		if($application->hasModule('BackendCache') && $this->_cache) {
-			$cache = $application->getModule('BackendCache')->getCache();
+		if($application->hasModule('BackendCache') && $this->getOptions('cache')) {
+			$cache = $application->getModule('BackendCache');
 			$parser = $this->getParser();
 			$file = SassFile::get_file($file, $parser);
 			$md5 = md5_file($file[0]);
@@ -67,5 +71,9 @@ class Kansas_Application_Module_Sass
 		} else
 			return $this->getParser()->toCss($file);
 	}
-	
+
+  public function getVersion() {
+		global $environment;
+		return $environment->getVersion();
+	}	
 }

@@ -5,11 +5,13 @@ class Kansas_View_Result_String
 		
 	private $_text;
 	
-	public function __construct($text) {
+	public function __construct($text, $mimeType) {
+    parent::__construct($mimeType);
 		$this->_text = $text;
 	}
 	
-	public function getResult() {
+	public function getResult(&$noCache) {
+    $noCache = true;
 		return $this->_text;
 	}
 }

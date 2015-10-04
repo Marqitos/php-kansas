@@ -1,29 +1,34 @@
 <?php
 
 class Kansas_Application_Module_Messages
-	extends Kansas_Application_Module_Abstract {
+	implements Kansas_Application_Module_Interface {
 
 	private $_router;
+  protected $options;  
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
 		global $application;
+    $this->options = array_replace_recursive([
+      'router' => [
+        'basepath' => 'contacto'
+      ]
+    ], $options);
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
 	
 	public function appPreInit() { // añadir router
 		global $application;
-		$application->getRouter()->addRouter($this->getRouter());
+		$application->addRouter($this->getRouter());
 	}
 	
 	public function getRouter() {
 		if($this->_router == null)
-			$this->_router = new Kansas_Router_Messages($this->options->router);
+			$this->_router = new Kansas_Router_Messages($this->options['router']);
 		return $this->_router;
 	}
 	
 	public function getBasePath() {
-		return $this->options->router->basePath;
+		return $this->options['router']['basePath'];
 	}
 
 	public function fillContactForm(Kansas_Request $request, Zend_View_Interface $view, System_Guid $target) {
@@ -34,10 +39,15 @@ class Kansas_Application_Module_Messages
 		$view->assign('action',	'/mensajes/enviar');
 	}
 
-	public function ApiMatch(Kansas_Request $request) {
+	public function ApiMatch() {
 		$apiRouter = new Kansas_Router_API_Messages();
 		$apiRouter->setBasePath("api/messages");
-		return $apiRouter->match($request);
+		return $apiRouter->match();
 	}
+  
+  public function getVersion() {
+    global $environment;
+    return $environment->getVersion();    
+  }
 	
 }

@@ -2,21 +2,22 @@
 
 class Kansas_Router_API
 	extends Kansas_Router_Abstract {
-	use Router_PartialPath;
 
 	private $_routers;
 	
-	public function __construct(Zend_Config $options) {
+	public function __construct(array $options) {
 		parent::__construct($options);
 		$this->_routers = [];
 	}
 	
-	public function match(Kansas_Request $request) {
+	public function match() {
 		global $application;
-		$path = $this->getPartialPath($this, $request);
+    global $environment;
 		$params = false;
-
-  	if($path === false)
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    if(Kansas_String::startWith($path, $this->getBasePath()))
+      $path = substr($path, strlen($this->getBasePath()));
+    else
 			return false;
 			
 		switch($path) {

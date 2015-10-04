@@ -4,8 +4,8 @@ class Kansas_Controllers_Image
 	extends Kansas_Controller_Abstract {
 
 	public function gallery() {
-
-		$auth = Zend_Auth::getInstance();
+		global $application;
+		$auth = $application->getModule('Auth');
 		$view = $this->createView();
 		$gallery = $this->getParam('gallery');
 		$view->setCacheId('galery-' . $gallery->getName());
@@ -38,7 +38,8 @@ class Kansas_Controllers_Image
 
 	public function album() {
 		require_once('Kansas/Core/Collection/Interface.php');
-		$auth = Zend_Auth::getInstance();
+		global $application;
+		$auth = $application->getModule('Auth');
 		$template = $this->getParam('template',	'page.image-album.tpl');
 		$view = $this->createView();
 		$router = $this->getParam('router');
@@ -80,7 +81,8 @@ class Kansas_Controllers_Image
 	}
 	
 	public function image() {
-		$auth = Zend_Auth::getInstance();
+		global $application;
+		$auth = $application->getModule('Auth');
 		$template = $this->getParam('template',	'page.image-image.tpl');
 		$view = $this->createView();
 		$image = $this->getParam('image');
@@ -117,7 +119,8 @@ class Kansas_Controllers_Image
 	}
 
 	public function createImage() {
-		$auth = Zend_Auth::getInstance();
+		global $application;
+		$auth = $application->getModule('Auth');
 		if($auth->hasIdentity()) {
 			global $application;
 			$router 			= $this->getParam('router');
@@ -133,7 +136,6 @@ class Kansas_Controllers_Image
 		} else {
 			
 		}
-		
 		return $result;
 	}
 	

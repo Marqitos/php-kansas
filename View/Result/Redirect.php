@@ -36,16 +36,8 @@ class Kansas_View_Result_Redirect
    * @return void
    */
   public function setGotoUrl($url) {
-        // prevent header injections
-        $url = str_replace(array("\n", "\r"), '', $url);
-
-        // If relative URL, decide if we should prepend base URL
-      /*  if (!preg_match('|^[a-z]+://|', $url)) {
-            $url = $this->_prependBase($url);
-        }*/
-
-        $this->_location = $url;
-    }
+    $this->_location = str_replace(["\n", "\r"], '', $url);
+  }
     
   /* (non-PHPdoc)
    * @see Kansas_View_Result_Interface::executeResult()

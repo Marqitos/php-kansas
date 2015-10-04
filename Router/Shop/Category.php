@@ -5,14 +5,19 @@ class Kansas_Router_Shop_Category
 		
 	private $_categories;
 		
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
+		parent::__construct();
+    $this->setOptions($options);
 	}
 		
-	public function match(Kansas_Request $request) {
-		$path = Kansas_Router_GetPartialPath($this, $request);
-
-		if($path === false)
+	public function match() {
+    global $environment;
+		$params = false;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    
+    if(Kansas_String::startWith($this->getBasePath(), $path))
+      $path = substr($this->getBasePath(), strlen($this->getBasePath()));
+    else
 			return false;
 			
 		switch($path) {

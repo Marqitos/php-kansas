@@ -7,8 +7,10 @@ abstract class Kansas_Router_Basic
 		parent::__construct(new Zend_Config(array()));
 	}
 	
-	public function match(Kansas_Request $request) {
-		$path = Kansas_Router_GetPartialPath($this, $request);
+	public function match() {
+    global $environment;
+		$params = false;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
 		
 		if(($params = $this->getByPartialUrl($path)) !== false)
 			$params['router'] = $this;

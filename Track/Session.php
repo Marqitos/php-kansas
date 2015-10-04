@@ -7,9 +7,10 @@ class Kansas_Track_Session
 	private $_user;
 	
 	public function __construct() {
+		global $application;
 		$this->_device = new Kansas_Track_Device();
 		$this->row['sessionId'] = Zend_Session::getId();
-		$auth = Zend_Auth::getInstance();
+		$auth = $application->getModule('Auth');
 		if($auth->hasIdentity())
 			$this->_user = $auth->getIdentity();
 	}

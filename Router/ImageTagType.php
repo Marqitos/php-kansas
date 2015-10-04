@@ -6,28 +6,29 @@ class Kansas_Router_ImageTagType
 	private $_gallery;
 	
 	protected function getDefaultOptions() {
-		return parent::getDefaultOptions()->merge(new Zend_Config(array(
-			'gallery'		=> array(
+		return array_replace_recursive(parent::getDefaultOptions(), [
+			'gallery'		=> [
 				'template'		=> 'page.image-gallery.tpl',
-				'body_class'	=>	'gallery-empty'),
-			'album'			=> array(
+				'body_class'	=>	'gallery-empty'],
+			'album'			=> [
 				'template'	=> 'page.image-album.tpl',
-				'body_class'	=>	'album-full'),
-			'photo'			=> array(
+				'body_class'	=>	'album-full'],
+			'photo'			=> [
 				'template'	=> 'page.image-image.tpl',
-				'body_class'	=>	'album-full'),
+				'body_class'	=>	'album-full'],
 			'tagType'		=> ''
-			)));
+    ]);
 	}
 
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
+	public function __construct(array $options) {
+		parent::__construct();
+    $this->setOptions();
 	}
 		
 	public function getGallery() {
 		global $application;
 		if($this->_gallery == null)
-			$this->_gallery = $application->getProvider('Image')->getByTagType($this->options->tagType);
+			$this->_gallery = $application->getProvider('Image')->getByTagType($this->options['tagType']);
 		return $this->_gallery;
 	}
 	
@@ -36,7 +37,7 @@ class Kansas_Router_ImageTagType
 	}
 	
 	public function getDefaultParams() {
-		return array_merge(parent::getDefaultParams(), $this->options->gallery->toArray());
+		return array_merge($this->getDefaultParams(), $this->options['gallery']);
 	}
 		
 }

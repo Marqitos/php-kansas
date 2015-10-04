@@ -2,51 +2,58 @@
 
 class Kansas_Router_Account
 	extends Kansas_Router_Abstract {
-	use Router_PartialPath;
 		
-	private $_pages;
-	private $_defaultPage;
-		
-	public function __construct(Zend_Config $options) {
-		parent::__construct($options);
-		$this->_defaultPage = [
-			'controller'	=> 'Account',
-			'action'			=> 'index'
-		];
-		$this->_pages = [
-			'signout' => [
-				'controller'	=> 'Account',
-				'action'			=> 'signOut'],
-			'signin'	=> [
-				'controller'	=> 'Account',
-				'action'			=> 'signIn']
-		];
+	public function __construct(array $options) {
+    parent::__construct();
+    $this->setOptions($options);
 	}
 		
-	public function match(Kansas_Request $request) {
-		$path = $this->getPartialPath($this, $request);
-		if($path === false)
-			return false;
-
-		if($path == '')
-			$params = array_merge($this->getDefaultParams(), $this->_defaultPage);
-		elseif(isset($this->_pages[$path]))
-			$params = array_merge($this->getDefaultParams(), $this->_pages[$path]);
-		else
-			$params = false;
-			
-		if($params)
-			$params['router'] = $this;
-		
+	public function match() {
+    global $environment;
+		$params = false;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    
+		foreach($this->options['path'] as $key => $value) {
+			if($path == ((substr($value, 0, 1) == '/') ? substr($value, 1) : $this->options['basePath'] . '/' . $value) &&
+				isset($this->options['action'][$key])) {
+				$params = array_merge($this->options['params'], $this->options['action'][$key], ['router' => $this]);
+				break;
+			}
+		}
 		return $params;
 	}
 	
-	public function setRoute($page, $params) {
-		if(empty($page))
-			$this->_defaultPage = $params;
-		else
-			$this->_pages[$page] = $params;
+  public function assemble($data = [], $reset = false, $encode = false) {
+		$basePath = parent::assemble($data, $reset, $encode);
+	 	if(isset($data['action']) && isset($this->options['path'][$data['action']])) {
+			$path = (substr($this->options['path'][$data['action']], 0, 1) == '/') ?
+							 $this->options['path'][$data['action']] :
+							 $basePath . '/' . $this->options['path'][$data['action']];
+			 unset($data['action'], $data['basepath']);
+			return $path . '?' . http_build_query($data);
+		}		
+		return false;
 	}
-
-
+	
+	protected function getDefaultOptions() {
+		return [
+			'basePath'	=> 'account',
+			'params'		=> [],
+			'path'		  => [
+				'signout'   => 'signout',
+				'signin'    => 'signin',
+				'account'		=> ''],
+			'action'  => [
+				'account' => [
+					'controller'	=> 'Account',
+					'action'			=> 'index'],
+				'signout' => [
+					'controller'	=> 'Account',
+					'action'			=> 'signOut'],
+				'signin'	=> [
+					'controller'	=> 'Account',
+					'action'			=> 'signIn']
+			]
+		];
+	}	
 }

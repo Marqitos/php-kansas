@@ -9,9 +9,7 @@
 //) COMMENT =  'Autenticación HttpDigest';
 
 class Kansas_Auth_Digest
-	implements Zend_Auth_Adapter_Interface {
-	
-	private $_signIn;
+	implements Kansas_Auth_Adapter_Interface {
 	
 	private $_digest;
 	private $_users;
@@ -21,8 +19,7 @@ class Kansas_Auth_Digest
 	private $_adminUsername;
 	private $_adminA1;
 	
-	public function __construct(Kansas_Db_SignIn $signIn, Kansas_Db_Auth_Digest $digest, Kansas_Db_Users $users, $realm) {
-		$this->_signIn			= $signIn;
+	public function __construct(Kansas_Db_Auth_Digest $digest, Kansas_Db_Users $users, $realm) {
 		$this->_digest			= $digest;
 		$this->_users				= $users;
 		$this->_realm				= $realm;
@@ -39,7 +36,7 @@ class Kansas_Auth_Digest
 		$digest = self::getDigest();
 		// If there was no digest, show login
 		if (!$digest)
-			$result = new Zend_Auth_Result(Zend_Auth_Result::FAILURE, null);
+			$result = Kansas_Auth_Result::Failure(Kansas_Auth_Result::FAILURE);
 		else {
 			$digestParts = self::digestParse($digest);
 			
@@ -48,16 +45,15 @@ class Kansas_Auth_Digest
 			$A1 = $digestParts['username'] == $this->_adminUsername ? $this->_adminA1 :
 																																$this->_digest->getA1($this->_realm, $digestParts['username']); 
 			if(!$A1)
-				$result = new Zend_Auth_Result(Zend_Auth_Result::FAILURE, null);
+				$result = Kansas_Auth_Result::Failure(Kansas_Auth_Result::FAILURE);
 			else {
-				//var_dump($A1, md5("marcosarnoso@msn.com:API:34878854")); exit;
 				
 				$A2 = md5("{$_SERVER['REQUEST_METHOD']}:{$digestParts['uri']}");
 				
 				$validResponse = md5("{$A1}:{$digestParts['nonce']}:{$digestParts['nc']}:{$digestParts['cnonce']}:{$digestParts['qop']}:{$A2}");
 				
 				if ($digestParts['response']!=$validResponse)
-					$result = new Zend_Auth_Result(Zend_Auth_Result::FAILURE_CREDENTIAL_INVALID, null);
+					$result = Kansas_Auth_Result::Failure(Kansas_Auth_Result::FAILURE_CREDENTIAL_INVALID);
 				else {
 					try {
 						$user = $this->_users->getByEmail($digestParts['username']);
@@ -66,12 +62,10 @@ class Kansas_Auth_Digest
 					}
 					if(!isset($user) && $digestParts['username'] == $this->_adminUsername)
 						$user = $this->getAdmin();
-					$result = new Zend_Auth_Result(Zend_Auth_Result::SUCCESS, $user);
+					$result = Kansas_Auth_Result::Success($user);
 				}
 			}
 		}
-		// Log intento de inicio de sesión
-		$this->_signIn->addResult($result);
 		return $result;
 	}
 	
