@@ -1,10 +1,10 @@
 <?php
 
 require_once 'Smarty/Smarty.class.php';
-require_once 'Zend/View/Interface.php';
+require_once 'Kansas/View/Interface.php';
 
 class Kansas_View_Smarty
-  implements Zend_View_Interface {
+  implements Kansas_View_Interface {
 		
   protected $_smarty;
 	private $_config;
@@ -69,11 +69,6 @@ class Kansas_View_Smarty
 		return $this->_scriptPath;
 	}
   
-	public function setBasePath($path, $classPrefix = 'Zend_View') {}
-
-  public function addBasePath($path, $classPrefix = 'Zend_View') {}
-
-
   public function __set($key,$val) {
     $this->getEngine()->assign($key,$val);
   }
@@ -90,10 +85,6 @@ class Kansas_View_Smarty
     $this->getEngine()->clear_assign($key);
   }
   
-  /**
-   * (non-PHPdoc)
-   * @see Zend_View_Abstract::assign()
-   */
   public function assign($spec, $value = null) {
     if($value === null)
       $this->getEngine()->assign($spec);
@@ -101,10 +92,6 @@ class Kansas_View_Smarty
       $this->getEngine()->assign($spec, $value);
   }
   
-  /**
-   * (non-PHPdoc)
-   * @see Zend_View_Abstract::clearVars()
-   */
   public function clearVars() {
     $this->getEngine()->clear_all_assign();
   }

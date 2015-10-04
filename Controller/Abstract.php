@@ -8,7 +8,7 @@ abstract class Kansas_Controller_Abstract
 	protected function createView() {
 		global $view;
 		global $application;
-		if(!$view instanceof Zend_View_Interface)
+		if(!$view instanceof Kansas_View_Interface)
 			$view = $application->createView();
 		$view->assign($this->_params);
 		return $view;

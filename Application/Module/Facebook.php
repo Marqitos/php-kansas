@@ -36,7 +36,7 @@ class Kansas_Application_Module_Facebook
     }
 	}
   
-	public function appCreateView(Zend_View_Interface $view) { // registrar plugins en la vista
+	public function appCreateView(Kansas_View_Interface $view) { // registrar plugins en la vista
 		$engine = $view->getEngine();
     $engine->registerPlugin('function', 'facebooklike', [$this, "viewFacebookLike"]);
 	}	
