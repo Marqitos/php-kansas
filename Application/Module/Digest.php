@@ -5,7 +5,7 @@ class Kansas_Application_Module_Digest
 
 	public function __construct(array $options) {
 		global $application;
-		$usersModule = $application->getModule('Users');
+    $usersModule = $application->getModule('Auth');
 		$usersModule->setAuthService('digest', $this);
 	}
 
