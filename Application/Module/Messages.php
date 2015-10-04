@@ -1,12 +1,12 @@
 <?php
 
 class Kansas_Application_Module_Messages
-	extends Kansas_Application_Module_Abstract {
+	implements Kansas_Application_Module_Interface {
 
 	private $_router;
+  protected $options;  
 
 	public function __construct(array $options) {
-		parent::__construct($options);
 		global $application;
     $this->options = array_replace_recursive([
       'router' => [
@@ -44,5 +44,10 @@ class Kansas_Application_Module_Messages
 		$apiRouter->setBasePath("api/messages");
 		return $apiRouter->match();
 	}
+  
+  public function getVersion() {
+    global $environment;
+    return $environment->getVersion();    
+  }
 	
 }

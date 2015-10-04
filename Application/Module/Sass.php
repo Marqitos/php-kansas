@@ -2,20 +2,24 @@
 
 require_once('Phpsass/SassParser.php');
 
-class Kansas_Application_Module_Sass {
+class Kansas_Application_Module_Sass
+  extends Kansas_Application_Module_Abstract {
 		
 	private $_parser;
-	private $_cache = false;
 	private $_router;
-  protected $options;
 
 	public function __construct(array $options) {
-    $this->options = $options;
-		if(isset($options->cache))
-			$this->_cache = $options->cache;
 		global $application;
+    parent::__construct($options);
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
+  
+  public function getDefaultOptions() {
+    global $environment;
+    return [
+      'cache' => ($environment->getStatus() == Kansas_Environment::DEVELOPMENT ? FALSE: TRUE)
+    ];
+  }
 	
 	public function appPreInit() { // añadir rutas
 		global $application;
@@ -30,7 +34,7 @@ class Kansas_Application_Module_Sass {
 
 	public function getParser() {
 		if($this->_parser == null) {
-			$options = $this->options;
+			$options = $this->getOptions();
 			
 			if(isset($options['load_paths'])) {
 				if(is_string($options['load_paths']))
@@ -52,7 +56,7 @@ class Kansas_Application_Module_Sass {
 	
 	public function toCss($file) {
 		global $application;
-		if($application->hasModule('BackendCache') && $this->_cache) {
+		if($application->hasModule('BackendCache') && $this->getOptions('cache')) {
 			$cache = $application->getModule('BackendCache');
 			$parser = $this->getParser();
 			$file = SassFile::get_file($file, $parser);
@@ -67,5 +71,9 @@ class Kansas_Application_Module_Sass {
 		} else
 			return $this->getParser()->toCss($file);
 	}
-	
+
+  public function getVersion() {
+		global $environment;
+		return $environment->getVersion();
+	}	
 }

@@ -2,7 +2,6 @@
 
 class Kansas_Router_Messages
 	extends Kansas_Router_Abstract {
-	use Router_PartialPath;
 
 	public function __construct(array $options) {
 		parent::__construct();

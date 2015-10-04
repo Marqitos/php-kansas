@@ -1,6 +1,7 @@
 <?php
 
-class Kansas_Application_Module_Auth {
+class Kansas_Application_Module_Auth
+  extends Kansas_Application_Module_Abstract {
 
   protected $options;
 	private $_router;
@@ -10,18 +11,27 @@ class Kansas_Application_Module_Auth {
 	private $_events;
 
 	public function __construct(array $options) {
+    parent::__construct($options);
 		global $application;
-    $this->options = array_replace_recursive([
-      'router' => [
-        'basepath' => 'account'
-      ]
-    ], $options);
 		@session_start();
 		$_events = new Kansas_Auth_Events();
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 		$application->registerRouteCallbacks([$this, "appRoute"]);
     $application->registerRenderCallbacks([$this, "appRender"]);
 	}
+  
+  public function getDefaultOptions() {
+    return [
+      'router' => [
+        'basepath' => 'account'
+      ]
+    ];
+  }
+  
+  public function getVersion() {
+		global $environment;
+		return $environment->getVersion();
+	}	
 	
 	public function appRoute(Kansas_Request $request, $params) { // Añadir datos de usuario
 		return $this->hasIdentity() ? ['identity' => $this->getIdentity()]
@@ -39,7 +49,7 @@ class Kansas_Application_Module_Auth {
   
 	public function getRouter() {
 		if($this->_router == null)
-			$this->_router = new Kansas_Router_Account($this->options['router']);
+			$this->_router = new Kansas_Router_Account($this->getOptions('router'));
 		return $this->_router;
 	}
 	
@@ -73,7 +83,7 @@ class Kansas_Application_Module_Auth {
 	}
 	
 	public function getBasePath() {
-		return $this->options['router']['basePath'];
+		return $this->getOptions(['router', 'basePath']);
 	}
 	
 	// Obtiene los rols del usuario actual, invitado si no esta autenticado
@@ -127,8 +137,4 @@ class Kansas_Application_Module_Auth {
     unset($_SESSION['auth']);
   }
     
-  public function getVersion() {
-		global $environment;
-		return $environment->getVersion();
-	}
 }
