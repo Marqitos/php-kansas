@@ -3,8 +3,8 @@
 class Kansas_Controllers_API
 	extends Kansas_Controller_Abstract {
 	
-	public function init(Kansas_Request $request) {
-		parent::init($request);
+	public function init(array $params) {
+		parent::init($params);
 		// Cargar autenticación
 		global $application;
 		$application->setModule('Digest', []);

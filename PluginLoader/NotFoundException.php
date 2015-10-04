@@ -12,7 +12,7 @@ class Kansas_PluginLoader_NotFoundException
 	public function __construct($name, array $registry) {
 		$message = "El Plugin de nombre '$name' no se encuentra en el registro; usando las rutas:";
 		foreach ($registry as $prefix => $paths)
-			$message .= "\n$prefijo: " . implode(PATH_SEPARATOR, $paths);
+			$message .= "\n$prefix: " . implode(PATH_SEPARATOR, $paths);
 			
 		parent::__construct($message);
 	}
