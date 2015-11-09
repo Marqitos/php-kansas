@@ -21,13 +21,11 @@ class Kansas_Application
 	private $_pages	= [];  
 	
 	private $_viewClass = 'Kansas_View_Smarty';
-	private $_viewOptions;
+	private $_viewOptions = [];
 	
 	private $_titleClass = 'Kansas_TitleBuilder_Default';
 	private $_titleOptions;
   
-  private $_theme;
-	
   private $_logCallback = ['Kansas_Environment', 'log'];
   private $_errorCallback;
   
@@ -65,7 +63,6 @@ class Kansas_Application
 		$this->_modulesLoaded = true;
 	}
 	public function getModule($moduleName) { // Obtiene el modulo seleccionado, lo carga si es necesario
-		global $environment;
 		if(!is_string($moduleName))
 			throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
 		$moduleName = ucfirst($moduleName);
@@ -77,7 +74,7 @@ class Kansas_Application
 					[];
 				$module = new $moduleClass($options);
 			} catch(Exception $e) {
-				$environment->log(E_USER_NOTICE, $e);
+        call_user_func($this->_logCallback, E_USER_NOTICE, $e);        
 				$module = false;
 			}
 			$this->_modules[$moduleName] = $module;
@@ -96,7 +93,9 @@ class Kansas_Application
 			$this->getModule($moduleName);
 	}
 	public function hasModule($moduleName) { // Obtiene el modulo seleccionado si está cargado o false en caso contrario
-		$moduleName = ucfirst($moduleName);
+		if(!is_string($moduleName))
+			throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
+    $moduleName = ucfirst($moduleName);
 		return isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof Kansas_Application_Module_Interface) ?
       $this->_modules[$moduleName]:
       false;
@@ -115,7 +114,7 @@ class Kansas_Application
 		if(!is_string($providerName))
 			throw new System_ArgumentOutOfRangeException('providerName', $providerName, 'Se esperaba una cadena');
 		$providerName = ucfirst($providerName);
-		if(!array_key_exists($providerName, $this->_providers)) {
+		if(!isset($this->_providers[$providerName])) {
 			$providerClass = $this->getLoader('provider')->load($providerName);
 			$provider = new $providerClass($this->getDb());
 			$this->_providers[$providerName] = $provider;
@@ -256,7 +255,7 @@ class Kansas_Application
 
 	public function getDb() {
 		if(is_array($this->_db))
-			$this->_db = Zend_Db::factory($this->_db);
+			$this->_db = Zend_Db::factory($this->_db['adapter'], $this->_db['params']);
 		return $this->_db;
 	}
 	public function setDb($value) {
@@ -275,7 +274,8 @@ class Kansas_Application
 	}
 	
   public function loadIni($filename, array $options = []) {
-    $this->set(Kansas_Config::ParseIni($filename, $options, Kansas_Environment::getInstance()->getStatus()));
+    global $environment;
+    $this->set(Kansas_Config::ParseIni($filename, $options, $environment->getStatus()));
   }
 	public function set($key, $value = null) {
 		if(is_array($key)) {
@@ -326,18 +326,18 @@ class Kansas_Application
           if(is_callable($value))
             $this->_errorCallback = $value;
           break;
+        case 'theme':
+          global $environment;
+          $environment->setTheme($value);
+          break;
 			}
 			
 		}
 	}
 	
 	public function createView() {
-		if($this->_viewOptions == null)
-			$this->_viewOptions = [];
-    $defaultScriptPaths = [];
-    if(isset($this->_config['theme']) && file_exists(BASE_PATH . './layout/' . $this->_config['theme'] . '/') && is_dir(BASE_PATH . './layout/' . $this->_config['theme'] . '/'))
-      $defaultScriptPaths[] = realpath(BASE_PATH . './layout/' . $this->_config['theme'] . '/');
-    $defaultScriptPaths[] = realpath(BASE_PATH . './layout/shared/');
+    global $environment;
+    $defaultScriptPaths = $environment->getViewPaths();
 		$view = new $this->_viewClass(array_replace_recursive(['scriptPath' => $defaultScriptPaths], $this->_viewOptions));
 		if($view->getCaching())
 			$view->setCacheId($this->getRequest()->getRequestUri());
@@ -391,7 +391,7 @@ class Kansas_Application
 		$result = $this->dispatch(array_merge($params, [
 			'controller'	=> 'Error',
 			'action'			=> 'Index'
-    ]));
+    ], $this->getDefaultParams()));
 		$result->executeResult();
   }
   

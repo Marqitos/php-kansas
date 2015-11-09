@@ -2,7 +2,6 @@
 
 function smarty_function_signin($params, $template) {
   global $application, $environment;
-  $request = $environment->getRequest();
-  @$ru = $params['ru'] ?: $request->getUriString();
+  @$ru = $params['ru'] ?: $environment->getRequest()->getUriString();
   return $application->getModule('Auth')->getRouter()->assemble(['action' => 'signin', 'ru' => $ru]);
 }

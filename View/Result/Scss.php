@@ -13,7 +13,7 @@ class Kansas_View_Result_Scss
 	public function getResult(&$noCache) {
 		global $application;
     $noCache = true;
-		return $application->getModule('Scss')->toCss($this->_file);
+		return $application->getModule('Scss')->toCss($this->_file, $noCache);
 	}  
 
 }

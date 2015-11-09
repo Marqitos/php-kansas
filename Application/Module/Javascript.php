@@ -1,42 +1,48 @@
 <?php
       
 class Kansas_Application_Module_Javascript
-  implements Kansas_Application_Module_Interface {
+  extends Kansas_Application_Module_Abstract {
   
-  protected $options;
   private $_packager;
   
   public function __construct(array $options) {
-    global $environment;
-    $this->options = array_replace_recursive([
-      'cache'     => ($environment->getStatus() == Kansas_Environment::PRODUCTION),
-      'packages'   => [],
-      'minifier'  => ($environment->getStatus() == Kansas_Environment::PRODUCTION ? ['flaggedComments' => false] : false) 
-    ], $options);
+    parent::__construct($options);
   }
+
+  public function getDefaultOptions() {
+    global $environment;
+    return [
+      'cache'     => true,
+      'packages'  => [],
+      'minifier'  => ($environment->getStatus() == Kansas_Environment::PRODUCTION ? ['flaggedComments' => false] : false) 
+    ];
+  }  
   
   public function getPackager() {
     require_once 'packager/packager.php';
     if($this->_packager == null)
-      $this->_packager = new Packager($this->options['packages']);
+      $this->_packager = new Packager($this->getOptions('packages'));
     return $this->_packager;
   }
   
-  public function build($components) {
+  public function build($components, &$md5 = false) {
     global $application;
-		$md5 = md5(serialize($components));
-    if($this->options['cache'] && $application->hasModule('BackendCache')) {
-			$cache = $application->getModule('BackendCache');
-			if($cache->test('js-' . $md5))
-				return $cache->load('js-' . $md5);
+    $cache = false;
+    //var_dump($cache = $application->hasModule('BackendCache'), $cache->test('js-' . $md5));
+		$md5 = md5(serialize($components));    
+    if($this->getOptions('cache') &&
+       $cache = $application->hasModule('BackendCache')) {
+      // TODO: Comprobar crc de todos archivos que componen el resultado
+      if($cache->test('js-' . $md5))
+  			return $cache->load('js-' . $md5);
     }
     $jsCode = $this->getPackager()->build_from_components($components);
-    if($this->options['minifier']) {
+    if($this->getOptions('minifier')) {
       require_once 'JShrink/Minifier.php';
-      $jsCode = \JShrink\Minifier::minify($jsCode, $this->options['minifier']); 
+      $jsCode = \JShrink\Minifier::minify($jsCode, $this->getOptions('minifier')); 
     }
-    if($this->options['cache'] && $application->hasModule('BackendCache'))
-			$application->getModule('BackendCache')->save($jsCode, 'js-' . $md5);
+    if($this->getOptions('cache') && $cache)
+			$cache->save($jsCode, 'js-' . $md5);
     return $jsCode;
   }
   

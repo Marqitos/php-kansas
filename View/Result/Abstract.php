@@ -17,12 +17,22 @@ abstract class Kansas_View_Result_Abstract
 		$this->_mimeType = $value;
 	}
   
-	protected function sendHeaders($noCache = false) {
+	protected function sendHeaders($cache = false) {
  		header('Content-Type: ' . $this->getMimeType());
-    if($noCache) {
+    if($cache) {
       header ("cache-control: must-revalidate");
-      header ("expires: " . gmdate ("D, d M Y H:i:s", time() + 60 * 60) . " GMT");
-    }
+      if(is_int($cache))
+        header ("expires: " . gmdate ("D, d M Y H:i:s", time() + $cache) . " GMT");        
+      if(is_string($cache)) {
+        if(isset($_SERVER['HTTP_IF_NONE_MATCH']) && trim($_SERVER['HTTP_IF_NONE_MATCH']) == $cache) {
+          header("HTTP/1.1 304 Not Modified");
+          return false;
+        } else
+          header('Etag: ' . $cache);
+      }
+    } else
+      header ("cache-control: no-store");
+    return true;
 	}
 
 }
