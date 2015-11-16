@@ -23,13 +23,11 @@ class Kansas_Application_Module_Sass
 	
 	public function appPreInit() { // añadir rutas
 		global $application;
-		$config = $application->getConfig();
-		if(isset($config['theme']))
-      $application->setRoute('css', [
-        'controller'  => 'index',
-        'action'      => 'sass',
-        'file'        => 'default.scss'
-      ]);
+    $application->setRoute('css', [
+      'controller'  => 'index',
+      'action'      => 'sass',
+      'file'        => 'default.scss'
+    ]);
 	}
 
 	public function getParser() {
@@ -43,10 +41,8 @@ class Kansas_Application_Module_Sass
 					foreach($options['load_paths'] as $key => $path)
 						$options['load_paths'][$key] = realpath($path);
 			} else {
-				$options['load_paths'] = [];
-				if($themePath = Kansas_Router_Theme::getThemePath())
-					$options['load_paths'][] = $themePath;
-				$options['load_paths'][] = realpath(BASE_PATH . './themes/shared/');
+        global $environment;
+				$options['load_paths'] = $environment->getThemePaths();
 			}
 
 			$this->_parser = new SassParser($options); 

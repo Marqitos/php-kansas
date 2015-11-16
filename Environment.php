@@ -5,7 +5,8 @@ class Kansas_Environment {
 	private $_status;
 	private $_request;
 	private $t_inicio;
-	private $_version;	
+	private $_version;
+  private $_theme = ['shared'];
 	protected static $instance;
 	
 	const CONSTRUCTION	= 'construction';
@@ -55,7 +56,33 @@ class Kansas_Environment {
 			$this->_request = new Kansas_Request();
 		return $this->_request;
 	}
-	
+  
+  public function setTheme($theme) {
+    if(is_string($theme))
+      $theme = explode(':', $theme);
+    if(!is_array($theme))
+      throw new System_ArgumentOutOfRange();
+    if($theme[0] == '') {
+      unset($theme[0]);
+      $this->_theme = array_merge($this->_theme, $theme);        
+    } else
+      $this->_theme = $theme;
+  }
+  
+  public function getViewPaths() {
+    $func = function($theme) {
+      return realpath(BASE_PATH . './layout/' . $theme . '/');
+    };
+    return array_reverse(array_map($func, $this->_theme));
+  }
+  
+  public function getThemePaths() {
+    $func = function($theme) {
+      return realpath(BASE_PATH . './themes/' . $theme . '/');
+    };
+    return array_reverse(array_map($func, $this->_theme));
+  }
+  
 	public static function log($level, $message) {
 		$time = self::$instance->getExecutionTime();
 		
