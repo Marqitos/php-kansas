@@ -10,10 +10,9 @@ class Kansas_View_Result_Javascript
 		$this->_components	= $components;
 	}
 	
-	public function getResult(&$noCache) {
+	public function getResult(&$cache) {
 		global $application;
-    $noCache = true;
-		return $application->getModule('Javascript')->build($this->_components);
+		return $application->getModule('Javascript')->build($this->_components, $cache);
 	}
 
 }

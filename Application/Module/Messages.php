@@ -31,7 +31,7 @@ class Kansas_Application_Module_Messages
 		return $this->options['router']['basePath'];
 	}
 
-	public function fillContactForm(Kansas_Request $request, Zend_View_Interface $view, System_Guid $target) {
+	public function fillContactForm(Kansas_Request $request, Kansas_View_Interface $view, System_Guid $target) {
 		$error = isset($_REQUEST['err']) ? (int)$_REQUEST['err'] : null;
 		$view->assign('msg',		Bioter_Model_Message::getModel($mId));
 		$view->assign('error',	$error);

@@ -46,6 +46,13 @@ class Kansas_View_Result_Redirect
 		Kansas_Response::redirect($this->_location);
 		return true;
   }
+  
+  public static function gotoUrl($url, $code = self::MOVED_TEMPORARILY) {
+    $result = new self();
+    $result->setCode($code);
+    $result->setGotoUrl($url);
+    return $result;    
+  }
 
     
 }

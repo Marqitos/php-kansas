@@ -8,16 +8,16 @@ abstract class Kansas_View_Result_String_Abstract
    * @see Kansas_View_Result_Interface::executeResult()
 	 */
 	public function executeResult() {
-    $noCache = false;
-    $result = $this->getResult($noCache);
-    parent::sendHeaders($noCache);
-    echo $result;
+    $cache = false;
+    $result = $this->getResult($cache);
+    if(parent::sendHeaders($cache))
+      echo $result;
 		return true;
 	}
 	
 	/* (non-PHPdoc)
    * @see Kansas_View_Result_String_Interface::getResult()
 	 */
-	public abstract function getResult(&$noCache);
+	public abstract function getResult(&$cache);
 		
 }

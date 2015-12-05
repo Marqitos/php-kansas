@@ -11,21 +11,22 @@ class Kansas_Controllers_Error
     $view->assign('title', 'Error');
 		$view->setCaching(false);
 		
-		switch($code) {
+    switch($code) {
 			case 403:
-				header('HTTP/1.0 403 Forbidden');
+				header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden', true, 403);
 				break;
 			case 404:
-				header("HTTP/1.0 404 Not Found");
+				header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found', true, 404);
 				break;
 			default:
-			
+        header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error', true, 500);
 		}
 		
 		$view->assign($params);
 		$view->assign('env', 				$application->getEnvironment());
 		$view->assign('pageTitle',  $this->getParam('message'));
 		$view->assign('requestUri', $environment->getRequest()->getUriString());
+    $view->assign('sugestions', []);
 		
 		return $this->createResult($view, 'page.error.tpl');
 	}

@@ -8,7 +8,7 @@ class Kansas_View_Result_Template
 	private $_template;
 	private $_view;
 	
-	public function __construct(Zend_View_Interface $view, $template, $mimeType) {
+	public function __construct(Kansas_View_Interface $view, $template, $mimeType) {
     parent::__construct($mimeType);
 		$this->_view			= $view;
 		$this->_template	= $template;

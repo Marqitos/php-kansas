@@ -15,15 +15,15 @@ class Kansas_Controllers_Facebook
 		try {
 			$fbSession = Kansas_Auth_Facebook::getSessionFromRedirect($ru);
 			if($fbSession == null)
-				return (new Kansas_View_Result_Redirect())->setGotoUrl(
+				return Kansas_View_Result_Redirect::gotoUrl('/' .
 					$router->assemble(['action' => 'signin']) . http_build_query([
 						'fb-error' => $this->getParam('error'),
 						'ru' => $ru]));
-			$module = $application->getModule('Auth');
-			$authAdapter	= $module->createAuthMembership('facebook', [$fbSession]);
-			$result = $module->authenticate($authAdapter);
+			$auth = $application->getModule('Auth');
+			$authAdapter	= $auth->createAuthMembership('facebook', [$fbSession]);
+			$result = $auth->authenticate($authAdapter);
 			if($result->isValid())
-				return (new Kansas_View_Result_Redirect())->setGotoUrl($ru);
+				return Kansas_View_Result_Redirect::gotoUrl($ru);
 			else {
 				var_dump($result);
 				

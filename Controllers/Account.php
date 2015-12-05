@@ -4,8 +4,8 @@ class Kansas_Controllers_Account
 	extends Kansas_Controller_Abstract {
 		
 	
-	public function init(Kansas_Request $request, array $params) {
-		parent::init($request, $params);
+	public function init(array $params) {
+		parent::init($params);
 	}
 	
 	
