@@ -15,7 +15,7 @@ class Kansas_Router_Cache
 		$cacheId = $this->_cache->getCacheId($environment->getRequest());
         
 		if($this->_cache->test($cacheId)) {
-			$params = unserialize($this->load($cacheId));
+			$params = unserialize($this->_cache->load($cacheId));
 			$params['cache'] = urldecode($cacheId);
 		}
 		return $params;
