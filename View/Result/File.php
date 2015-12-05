@@ -6,15 +6,23 @@ class Kansas_View_Result_File
 	private $_filename;
 	private $_chunksize; // how many bytes per chunk 
 	private $_retbytes;
-	private $_mimeType;
 		
-	public function __construct($filename, $retbytes=true) {
-    parent::__construct(null, $filename);
-		$this->_filename	= $filename;
-		$this->_retbytes	= $retbytes;
+	public function __construct($filename, array $options = []) {
+		$this->_filename	= realpath($filename);
+		$this->_retbytes	= isset($options['retbytes']) ? $options['retbytes'] : true;
+    $this->download   = isset($options['download']) ? $options['download'] : false;
 		$this->_chunksize	= 1*(1024*1024);
-    
 	}
+  
+  // Obtiene o establece el tipo de contenido de archivo	
+	public function getMimeType() {
+    if(empty($this->_mimeType)) {
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			return finfo_file($finfo, $this->_filename);
+			finfo_close($finfo);
+    }
+		return $this->_mimeType;
+	}  
 	
   /* (non-PHPdoc)
    * @see Kansas_View_Result_Interface::executeResult()
@@ -49,8 +57,8 @@ class Kansas_View_Result_File
 		}
 	}
  
-	public function getUseXSendFile() {
-		return array_search('mod_xsendfile', apache_get_modules());
+	public function getUseXSendFile() { // Por defecto devuelve true
+		return !function_exists('apache_get_modules') || in_array('mod_xsendfile', apache_get_modules());
 	}
 
 }

@@ -48,9 +48,9 @@ class Kansas_Controllers_Index
 		return new Kansas_View_Result_Scss($file);
 	}
 	
-	public function File() {
+	public function File($params) {
 		$file				= $this->getParam('file');
-		return new Kansas_View_Result_File($file);
+		return new Kansas_View_Result_File($file, $params);
 	}
   
   public function Javascript() {
