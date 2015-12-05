@@ -9,15 +9,16 @@ class Kansas_Application_Module_BackendCache
   private $_config;
 
   public function __construct(array $options) {
+    global $application;
     $this->_config = $options;
     parent::__construct($this->getOptions());
     
     if($this->getOptions('cacheRouting')) {
-      global $application;
   		$application->registerPreInitCallbacks([$this, "appPreInit"]);
   		$application->registerRouteCallbacks([$this, "appRoute"]);
     }
-     
+    if($this->getOptions('log'))
+      $application->set('log', [$this, 'log']);
   }
 
   public function getOptions($key = NULL){
@@ -48,7 +49,8 @@ class Kansas_Application_Module_BackendCache
   public function getDefaultOptions() {
     global $environment;
     return [
-      'cacheRouting' => ($environment->getStatus() == Kansas_Environment::PRODUCTION)
+      'cacheRouting' => ($environment->getStatus() == Kansas_Environment::PRODUCTION),
+      'log'          => false
     ];
   }
 
@@ -86,6 +88,16 @@ class Kansas_Application_Module_BackendCache
 		global $environment;
 		return $environment->getVersion();
 	}	
+  
+  public function log($level, $message) {
+    global $environment;
+		$time = $environment->getExecutionTime();
+    $this->save(serialize([
+      'time' => $time,
+      'level' => $level,
+      'message' => $message
+    ]), 'error-' . System_Guid::newGuid()->__toString());
+	}
 }
 		
 	
