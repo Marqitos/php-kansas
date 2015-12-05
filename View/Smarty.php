@@ -18,9 +18,15 @@ class Kansas_View_Smarty
 			$config['compileDir'] = realpath($config['compileDir']);
 			
 		foreach(['configDir', 'pluginDir', 'cacheDir'] as $config_dir) {
-			if(isset($config[$config_dir]))
+			if(isset($config[$config_dir]) && is_string($config[$config_dir]))
 				$config[$config_dir] = realpath($config[$config_dir]);
 		}
+    if(isset($config['pluginDir']) && is_array($config['pluginDir'])) {
+      $pluginDir = [];
+      foreach($config['pluginDir'] as $dir)
+				$pluginDir[] = realpath($dir);
+      $config['pluginDir'] = $pluginDir;
+    }
 			
 		if(isset($config['scriptPath']))
 			$this->setScriptPath($config['scriptPath']);
@@ -38,8 +44,9 @@ class Kansas_View_Smarty
 				$this->_smarty->config_dir = $this->_config['configDir'];
 	
 			if(isset($this->_config['pluginDir']))
-				$this->_smarty->plugins_dir[] = $this->_config['pluginDir'];
-				
+        foreach((array)$this->_config['pluginDir'] as $dir)
+          $this->_smarty->addPluginsDir($dir);
+        
 			if(isset($this->_config['cacheDir']))
 				$this->_smarty->cache_dir = $this->_config['cacheDir'];
 	

@@ -1,10 +1,10 @@
 <?php
 
-function smarty_function_title($params, $template) {
+function smarty_function_title(array $params, Smarty_Internal_Template $template) {
   global $application;
-  @$title = $params['title'] ?: ($template->getVariable('title')? $template->getVariable('title')->value: false);
+  $title = $params['title'] ?: ($template->getTemplateVars('title')? $template->getTemplateVars('title')->value: false);
   if(!$title) {
-    @$page = $params['page'] ?: ($template->getVariable('page')? $template->getVariable('title')->value: false);
+    @$page = $params['page'] ?: ($template->getTemplateVars('page')? $template->getTemplateVars('title')->value: false);
     if($page)
       $title = $page->getTitle();
   }
