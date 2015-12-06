@@ -71,14 +71,14 @@ class Kansas_Environment {
   
   public function getViewPaths() {
     $func = function($theme) {
-      return realpath(BASE_PATH . './layout/' . $theme . '/');
+      return realpath(LAYOUTS_PATH . $theme . '/');
     };
     return array_reverse(array_map($func, $this->_theme));
   }
   
   public function getThemePaths() {
     $func = function($theme) {
-      return realpath(BASE_PATH . './themes/' . $theme . '/');
+      return realpath(THEMES_PATH . $theme . '/');
     };
     return array_reverse(array_map($func, $this->_theme));
   }
