@@ -61,12 +61,10 @@ abstract class Kansas_Cache {
     public static function factory($backend, $backendOptions = array(), $customBackendNaming = false, $autoload = false) {
         if (is_string($backend))
           return self::_makeBackend($backend, $backendOptions, $customBackendNaming, $autoload);
-        else {
-          if ($backend instanceof Kansas_Cache_Interface)
-            return $backend;
-          else
-            self::throwException('backend must be a backend name (string) or an object which implements Zend_Cache_Backend_Interface');
-        }
+        elseif ($backend instanceof Kansas_Cache_Interface)
+          return $backend;
+        else
+          self::throwException('backend must be a backend name (string) or an object which implements Zend_Cache_Backend_Interface');
     }
 
     /**

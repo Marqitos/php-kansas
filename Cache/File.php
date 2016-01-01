@@ -10,8 +10,8 @@
  */
 
 class Kansas_Cache_File
-  extends Zend_Cache
-  implements Zend_Cache_ExtendedInterface {
+  extends Kansas_Cache
+  implements Kansas_Cache_ExtendedInterface {
     /**
      * Available options
      *
