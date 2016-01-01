@@ -5,7 +5,6 @@ interface Kansas_Router_Interface {
   public function assemble($data = array(), $reset = false, $encode = false);
 
 	public function getBasePath();
-	public function setBasePath($basePath);
 	public function setOptions(array $options);	
 }
 
