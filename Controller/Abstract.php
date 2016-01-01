@@ -5,15 +5,6 @@ abstract class Kansas_Controller_Abstract
 		
 	private $_params;
 		
-	protected function createView() {
-		global $view;
-		global $application;
-		if(!$view instanceof Kansas_View_Interface)
-			$view = $application->createView();
-		$view->assign($this->_params);
-		return $view;
-	}
-	
 	public function init(array $params) {
 		$this->_params 	= $params;
 	}
@@ -24,12 +15,14 @@ abstract class Kansas_Controller_Abstract
 																				: $default);
 	}
 	
-	protected function createResult($view, $defaultTemplate, $mimeType = 'text/html') {
-		global $application;
-		$template = $this->getParam('template', $defaultTemplate);
-		return new Kansas_View_Result_Template($view, $template, $mimeType);
+	protected function createViewResult($defaultTemplate, array $data = [], $mimeType = 'text/html') {
+    global $application;
+    $view = $application->getView();
+		$template = $view->createTemplate($this->getParam('template', $defaultTemplate), array_merge($this->_params, $data));
+		return new Kansas_View_Result_Template($template, $mimeType);
 	}
-	protected function isCached($view, $defaultTemplate) {
+	protected function isCached($defaultTemplate) {
+    global $view;
 		$template = $this->getParam('template', $defaultTemplate);
 		return $view->isCached($template);
 	}

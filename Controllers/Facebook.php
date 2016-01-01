@@ -31,24 +31,21 @@ class Kansas_Controllers_Facebook
 				$cancel = $router->assemble(['action' => 'signin']) . http_build_query(['ru' => $ru]);
 				$request = new FacebookRequest($fbSession, 'GET', '/me');
 			  $user = $request->execute()->getGraphObject()->cast('Facebook\GraphUser');
-				$view = $this->createView();
-        $view->assign('title', 'Conectar con facebook');
-				$view->setCaching(false);
-			
-				$view->assign('ru', 			$ru);
-				$view->assign('register',	$register);			
-				$view->assign('cancel',	$cancel);
-				$view->assign('email',	$user->getEmail());
-				$view->assign('name',	$user->getName());
-				return $this->createResult($view, 'page.fb-register.tpl');		
+        $application->getView()->setCaching(false);
+        
+				return $this->createViewResult('page.fb-register.tpl', [
+          'title'     => 'Conectar con facebook',
+          'ru'        => $ru,
+          'register'  => $register,
+          'cancel'    => $cancel,
+          'email'     => $user->getEmail(),
+          'name'      => $user->getName()
+        ]);		
 			}
 			
 		} catch(FacebookRequestException $ex) { 		  // When Facebook returns an error
-			$result = new Kansas_View_Result_Redirect();
-			$result->setGotoUrl('/' . $router->assemble(['action' => 'signin']) . http_build_query(['fb-error' => $ex->getCode(), 'ru' => $ru]));
-			return $result;
+      return Kansas_View_Result_Redirect::gotoUrl('/' . $router->assemble(['action' => 'signin']) . http_build_query(['fb-error' => $ex->getCode(), 'ru' => $ru]));
 		}
-
 		
 		if ($fbSession) {
 

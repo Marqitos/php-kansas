@@ -81,7 +81,7 @@ class Kansas_Application
 		}
 		return $this->_modules[$moduleName];
 	}
-	public function setModule($moduleName, $options = []) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
+	public function setModule($moduleName, array $options = []) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
 		if(!is_string($moduleName))
 			throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
 		$moduleName = ucfirst($moduleName);
@@ -138,6 +138,8 @@ class Kansas_Application
 			'Index';
 		$controllerClass = $this->getLoader('controller')->load($controller);
 		$class = new $controllerClass();
+    unset($params['controller']);
+    unset($params['action']);
 		$class->init($params);
 		if(!is_callable([$class, $action]))
 			throw new System_NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($class));
@@ -162,7 +164,10 @@ class Kansas_Application
   			$params = $this->_pages[$path];
   		else	
   			foreach($this->_routers as $router)
-  				if($params = $router->match()) break;
+  				if($params = $router->match()) {
+            $params['router'] = $router;
+            break;
+          }
     }
 		if($params) {
 			// Route event
@@ -182,7 +187,6 @@ class Kansas_Application
     global $environment;
 		$request = $environment->getRequest();
 		return [
-			'application'	=> $application,
 			'url'					=> trim($request->getUri()->getPath(), '/'),
 			'uri'					=> $request->getUriString(),
 			'requestType' => $request->isXmlHttpRequest() ? 'XMLHttpRequest' : 
@@ -335,14 +339,16 @@ class Kansas_Application
 		}
 	}
 	
-	public function createView() {
+	public function getView() {
     global $environment;
-    $defaultScriptPaths = $environment->getViewPaths();
-		$view = new $this->_viewClass(array_replace_recursive(['scriptPath' => $defaultScriptPaths], $this->_viewOptions));
-		if($view->getCaching())
-			$view->setCacheId($this->getRequest()->getRequestUri());
-    $this->fireCreateView($view);
-		return $view;
+    if(!$this->_viewClass instanceof Kansas_View_Interface) {
+      $defaultScriptPaths = $environment->getViewPaths();
+      $this->_viewClass = new $this->_viewClass(array_replace_recursive(['scriptPath' => $defaultScriptPaths], $this->_viewOptions));
+      if($this->_viewClass->getCaching())
+        $this->_viewClass->setCacheId($this->getRequest()->getRequestUri());
+      $this->fireCreateView($this->_viewClass);
+    }
+		return $this->_viewClass;
 	}
 	
 	public function createTitle() {
@@ -357,19 +363,20 @@ class Kansas_Application
 	public function error_handler($errno, $errstr, $errfile, $errline, $errcontext) {
 		if (!(error_reporting() & $errno))
 				return false; // Este código de error no está incluido en error_reporting
-
-    call_user_func($this->_logCallback, E_USER_ERROR, $errstr);
-		if($errno == E_USER_ERROR)
-      call_user_func($this->_errorCallback, [
-				'exception'   => null,
-				'errorLevel'	=> $errno,
-				'code'				=> 500,
-				'message'			=> $errstr,
-				'trace'				=> debug_backtrace(),
-				'line'				=> $errline,
-				'file'				=> $errfile,
-				'context'			=> $errcontext
-			]);
+    
+    $errData = [
+      'exception'   => null,
+      'errorLevel'	=> $errno,
+      'code'				=> 500,
+      'message'			=> $errstr,
+      'trace'				=> Kansas_Environment::debug_string_backtrace(),
+      'line'				=> $errline,
+      'file'				=> $errfile,
+      'context'			=> $errcontext
+    ];
+    call_user_func($this->_logCallback, $errno, $errData);
+		if($errno == E_USER_ERROR) 
+      call_user_func($this->_errorCallback, $errData);
     return true; // No ejecutar el gestor de errores interno de PHP
 	}
 	

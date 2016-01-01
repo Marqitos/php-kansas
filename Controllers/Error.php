@@ -7,8 +7,7 @@ class Kansas_Controllers_Error
 		global $application;
 		global $environment;
 		$code	= $this->getParam('code');
-		$view = $this->createView();
-    $view->assign('title', 'Error');
+		$view = $application->getView();
 		$view->setCaching(false);
 		
     switch($code) {
@@ -22,13 +21,13 @@ class Kansas_Controllers_Error
         header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error', true, 500);
 		}
 		
-		$view->assign($params);
-		$view->assign('env', 				$application->getEnvironment());
-		$view->assign('pageTitle',  $this->getParam('message'));
-		$view->assign('requestUri', $environment->getRequest()->getUriString());
-    $view->assign('sugestions', []);
-		
-		return $this->createResult($view, 'page.error.tpl');
+		return $this->createViewResult('page.error.tpl', [
+      'title'       => 'Error',
+      'env'         => $application->getEnvironment(),
+      'pageTitle'   => $this->getParam('message'),
+      'requestUri'  => $environment->getRequest()->getUriString(),
+      'sugestions'  => []
+    ]);
 	}
 	
 }

@@ -8,25 +8,21 @@ class Kansas_Controllers_Account
 		parent::init($params);
 	}
 	
-	
 	static function getSignInRedirection($ru = '/') {
-		$result = new Kansas_View_Result_Redirect();
-		$result->setGotoUrl(self::getRouter()->assemble([
+		return Kansas_View_Result_Redirect::gotoUrl(self::getRouter()->assemble([
 			'action' => 'signin',
 			'ru'     => $ru
 		]));
-		return $result;
 	}
 	
 	public function index() {
 		global $application;
 		if(!$application->getModule('Auth')->hasIdentity())
 			return self::getSignInRedirection('/' . trim($this->getRequest()->getUri()->getPath(), '/'));
-		else {
-			$view = $this->createView();
-      $view->assign('title', 'Perfil de usuario');
-			return $this->createResult($view, 'page.account.tpl');
-		}
+		else
+			return $this->createViewResult('page.account.tpl', [
+        'title' => 'Perfil de usuario'
+      ]);
 	}
 	
 	protected static function getExternalSignIn($params) {
@@ -51,22 +47,23 @@ class Kansas_Controllers_Account
 		global $application;
 		$facebook = $this->getModule()->getAuthService('facebook')->getCore();
 		$ru				= $this->getParam('ru', '/');
-		if(intval($facebook->getClass()->getUser()) == 0) {
-			$result = new Kansas_View_Result_Redirect();
-			$result->setGotoUrl('/account/signin' . Kansas_Response::buildQueryString(array('ru'	=> $ru)));
-		} elseif($facebook->isRegistered()) {
-			$result = new Kansas_View_Result_Redirect();
+		if(intval($facebook->getClass()->getUser()) == 0)
+      return Kansas_View_Result_Redirect::gotoUrl('/account/signin' . http_build_query([
+        'ru'  => $ru
+      ]));
+		elseif($facebook->isRegistered()) {
 			$authResult				= $application->getModule('Auth')->authenticate($facebook);
 			if($authResult->isValid())
-				$result->setGotoUrl($ru);
+				return Kansas_View_Result_Redirect::gotoUrl($ru);
 			else
-				$result->setGotoUrl('/account/signin' . Kansas_Response::buildQueryString(array('ru'	=> $ru)));
+				return Kansas_View_Result_Redirect::gotoUrl('/account/signin' . http_build_query([
+          'ru'	=> $ru
+        ]));
 				
-		} else {
-			$result = new Kansas_View_Result_Redirect();
-			$result->setGotoUrl('/account/fb/register' . Kansas_Response::buildQueryString(array('ru'	=> $ru)));
-		}
-		return $result;
+		} else
+      return Kansas_View_Result_Redirect::gotoUrl('/account/fb/register' . http_build_query([
+        'ru'	=> $ru
+      ]));
 	}
 	
 	public function fbRegister() {
@@ -83,15 +80,13 @@ class Kansas_Controllers_Account
 				$redirect->setGotoUrl('/account/signin' . Kansas_Response::buildQueryString(array('ru'	=> $ru)));
 			return $redirect;
 		} else {
-			$user = $facebook->getClass()->getUser();
-			
-			$view = $this->createView();
-			$view->setCaching(false);
-			$view->assign('user',		$user);
-			$view->assign('signin', 	true);
-			$view->assign('ru', 		$ru);
-			$view->assign('fb_id', 	$facebook->getClass()->getAppId());
-			return $this->createResult($view, 'page.fb-register.tpl');
+      $application->getView()->setCaching(false);
+			return $this->createResult('page.fb-register.tpl',[
+        'user'    => $facebook->getClass()->getUser(),
+        'signin'  => true,
+        'ru'      => $ru,
+        'fb_id'   => $facebook->getClass()->getAppId()
+      ]);
 		}
 	}
 	

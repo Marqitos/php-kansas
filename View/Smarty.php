@@ -122,4 +122,14 @@ class Kansas_View_Smarty
 	public function setCacheId($cacheId) {
 		$this->_cacheId = $cacheId;
 	}
+  
+  public function createData() {
+    return $this->getEngine()->createData();
+  }
+  
+  public function createTemplate($file, array $data = []) {
+    $file = substr($file, strrpos($file, '/'));
+    $this->getEngine()->setTemplateDir($this->getScriptPaths());
+    return $this->getEngine()->createTemplate($file, $data);
+  }
 }

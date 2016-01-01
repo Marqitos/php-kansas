@@ -3,18 +3,12 @@
 class Kansas_Controllers_Index
 	extends Kansas_Controller_Abstract {
 
-	public function Index($vars = []) {
-		$template = $this->getParam('template', 'page.default.tpl');
-		$view = $this->createView();
-		$view->assign($vars);
-		return $this->createResult($view, $template);
+	public function Index(array $vars = []) {
+		return $this->createViewResult('page.default.tpl');
 	}
 	
-	public function Redirection() {
-		$gotoUrl = $this->getParam('gotoUrl');
-		$redirection = new Kansas_View_Result_Redirect();
-		$redirection->setGotoUrl($gotoUrl);
-		return $redirection;
+	public function Redirection(array $vars = []) {
+    return Kansas_View_Result_Redirect::gotoUrl($this->getParam('gotoUrl'));
 	}
 	
 	public function Css() {
@@ -38,34 +32,27 @@ class Kansas_Controllers_Index
 	}
 
 
-	public function Sass() {
-		$file				= $this->getParam('file');
-		return new Kansas_View_Result_Sass($file);
+	public function Sass(array $vars = []) {
+		return new Kansas_View_Result_Sass($this->getParam('file'));
 	}
 	
-	public function Scss() {
-		$file				= $this->getParam('file');
-		return new Kansas_View_Result_Scss($file);
+	public function Scss(array $vars = []) {
+		return new Kansas_View_Result_Scss($this->getParam('file'));
 	}
 	
-	public function File($params) {
-		$file				= $this->getParam('file');
-		return new Kansas_View_Result_File($file, $params);
+	public function File(array $vars = []) {
+		return new Kansas_View_Result_File($this->getParam('file'));
 	}
   
   public function Javascript() {
-    $components = (array)$this->getParam('component');
-    return new Kansas_View_Result_Javascript($components);
+    return new Kansas_View_Result_Javascript((array)$this->getParam('component'));
   }		
 	
 	public function clearCache() {
-		$ru = $this->getParam('ru', '/');
-		$view = $this->createView();
-		$view->getEngine()->clearAllCache();
-		
-		$redirection = new Kansas_View_Result_Redirect();
-		$redirection->setGotoUrl($ru);
-		return $redirection;
+    global $application;
+    $application->getView()->getEngine()->clearAllCache();
+
+    return Kansas_View_Result_Redirect::gotoUrl($this->getParam('ru', '/'));
 	}
 	
 	public function phpInclude() {

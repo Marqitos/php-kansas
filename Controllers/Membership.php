@@ -13,13 +13,8 @@ class Kansas_Controllers_Membership
 			return $result;
 		}
 		$router 	= $this->getParam('router');		
-
-		$view = $this->createView();
-    $view->assign('title', 'Iniciar sesión');
-		$view->setCaching(false);
-
-		$view->assign('ru', 			$ru);
-		$view->assign('signin', 	true);
+    $application->getView()->setCaching(false);
+    $membershipData = [];
 		if($auth->getAuthService('membership')) {
 			$email 		= $this->getParam('email', '');
 			$password = $this->getParam('password');
@@ -39,14 +34,20 @@ class Kansas_Controllers_Membership
 				}
 			}
 			
-			$view->assign('email',		$email);
-			$view->assign('form-action', '/iniciar-sesion');
-			$view->assign('remember-account', '/remember-account');
+      $membershipData = [
+        'email'             => $email,
+        'form-action'       => '/iniciar-sesion',
+        'remember-account'  => '/remember-account'
+      ];
 		}
 		
-		$view->assign('external_signin', parent::getExternalSignin($params));
-		$view->assign('register', '/registro');
-		return $this->createResult($view, 'page.account-signin.tpl');		
+		return $this->createResult('page.account-signin.tpl', array_merge([
+        'title'           => 'Iniciar sesión',
+        'ru'              => $ru,
+        'signin'          => true,
+        'external_signin' => parent::getExternalSignin($params),
+        'register'        => '/registro'
+      ], $membershipData));		
 	}
 	
 }
