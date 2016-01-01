@@ -6,7 +6,7 @@ class Kansas_Application_Module_Google
 	private $_client;
 
 	public function __construct(array $options) {
-    parent::__construct($options);
+    parent::__construct($options, __FILE__);
 		global $application;
 		$application->registerRenderCallbacks([$this, 'appRender']);
 	}

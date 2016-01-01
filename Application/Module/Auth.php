@@ -11,7 +11,7 @@ class Kansas_Application_Module_Auth
 	private $_events;
 
 	public function __construct(array $options) {
-    parent::__construct($options);
+    parent::__construct($options, __FILE__);
 		global $application;
 		@session_start();
 		$_events = new Kansas_Auth_Events();
@@ -19,14 +19,6 @@ class Kansas_Application_Module_Auth
 		$application->registerRouteCallbacks([$this, "appRoute"]);
     $application->registerRenderCallbacks([$this, "appRender"]);
 	}
-  
-  public function getDefaultOptions() {
-    return [
-      'router' => [
-        'basepath' => 'account'
-      ]
-    ];
-  }
   
   public function getVersion() {
 		global $environment;

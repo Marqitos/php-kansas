@@ -84,7 +84,7 @@ class Kansas_Application_Module_Scss {
       else {
         $css = $this->getParser()->compile(file_get_contents($file));
         $fileList = [$file => hash_file("crc32b", $file)];
-        foreach($this->getParser()->getParsedFiles() as $path)
+        foreach($this->getParser()->getParsedFiles() as $path => $time)
           $fileList[$path] = hash_file("crc32b", $path);
         $data = serialize($fileList);
         $md5 = md5($data);

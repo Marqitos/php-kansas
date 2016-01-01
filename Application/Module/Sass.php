@@ -10,17 +10,10 @@ class Kansas_Application_Module_Sass
 
 	public function __construct(array $options) {
 		global $application;
-    parent::__construct($options);
+    parent::__construct($options, __FILE__);
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
   
-  public function getDefaultOptions() {
-    global $environment;
-    return [
-      'cache' => ($environment->getStatus() == Kansas_Environment::DEVELOPMENT ? FALSE: TRUE)
-    ];
-  }
-	
 	public function appPreInit() { // añadir rutas
 		global $application;
     $application->setRoute('css', [
@@ -37,7 +30,7 @@ class Kansas_Application_Module_Sass
 			if(isset($options['load_paths'])) {
 				if(is_string($options['load_paths']))
 					$options['load_paths'] = realpath($options['load_paths']);
-				else if(is_array($options['load_paths']))
+				elseif(is_array($options['load_paths']))
 					foreach($options['load_paths'] as $key => $path)
 						$options['load_paths'][$key] = realpath($path);
 			} else {

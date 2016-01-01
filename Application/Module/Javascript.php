@@ -6,18 +6,9 @@ class Kansas_Application_Module_Javascript
   private $_packager;
   
   public function __construct(array $options) {
-    parent::__construct($options);
+    parent::__construct($options, pathinfo(__FILE__));
   }
 
-  public function getDefaultOptions() {
-    global $environment;
-    return [
-      'cache'     => true,
-      'packages'  => [],
-      'minifier'  => ($environment->getStatus() == Kansas_Environment::PRODUCTION ? ['flaggedComments' => false] : false) 
-    ];
-  }  
-  
   public function getPackager() {
     require_once 'packager/packager.php';
     if($this->_packager == null)

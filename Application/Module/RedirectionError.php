@@ -5,7 +5,7 @@ class Kansas_Application_Module_RedirectionError
   extends Kansas_Application_Module_Abstract {
 
 	public function __construct(array $options) {
-    parent::__construct($options);
+    parent::__construct($options, pathinfo(__FILE__));
 		global $application;
 		$application->set('error', [$this, "errorManager"]);
 	}
