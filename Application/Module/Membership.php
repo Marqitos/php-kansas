@@ -1,30 +1,33 @@
 <?php
 
 class Kansas_Application_Module_Membership
-	implements Kansas_Auth_Service_Interface {
+  extends Kansas_Application_Module_Abstract
+  implements Kansas_Auth_Service_Interface {
 
-  protected $options;
-  
+  /// Constructor
 	public function __construct(array $options) {
-		global $application;
-    $this->options = array_replace_recursive([
-  			'path'		  => [
-  				'signin'    => 'signin'], // iniciar sesión
-  			'action'  => [
-  				'signin'	=> [
-  					'controller'	=> 'Membership',
-  					'action'			=> 'signIn']]
-  		], $options);
-		$application->registerPreInitCallbacks([$this, "appPreInit"]);
-	}
-
-	public function appPreInit() { // añadir proveedor de inicio de sesión
+    parent::__construct($options, __FILE__);
 		global $application;
 		$usersModule = $application->getModule('Auth');
 		$usersModule->setAuthService('membership', $this);
-		$usersModule->getRouter()->setOptions($this->options);
 	}
-	
+  
+  /// Miembros de Kansas_Application_Module_Interface
+  public function getVersion() {
+		global $environment;
+		return $environment->getVersion();
+	}
+  
+  /// Miembros de Kansas_Auth_Service_Interface
+  public function getActions() {
+    return $this->getOptions('actions');
+  }
+  
+	public function getAuthType() {
+		return 'form';
+	}
+  
+  /// Miembros estaticos
 	public static function factory($email, $password) {
 		global $application;
 		return new Kansas_Auth_Membership(
@@ -33,13 +36,5 @@ class Kansas_Application_Module_Membership
 			$password
 		);
 	}
-	
-	public function getAuthType() {
-		return 'form';
-	}
-	
-  public function getVersion() {
-		global $environment;
-		return $environment->getVersion();
-	}
+
 }
