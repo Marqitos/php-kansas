@@ -42,12 +42,12 @@ class Kansas_Application_Module_Scss {
 		return $this->_parser;
 	}
 	
-	public function getFile($fileName, $parser, $first = false) {
+	public function getFile($fileName, $first = false) {
     global $environment;
     $ext = strtolower(substr($fileName, strrpos($fileName, '.') + 1));
     // if the last char isn't *, and it's not (.scss|.css)
     if(substr($fileName, -1) != '*' && $ext !== 'scss' && $ext !== 'css' &&
-			  $result = $this->getFile($fileName . '.scss', $parser, $first))
+			  $result = $this->getFile($fileName . '.scss', $first))
 			return $result;
 		if(file_exists($fileName))
 	      return $fileName;
