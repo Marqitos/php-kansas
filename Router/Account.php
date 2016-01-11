@@ -55,5 +55,9 @@ class Kansas_Router_Account
 					'action'			=> 'signIn']
 			]
 		];
-	}	
+	}
+  
+  public function addActions(array $actions = null) {
+    
+  }
 }
