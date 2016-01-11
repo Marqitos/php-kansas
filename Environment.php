@@ -88,7 +88,9 @@ class Kansas_Environment {
 		
 		if($message instanceof Exception)
 			$message = $message->getMessage();
-			
+    elseif(is_array($message))
+			$message = $message['message'];
+      			
     if(self::$instance->_status != self::DEVELOPMENT && $level != E_USER_WARNING)  
       return;
       
@@ -99,7 +101,7 @@ class Kansas_Environment {
     
     echo $levelText . $time . ' [' . $level . '] ' . $message . "<br />\n";
 	}
-	
+  
 	public function getVersion() {
 		return $this->_version;
 	}	

@@ -29,7 +29,7 @@ class Kansas_Core_GuidItem
     if(is_string($id))
       $id = new System_Guid($id);
     
-      $this->_id = $id;
+    $this->_id = $id;
   }
 
 // Miembros de Kansas_Core_GuidItem_Interface
