@@ -183,7 +183,6 @@ class Kansas_Application
 	
 	// Asocia los parametros indicados y los básicos a la petición actual
 	public static function getDefaultParams() {
-    global $application;
     global $environment;
 		$request = $environment->getRequest();
 		return [
@@ -363,26 +362,28 @@ class Kansas_Application
 	public function error_handler($errno, $errstr, $errfile, $errline, $errcontext) {
 		if (!(error_reporting() & $errno))
 				return false; // Este código de error no está incluido en error_reporting
+    $trace = debug_backtrace();
+    array_shift($trace);
     
     $errData = [
       'exception'   => null,
       'errorLevel'	=> $errno,
       'code'				=> 500,
       'message'			=> $errstr,
-      'trace'				=> Kansas_Environment::debug_string_backtrace(),
+      'trace'				=> $trace,
       'line'				=> $errline,
       'file'				=> $errfile,
       'context'			=> $errcontext
     ];
-    call_user_func($this->_logCallback, $errno, $errData);
+    if(error_reporting() != 0)
+      call_user_func($this->_logCallback, $errno, $errData);
 		if($errno == E_USER_ERROR) 
       call_user_func($this->_errorCallback, $errData);
     return true; // No ejecutar el gestor de errores interno de PHP
 	}
 	
 	public function exception_handler(Exception $ex) {
-    call_user_func($this->_logCallback, E_USER_ERROR, $ex);
-    call_user_func($this->_errorCallback, [
+    $errData = [
 			'exception'   => get_class($ex),
 			'errorLevel'	=> E_USER_ERROR,
 			'code'				=> ($ex instanceof System_Net_WebException ? $ex->getStatus() : 500),
@@ -390,7 +391,10 @@ class Kansas_Application
 			'trace'				=> $ex->getTrace(),
 			'line'				=> $ex->getLine(),
 			'file'				=> $ex->getFile()
-		]);
+		];
+    if(error_reporting() != 0)
+      call_user_func($this->_logCallback, E_USER_ERROR, $errData);
+    call_user_func($this->_errorCallback, $errData);
 		exit(1);
 	}
   
