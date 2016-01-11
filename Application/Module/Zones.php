@@ -3,33 +3,34 @@
 class Kansas_Application_Module_Zones
 	extends Kansas_Application_Module_Abstract {
   
-  private $_basePath;
-  private $_zone = 'default';
+  /// Campos
+  private $_zones = [];
+  private $_zone;
 
+  /// Constructor
   public function __construct(array $options) {
-    global $environment;
     parent::__construct($options, __FILE__);
- 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
-    $default = false;
-    foreach($this->getOptions() as $index => $basePath) {
-      if($index != 'default' &&
-         Kansas_String::startWith($path, $basePath)) {
-        $this->_zone = $index;
-        $this->_basePath = $basePath;
-        break;
-      }
-    }
   }
   
+  /// Miembros de Kansas_Application_Module_Interface
   public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
 	}
-    
+  
+  /// Metodos publicos
+  // Obtiene la zona actual
   public function getZone() {
     return $this->_zone;
   }
-  public function getBasePath() {
-    return $this->_basePath;
+  
+  // Agrega una nueva zona
+  public function addZone(Kansas_Application_Module_Zone_Interface $zone) {
+    global $environment;
+    $this->_zones[$zone->getBasePath()] = $zone;
+    $path = trim($environment->getRequest()->getUri()->getPath(), '/');
+    if(Kansas_String::startWith($path, $zone->getBasePath()))
+      $this->_zone = $zone;
   }
+
 }

@@ -1,39 +1,29 @@
 <?php
 
 class Kansas_Application_Module_API
-  extends Kansas_Application_Module_Abstract
+  extends Kansas_Application_Module_Zone_Abstract
   implements Kansas_Router_Interface {
 	
-	private $_basePath;
-
+  /// Constructor
 	public function __construct(array $options) {
     parent::__construct($options, __FILE__);
-		global $application;
-    $application->getModule('zones');
     $application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
  
-	public function appPreInit() { // añadir router
-		global $application;
-    if($zones = $application->getModule('zones') &&
-       $zones->getZone() == 'api') {
-      $application->addRouter($this);
-      $this->_basePath = $zones->getBasePath();
-    }
-	}
-
+  /// Miembros de Kansas_Application_Module_Interface
   public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
 	}
-
+  
+  /// Miembros de Kansas_Router_Interface
 	public function match() {
 		global $application;
     global $environment;
 		$params = false;
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
-    if(Kansas_String::startWith($path, $this->_basePath))
-      $path = substr($path, strlen($this->_basePath));
+    if(Kansas_String::startWith($path, $this->getBasePath()))
+      $path = substr($path, strlen($this->getBasePath()));
     else
 			return false;
 			
@@ -69,7 +59,12 @@ class Kansas_Application_Module_API
 		return $params;
 	}
 
-  public function getBasePath() {
-    return $this->_basePath;
-  }  
+  
+	public function appPreInit() { // añadir router
+		global $application;
+    if($this->zones->getZone() instanceof Kansas_Application_Module_API) {
+      $application->addRouter($this);
+    }
+	}
+
 }
