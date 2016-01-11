@@ -7,8 +7,9 @@ function smarty_function_dispatch($params, $template) {
     $params = $params['params'];
 	global $application;
 	$params['requestType']	= 'smarty';
-	$params['smarty']				= $template;
 	$result = $application->dispatch($params);
+  $noCache;
 	if($result instanceof Kansas_View_Result_String_Abstract)
-		return $result->getResult();
+		return $result->getResult($noCache);
+  return $result->executeResult();
 }
