@@ -137,27 +137,25 @@ class Kansas_Cache_File
      * @param boolean $doNotTestCacheValidity if set to true, the cache validity won't be tested
      * @return string|false cached datas
      */
-    public function load($id, $doNotTestCacheValidity = false)
-    {
-        if (!($this->_test($id, $doNotTestCacheValidity))) {
-            // The cache is not hit !
-            return false;
+    public function load($id, $doNotTestCacheValidity = false) {
+      if (!($this->_test($id, $doNotTestCacheValidity))) // The cache is not hit !
+        return false;
+
+      $metadatas = $this->_getMetadatas($id);
+      $file = $this->_file($id);
+      $data = $this->_fileGetContents($file);
+      if ($this->_options['read_control']) {
+        $hashData = $this->_hash($data, $this->_options['read_control_type']);
+        $hashControl = $metadatas['hash'];
+        if ($hashData != $hashControl) {
+          // Problem detected by the read control !
+          global $environment;
+          $environment->log(E_USER_NOTICE, 'Kansas_Cache_File::load() / read_control : stored hash and computed hash do not match');
+          $this->remove($id);
+          return false;
         }
-        $metadatas = $this->_getMetadatas($id);
-        $file = $this->_file($id);
-        $data = $this->_fileGetContents($file);
-        if ($this->_options['read_control']) {
-            $hashData = $this->_hash($data, $this->_options['read_control_type']);
-            $hashControl = $metadatas['hash'];
-            if ($hashData != $hashControl) {
-                // Problem detected by the read control !
-                global $environment;
-                $environment->log(E_USER_NOTICE, 'Kansas_Cache_File::load() / read_control : stored hash and computed hash do not match');
-                $this->remove($id);
-                return false;
-            }
-        }
-        return $data;
+      }
+      return $data;
     }
 
     /**
@@ -183,7 +181,7 @@ class Kansas_Cache_File
      * @param  int    $specificLifetime If != false, set a specific lifetime for this cache record (null => infinite lifetime)
      * @return boolean true if no problem
      */
-    public function save($data, $id, $tags = array(), $specificLifetime = false) {
+    public function save($data, $id, array $tags = [], $specificLifetime = false) {
         clearstatcache();
         $file = $this->_file($id);
         $path = $this->_path($id);
@@ -247,7 +245,7 @@ class Kansas_Cache_File
      * @param tags array $tags array of tags
      * @return boolean true if no problem
      */
-    public function clean($mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array()) {
+    public function clean($mode = Zend_Cache::CLEANING_MODE_ALL, array $tags = array()) {
         // We use this protected method to hide the recursive stuff
         clearstatcache();
         return $this->_clean($this->_options['cache_dir'], $mode, $tags);
@@ -279,7 +277,7 @@ class Kansas_Cache_File
      * @param array $tags array of tags
      * @return array array of matching cache ids (string)
      */
-    public function getIdsMatchingTags($tags = array()) {
+    public function getIdsMatchingTags(array $tags = array()) {
         return $this->_get($this->_options['cache_dir'], 'matching', $tags);
     }
 
@@ -291,7 +289,7 @@ class Kansas_Cache_File
      * @param array $tags array of tags
      * @return array array of not matching cache ids (string)
      */
-    public function getIdsNotMatchingTags($tags = array()) {
+    public function getIdsNotMatchingTags(array $tags = array()) {
         return $this->_get($this->_options['cache_dir'], 'notMatching', $tags);
     }
 
@@ -303,7 +301,7 @@ class Kansas_Cache_File
      * @param array $tags array of tags
      * @return array array of any matching cache ids (string)
      */
-    public function getIdsMatchingAnyTags($tags = array()) {
+    public function getIdsMatchingAnyTags(array $tags = array()) {
         return $this->_get($this->_options['cache_dir'], 'matchingAny', $tags);
     }
 

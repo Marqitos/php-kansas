@@ -154,8 +154,7 @@ abstract class Kansas_Cache {
      * @throws Zend_Cache_Exception
      * @return void
      */
-    public function setDirectives($directives) {
-      if (!is_array($directives)) Zend_Cache::throwException('Directives parameter must be an array');
+    public function setDirectives(array $directives) {
       while (list($name, $value) = each($directives)) {
         if (!is_string($name))
           Zend_Cache::throwException("Incorrect option name : $name");
@@ -256,12 +255,7 @@ abstract class Kansas_Cache {
      * @return boolean true if the directory is ok
      */
     protected function _isGoodTmpDir($dir) {
-        if (is_readable($dir)) {
-            if (is_writable($dir)) {
-                return true;
-            }
-        }
-        return false;
+      return is_readable($dir) && is_writable($dir);
     }    
 
 }

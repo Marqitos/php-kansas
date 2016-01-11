@@ -13,7 +13,7 @@ interface Kansas_Cache_Interface {
     *
     * @param array $directives assoc of directives
     */
-  public function setDirectives($directives);
+  public function setDirectives(array $directives);
 
   /**
     * Test if a cache is available for the given id and (if yes) return it (false else)
@@ -46,7 +46,7 @@ interface Kansas_Cache_Interface {
     * @param  int   $specificLifetime If != false, set a specific lifetime for this cache record (null => infinite lifetime)
     * @return boolean true if no problem
     */
-  public function save($data, $id, $tags = array(), $specificLifetime = false);
+  public function save($data, $id, array $tags = [], $specificLifetime = false);
 
   /**
     * Remove a cache record
@@ -73,6 +73,6 @@ interface Kansas_Cache_Interface {
     * @param  array  $tags Array of tags
     * @return boolean true if no problem
     */
-  public function clean($mode = Kansas_Cache::CLEANING_MODE_ALL, $tags = array());
+  public function clean($mode = Kansas_Cache::CLEANING_MODE_ALL, array $tags = []);
 
 }

@@ -54,7 +54,7 @@ class Kansas_Loader {
      * @return void
      */
     protected function __construct() {
-        spl_autoload_register([$this, '_autoload']);
+        spl_autoload_register([__CLASS__, 'loadClass']);
     }
 
     /**
@@ -141,10 +141,6 @@ class Kansas_Loader {
             self::loadFile($file, null, true);
         }
 
-        if (!class_exists($class, false) && !interface_exists($class, false)) {
-            require_once 'Zend/Exception.php';
-            throw new Zend_Exception("File \"$file\" does not exist or class \"$class\" was not found in the file");
-        }
     }
 
     /**
@@ -188,11 +184,15 @@ class Kansas_Loader {
         /**
          * Try finding for the plain filename in the include_path.
          */
-        if ($once) {
-            include_once $filename;
-        } else {
-            include $filename;
-        }
+        $reporting = error_reporting();
+        error_reporting(0);
+
+        if ($once)
+          include_once($filename);
+        else
+          include($filename);
+
+        error_reporting($reporting);
 
         /**
          * If searching in directories, reset include_path
@@ -293,26 +293,4 @@ class Kansas_Loader {
         }
     }
 
-    /**
-     * Attempt to include() the file.
-     *
-     * include() is not prefixed with the @ operator because if
-     * the file is loaded and contains a parse error, execution
-     * will halt silently and this is difficult to debug.
-     *
-     * Always set display_errors = Off on production servers!
-     *
-     * @param  string  $filespec
-     * @param  boolean $once
-     * @return boolean
-     * @deprecated Since 1.5.0; use loadFile() instead
-     */
-    protected static function _includeFile($filespec, $once = false)
-    {
-        if ($once) {
-            return include_once $filespec;
-        } else {
-            return include $filespec ;
-        }
-    }
 }
