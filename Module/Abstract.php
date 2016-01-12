@@ -1,7 +1,7 @@
 <?php
-// Implementa las funcionalidades básicas de Kansas_Application_Module_Interface y la carga de la configuración por defecto desde un archivo .ini
-abstract class Kansas_Application_Module_Abstract 
-  implements Kansas_Application_Module_Interface {
+// Implementa las funcionalidades básicas de Kansas_Module_Interface y la carga de la configuración por defecto desde un archivo .ini
+abstract class Kansas_Module_Abstract 
+  implements Kansas_Module_Interface {
   
   /// Campos
   private $_options;
@@ -14,7 +14,7 @@ abstract class Kansas_Application_Module_Abstract
     $this->_default = $default;
   }
 
-  /// Miembros de Kansas_Application_Module_Interface
+  /// Miembros de Kansas_Module_Interface
   // Obtiene la configuración por defecto, a partir de archivos .ini
   public function getDefaultOptions() {
     if(is_string($this->_default)) {

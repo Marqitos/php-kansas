@@ -1,7 +1,7 @@
 <?php
 
-class Kansas_Application_Module_Auth
-  extends Kansas_Application_Module_Abstract {
+class Kansas_Module_Auth
+  extends Kansas_Module_Abstract {
 
   /// Constantes
 	// Roles predeterminadas
@@ -26,7 +26,7 @@ class Kansas_Application_Module_Auth
     $application->registerRenderCallbacks(  [$this, "appRender"]);
 	}
   
-  /// Miembros de Kansas_Application_Module_Interface
+  /// Miembros de Kansas_Module_Interface
   public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
@@ -36,7 +36,7 @@ class Kansas_Application_Module_Auth
 	public function appPreInit() { // añadir router
 		global $application;
     $zones = $application->hasModule('zones');
-    if($zones && $zones->getZone() instanceof Kansas_Application_Module_Admin) {
+    if($zones && $zones->getZone() instanceof Kansas_Module_Admin) {
       $admin = $zones->getZone();
 		  $admin->registerMenuCallbacks([$this, "adminMenu"]);
     } else    

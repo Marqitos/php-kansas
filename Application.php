@@ -8,9 +8,9 @@ class Kansas_Application
 	private $_config;
 
 	private $_loaders = [
-		'controller' => ['Kansas_Controllers_' => 'Kansas/Controllers/'],
+		'controller' => ['Kansas_Controller_' => 'Kansas/Controller/'],
 		'helper'     => ['Kansas_Helpers_' => 'Kansas/Helpers/'],
-		'module'     => ['Kansas_Application_Module_'	=> 'Kansas/Application/Module/'],
+		'module'     => ['Kansas_Module_'	=> 'Kansas/Module/'],
 		'provider'	 => ['Kansas_Db_' => 'Kansas/Db/']
 	];
 
@@ -66,7 +66,7 @@ class Kansas_Application
 		if(!is_string($moduleName))
 			throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
 		$moduleName = ucfirst($moduleName);
-		if(!isset($this->_modules[$moduleName]) || !($this->_modules[$moduleName] instanceof Kansas_Application_Module_Interface)) {
+		if(!isset($this->_modules[$moduleName]) || !($this->_modules[$moduleName] instanceof Kansas_Module_Interface)) {
 			try {
 				$moduleClass = $this->getLoader('module')->load($moduleName);
 				$options = isset($this->_modules[$moduleName]) && is_array($this->_modules[$moduleName]) ?
@@ -74,7 +74,7 @@ class Kansas_Application
 					[];
 				$module = new $moduleClass($options);
 			} catch(Exception $e) {
-        call_user_func($this->_logCallback, E_USER_NOTICE, $e);        
+        call_user_func($this->_logCallback, E_USER_NOTICE, self::getErrorData($e));        
 				$module = false;
 			}
 			$this->_modules[$moduleName] = $module;
@@ -85,7 +85,7 @@ class Kansas_Application
 		if(!is_string($moduleName))
 			throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
 		$moduleName = ucfirst($moduleName);
-		if(!isset($this->_modules[$moduleName]) || !($this->_modules[$moduleName] instanceof Kansas_Application_Module_Interface))
+		if(!isset($this->_modules[$moduleName]) || !($this->_modules[$moduleName] instanceof Kansas_Module_Interface))
 			$this->_modules[$moduleName] = $options;
 		else
 			$this->_modules[$moduleName]->setOptions($options);
@@ -96,7 +96,7 @@ class Kansas_Application
 		if(!is_string($moduleName))
 			throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
     $moduleName = ucfirst($moduleName);
-		return isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof Kansas_Application_Module_Interface) ?
+		return isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof Kansas_Module_Interface) ?
       $this->_modules[$moduleName]:
       false;
 	}
@@ -383,15 +383,7 @@ class Kansas_Application
 	}
 	
 	public function exception_handler(Exception $ex) {
-    $errData = [
-			'exception'   => get_class($ex),
-			'errorLevel'	=> E_USER_ERROR,
-			'code'				=> ($ex instanceof System_Net_WebException ? $ex->getStatus() : 500),
-			'message'			=> $ex->getMessage(),
-			'trace'				=> $ex->getTrace(),
-			'line'				=> $ex->getLine(),
-			'file'				=> $ex->getFile()
-		];
+    $errData = self::getErrorData($ex);
     if(error_reporting() != 0)
       call_user_func($this->_logCallback, E_USER_ERROR, $errData);
     call_user_func($this->_errorCallback, $errData);
@@ -404,6 +396,18 @@ class Kansas_Application
 			'action'			=> 'Index'
     ], $this->getDefaultParams()));
 		$result->executeResult();
+  }
+  
+  public static function getErrorData(Exception $ex) {
+    return [
+			'exception'   => get_class($ex),
+			'errorLevel'	=> E_USER_ERROR,
+			'code'				=> ($ex instanceof System_Net_WebException ? $ex->getStatus() : 500),
+			'message'			=> $ex->getMessage(),
+			'trace'				=> $ex->getTrace(),
+			'line'				=> $ex->getLine(),
+			'file'				=> $ex->getFile()
+		];
   }
   
 	/* Enrutamiento */

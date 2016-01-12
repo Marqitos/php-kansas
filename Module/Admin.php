@@ -1,7 +1,7 @@
 <?php
 
-class Kansas_Application_Module_Admin
-  extends Kansas_Application_Module_Zone_Abstract
+class Kansas_Module_Admin
+  extends Kansas_Module_Zone_Abstract
   implements Kansas_Router_Interface {
 	
   /// Campos
@@ -18,7 +18,7 @@ class Kansas_Application_Module_Admin
 		$application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
   
-  /// Miembros de Kansas_Application_Module_Interface
+  /// Miembros de Kansas_Module_Interface
   public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
@@ -118,7 +118,7 @@ class Kansas_Application_Module_Admin
   /// Eventos de la aplicación
 	public function appPreInit() { // añadir router
 		global $application;
-    if($this->zones->getZone() instanceof Kansas_Application_Module_Admin) {
+    if($this->zones->getZone() instanceof Kansas_Module_Admin) {
       $application->addRouter($this);
     }
 	}

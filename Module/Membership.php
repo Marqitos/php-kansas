@@ -1,7 +1,7 @@
 <?php
 
-class Kansas_Application_Module_Membership
-  extends Kansas_Application_Module_Abstract
+class Kansas_Module_Membership
+  extends Kansas_Module_Abstract
   implements Kansas_Auth_Service_Interface {
 
   /// Constructor
@@ -12,7 +12,7 @@ class Kansas_Application_Module_Membership
 		$usersModule->setAuthService('membership', $this);
 	}
   
-  /// Miembros de Kansas_Application_Module_Interface
+  /// Miembros de Kansas_Module_Interface
   public function getVersion() {
 		global $environment;
 		return $environment->getVersion();

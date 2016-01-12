@@ -1,7 +1,7 @@
 <?php
 
-class Kansas_Application_Module_BackendCache
-	extends Kansas_Application_Module_Abstract
+class Kansas_Module_BackendCache
+	extends Kansas_Module_Abstract
   implements Kansas_Cache_Interface {
   
   /// Campos
@@ -24,7 +24,7 @@ class Kansas_Application_Module_BackendCache
       $application->set('log', [$this, 'log']);
   }
   
-  /// Miembros de Kansas_Application_Module_Interface
+  /// Miembros de Kansas_Module_Interface
   public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
@@ -66,7 +66,7 @@ class Kansas_Application_Module_BackendCache
     if($this->getOptions('cacheRouting')) // añadir router
       $application->addRouter($this->getRouter(), 10);
     $zones = $application->hasModule('zones');
-    if($zones && $zones->getZone() instanceof Kansas_Application_Module_Admin) {
+    if($zones && $zones->getZone() instanceof Kansas_Module_Admin) {
       $admin = $zones->getZone();
 		  $admin->registerMenuCallbacks([$this, "adminMenu"]);         
       if($this->getOptions('log'))
@@ -80,7 +80,7 @@ class Kansas_Application_Module_BackendCache
     return [];
   }
       
-  /// Eventos de Kansas_Application_Module_Admin
+  /// Eventos de Kansas_Module_Admin
   public function adminAlerts() {
     $errors = $this->_cache->getIdsMatchingTags(['error']);
     return [

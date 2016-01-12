@@ -1,7 +1,7 @@
 <?php
 
-class Kansas_Application_Module_Zones
-	extends Kansas_Application_Module_Abstract {
+class Kansas_Module_Zones
+	extends Kansas_Module_Abstract {
   
   /// Campos
   private $_zones = [];
@@ -12,7 +12,7 @@ class Kansas_Application_Module_Zones
     parent::__construct($options, __FILE__);
   }
   
-  /// Miembros de Kansas_Application_Module_Interface
+  /// Miembros de Kansas_Module_Interface
   public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
@@ -25,7 +25,7 @@ class Kansas_Application_Module_Zones
   }
   
   // Agrega una nueva zona
-  public function addZone(Kansas_Application_Module_Zone_Interface $zone) {
+  public function addZone(Kansas_Module_Zone_Interface $zone) {
     global $environment;
     $this->_zones[$zone->getBasePath()] = $zone;
     $path = trim($environment->getRequest()->getUri()->getPath(), '/');

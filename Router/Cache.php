@@ -12,7 +12,7 @@ class Kansas_Router_Cache
 	public function match() {
     global $environment;
 		$params = false;
-		$cacheId = Kansas_Application_Module_BackendCache::getCacheId($environment->getRequest());
+		$cacheId = Kansas_Module_BackendCache::getCacheId($environment->getRequest());
         
 		if($this->_cache->test($cacheId)) {
 			$params = unserialize($this->_cache->load($cacheId));

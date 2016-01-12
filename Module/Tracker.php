@@ -1,7 +1,7 @@
 <?php
 
-class Kansas_Application_Module_Tracker
-	extends Kansas_Application_Module_Abstract {
+class Kansas_Module_Tracker
+	extends Kansas_Module_Abstract {
 
 	public function __construct(Zend_Config $options) {
 		parent::__construct($options);

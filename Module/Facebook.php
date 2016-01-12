@@ -3,7 +3,7 @@
 use Facebook\FacebookSession;
 use Facebook\FacebookRequest;
 
-class Kansas_Application_Module_Facebook
+class Kansas_Module_Facebook
 	implements Kansas_Auth_Service_Interface {
 		
   protected $options;

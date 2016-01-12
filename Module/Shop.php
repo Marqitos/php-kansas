@@ -1,6 +1,6 @@
 <?php
 
-class Kansas_Application_Module_Shop {
+class Kansas_Module_Shop {
 		
 	private $_shop;
   protected $options;

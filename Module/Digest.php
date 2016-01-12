@@ -1,6 +1,6 @@
 <?php
 
-class Kansas_Application_Module_Digest
+class Kansas_Module_Digest
 	implements Kansas_Auth_Service_Interface {
 
 	public function __construct(array $options) {

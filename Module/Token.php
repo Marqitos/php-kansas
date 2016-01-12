@@ -1,6 +1,6 @@
 <?php
 
-class Kansas_Application_Module_Token {
+class Kansas_Module_Token {
 
   protected $options;
   

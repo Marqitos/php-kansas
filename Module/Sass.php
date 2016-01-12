@@ -2,8 +2,8 @@
 
 require_once('Phpsass/SassParser.php');
 
-class Kansas_Application_Module_Sass
-  extends Kansas_Application_Module_Abstract {
+class Kansas_Module_Sass
+  extends Kansas_Module_Abstract {
 		
 	private $_parser;
 	private $_router;

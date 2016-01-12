@@ -1,7 +1,7 @@
 <?php
       
-class Kansas_Application_Module_Javascript
-  extends Kansas_Application_Module_Abstract {
+class Kansas_Module_Javascript
+  extends Kansas_Module_Abstract {
   
   private $_packager;
   

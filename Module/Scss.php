@@ -2,7 +2,7 @@
 
 use Leafo\ScssPhp\Compiler;
 
-class Kansas_Application_Module_Scss {
+class Kansas_Module_Scss {
 		
 	private $_parser;
 	private $_router;

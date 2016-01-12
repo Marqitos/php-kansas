@@ -1,7 +1,7 @@
 <?php
 
-class Kansas_Application_Module_Messages
-	implements Kansas_Application_Module_Interface {
+class Kansas_Module_Messages
+	implements Kansas_Module_Interface {
 
 	private $_router;
   protected $options;  

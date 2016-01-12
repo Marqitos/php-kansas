@@ -1,7 +1,7 @@
 <?php
 
-class Kansas_Application_Module_API
-  extends Kansas_Application_Module_Zone_Abstract
+class Kansas_Module_API
+  extends Kansas_Module_Zone_Abstract
   implements Kansas_Router_Interface {
 	
   /// Constructor
@@ -10,7 +10,7 @@ class Kansas_Application_Module_API
     $application->registerPreInitCallbacks([$this, "appPreInit"]);
 	}
  
-  /// Miembros de Kansas_Application_Module_Interface
+  /// Miembros de Kansas_Module_Interface
   public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
@@ -62,7 +62,7 @@ class Kansas_Application_Module_API
   
 	public function appPreInit() { // añadir router
 		global $application;
-    if($this->zones->getZone() instanceof Kansas_Application_Module_API) {
+    if($this->zones->getZone() instanceof Kansas_Module_API) {
       $application->addRouter($this);
     }
 	}

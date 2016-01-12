@@ -1,8 +1,8 @@
 <?php
 
-abstract class Kansas_Application_Module_Zone_Abstract
-  extends Kansas_Application_Module_Abstract
-  implements Kansas_Application_Module_Zone_Interface {
+abstract class Kansas_Module_Zone_Abstract
+  extends Kansas_Module_Abstract
+  implements Kansas_Module_Zone_Interface {
   
   /// Campos
   protected $zones;
@@ -15,7 +15,7 @@ abstract class Kansas_Application_Module_Zone_Abstract
     $this->zones->addZone($this);
 	}
   
-  /// Miembros de Kansas_Application_Module_Zone_Interface
+  /// Miembros de Kansas_Module_Zone_Interface
   // Obtiene la ruta inicial de la zona  
   public function getBasePath() {
     return $this->getOptions('basePath');
