@@ -1,6 +1,6 @@
 <?php
 
-class Kansas_Controllers_API
+class Kansas_Controller_API
 	extends Kansas_Controller_Abstract {
 	
 	public function init(array $params) {

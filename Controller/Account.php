@@ -1,6 +1,6 @@
 <?php
 
-class Kansas_Controllers_Account
+class Kansas_Controller_Account
 	extends Kansas_Controller_Abstract {
 		
 	
@@ -118,7 +118,7 @@ class Kansas_Controllers_Account
             $data['newUserError'] = 0;
 
           if(isset($data['newUserData']['selectedRol'])) {
-            $data['selectedRol'] = Kansas_Application_Module_Auth::rolKey($data['newUserData']['selectedRol']);
+            $data['selectedRol'] = Kansas_Module_Auth::rolKey($data['newUserData']['selectedRol']);
             unset($data['newUserData']['selectedRol']);
           }
         } else // Error desconocido

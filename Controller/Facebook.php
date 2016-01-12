@@ -5,8 +5,8 @@ use Facebook\FacebookRedirectLoginHelper;
 use Facebook\FacebookRequest;
 use Facebook\FacebookRequestException;
 
-class Kansas_Controllers_Facebook
-	extends Kansas_Controllers_Account {
+class Kansas_Controller_Facebook
+	extends Kansas_Controller_Account {
 		
 	public function signIn() { //Trata de iniciar sesión a traves de una redirección desde facebook
 		global $application;

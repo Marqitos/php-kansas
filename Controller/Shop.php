@@ -1,6 +1,6 @@
 <?php
 
-class Kansas_Controllers_Shop
+class Kansas_Controller_Shop
 	extends Kansas_Controller_Abstract {
 		
 	protected function createView() {

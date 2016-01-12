@@ -1,7 +1,7 @@
 <?php
 
-class Kansas_Controllers_Membership
-	extends Kansas_Controllers_Account {
+class Kansas_Controller_Membership
+	extends Kansas_Controller_Account {
 		
 	public function signIn($params) {
 		global $application;

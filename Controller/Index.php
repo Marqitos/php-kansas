@@ -1,6 +1,6 @@
 <?php
 
-class Kansas_Controllers_Index
+class Kansas_Controller_Index
 	extends Kansas_Controller_Abstract {
 
 	public function Index(array $vars = []) {

@@ -1,6 +1,6 @@
 <?php
 
-class Kansas_Controllers_Image
+class Kansas_Controller_Image
 	extends Kansas_Controller_Abstract {
 
 	public function gallery() {
