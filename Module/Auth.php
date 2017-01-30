@@ -136,11 +136,11 @@ class Kansas_Module_Auth
 	public function getCurrentRoles(System_Guid $scope = null) {
     global $application;
     if($scope == null)
-      $scope = $this->getDefaultScope();
+      $scope = self::getDefaultScope();
     $user;
     if(!$user = $this->hasIdentity())
       return [
-        'scope' => $scope->getHex(),
+        'scope' => $scope['id'],
         'name'  => self::ROLE_GUEST];
     return $application->getProvider('users')->getUserRoles(new System_Guid($user['id']), $scope);
 	}
