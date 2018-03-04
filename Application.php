@@ -181,11 +181,6 @@ class Kansas_Application
 		return $this->_providers[$providerName];
 	}
 	
-	public function getRequest() {
-		global $environment;
-		return $environment->getRequest();
-	}
-	
 	public function dispatch($params) {
 		$params = $this->raiseDispatch($params);
 		$controller = isset($params['controller']) ?
@@ -255,7 +250,8 @@ class Kansas_Application
 			call_user_func($callback);
 	}
 	protected function raiseRoute($params = array()) {
-		$request	= $this->getRequest();
+		global $environment;
+		$request	= $environment->getRequest();
 		foreach ($this->_callbacks['route'] as $callback)
 			$params = array_merge($params, call_user_func($callback, $request, $params));
 		return $params;
@@ -265,7 +261,8 @@ class Kansas_Application
 			call_user_func($callback, $result);
 	}
 	protected function raiseDispatch($params = array()) {
-		$request	= $this->getRequest();
+		global $environment;
+		$request	= $environment->getRequest();
 		foreach ($this->_callbacks['dispatch'] as $callback)
 			$params = array_merge($params, call_user_func($callback, $request, $params));
 		return $params;
@@ -356,7 +353,7 @@ class Kansas_Application
     if($this->_view == null) {
       $this->_view = new Kansas_View_Smarty($this->options['view']);
       if($this->_view->getCaching())
-        $this->_view->setCacheId($this->getRequest()->getRequestUri());
+        $this->_view->setCacheId($environment->getRequest()->getRequestUri());
       $this->raiseCreateView($this->_view);
     }
 		return $this->_view;

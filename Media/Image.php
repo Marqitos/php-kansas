@@ -176,8 +176,8 @@ class Kansas_Media_Image
 	public static function getModel(&$mId, Kansas_Controller_Interface $controller) {
 		$model = parent::getModel($mId);
 		if($model == null) {
-			global $application;
-			$request			= $application->getRequest();
+			global $application, $environment;
+			$request			= $environment->getRequest();
 			$router				= $controller->getParam('router');
 			$image				= new System_Guid($controller->getParam('image'));
 			$model				= $application->getProvider('Image')->getById($image);
