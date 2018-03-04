@@ -1,4 +1,5 @@
 <?php
+require_once 'System/Version.php';
 
 class Kansas_Environment {
 	
@@ -25,7 +26,7 @@ class Kansas_Environment {
 	protected function __construct($status, float $t_inicio = null) {
 		$this->_status = $status;
 		$this->t_inicio = isset($t_inicio) ? (float)$t_inicio : microtime(true);
-		$this->_version = new System_Version('0.2');
+		$this->_version = new System_Version('0.3');
 	}
 	
 	public static function getInstance($status = null, $t_inicio = null) {
@@ -60,8 +61,10 @@ class Kansas_Environment {
   public function setTheme($theme) {
     if(is_string($theme))
       $theme = explode(':', $theme);
-    if(!is_array($theme))
-      throw new System_ArgumentOutOfRange();
+    if(!is_array($theme)) {
+			require_once 'System/ArgumentOutOfRangeException.php';
+      throw new System_ArgumentOutOfRangeException();
+		}
     if($theme[0] == '') {
       unset($theme[0]);
       $this->_theme = array_merge($this->_theme, $theme);        
@@ -102,6 +105,64 @@ class Kansas_Environment {
     echo $levelText . $time . ' [' . $level . '] ' . $message . "<br />\n";
 	}
   
+/**
+	* Determine system TMP directory and detect if we have read access
+	*
+	* inspired from Zend_File_Transfer_Adapter_Abstract
+	*
+	* @return string
+	* @throws Zend_Cache_Exception if unable to determine directory
+	*/
+	public static function getTmpDir() {
+		foreach ([$_ENV, $_SERVER] as $tab) {
+			foreach (['TMPDIR', 'TEMP', 'TMP', 'windir', 'SystemRoot'] as $key) {
+				if (isset($tab[$key])) {
+					if (($key == 'windir') or ($key == 'SystemRoot'))
+						$dir = realpath($tab[$key] . '\\temp');
+					else
+						$dir = realpath($tab[$key]);
+					if (self::_isGoodTmpDir($dir))
+						return $dir;
+				}
+			}
+		}
+		$upload = ini_get('upload_tmp_dir');
+		if ($upload) {
+			$dir = realpath($upload);
+			if (self::_isGoodTmpDir($dir))
+				return $dir;
+		}
+		if (function_exists('sys_get_temp_dir')) {
+			$dir = sys_get_temp_dir();
+			if ($this->_isGoodTmpDir($dir))
+				return $dir;
+		}
+		// Attemp to detect by creating a temporary file
+		$tempFile = tempnam(md5(uniqid(rand(), TRUE)), '');
+		if ($tempFile) {
+			$dir = realpath(dirname($tempFile));
+			unlink($tempFile);
+			if (self::_isGoodTmpDir($dir))
+				return $dir;
+		}
+		if (self::_isGoodTmpDir('/tmp'))
+			return '/tmp';
+		if (self::_isGoodTmpDir('\\temp'))
+			return '\\temp';
+		require_once 'System/IO/IOException.php';
+		throw new System_IO_Exception('Could not determine temp directory, please specify a temp directory manually');
+	}
+
+/**
+	* Verify if the given temporary directory is readable and writable
+	*
+	* @param $dir temporary directory
+	* @return boolean true if the directory is ok
+	*/
+	protected static function _isGoodTmpDir($dir) {
+		return is_readable($dir) && is_writable($dir);
+	}    
+
 	public function getVersion() {
 		return $this->_version;
 	}	

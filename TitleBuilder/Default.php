@@ -1,26 +1,33 @@
 <?php
+require_once 'System/Configurable/Abstract.php';
 
 class Kansas_TitleBuilder_Default
+	extends System_Configurable_Abstract
 	implements Kansas_TitleBuilder_Interface {
 		
-  const APPEND	= 'APPEND';
-	const SET			= 'SET';
+	const APPEND	= 'APPEND';
+	const SET		= 'SET';
 	const PREPEND	= 'PREPEND';
 
-	protected $options;
 	protected $_items = [];
 
-	public function __construct(array $options) {
-		$this->options = array_merge($this->getDefaultOptions(), $options);
+	/// Miembros de System_Configurable_Interface
+	public function getDefaultOptions($environment) {
+		switch ($environment) {
+			case 'production':
+			case 'development':
+			case 'test':
+				return [
+					'separator'		=> ' : ',
+					'attachOrder'	=> self::PREPEND,
+					'title'			=> ''
+				];
+			default:
+				require_once 'System/NotSupportedException.php';
+				throw new System_NotSupportedException("Entorno no soportado [$environment]");
+		}
 	}
 	
-	protected function getDefaultOptions() {
-		return [
-			'separator'		=> ' : ',
-			'attachOrder'	=> self::PREPEND,
-			'title'				=> ''
-		];
-	}
 
 	public function getSeparator() {
 		return $this->options['separator'];

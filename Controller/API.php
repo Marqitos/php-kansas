@@ -116,7 +116,7 @@ class Kansas_Controller_API
 		$realpath = self::removeDots($absolute); // realpath($absolute);
 		$basepath = self::removeDots(BASE_PATH);
 		$count = strlen($basepath);
-		if(Kansas_String::startWith($realpath, $basepath)) {
+		if(System_String::startWith($realpath, $basepath)) {
 			$relative = substr($realpath, $count);
 			return true;
 		} else

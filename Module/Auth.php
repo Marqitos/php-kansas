@@ -1,57 +1,130 @@
 <?php
+require_once 'System/Configurable/Abstract.php';
+require_once 'Kansas/Module/Interface.php';
 
 class Kansas_Module_Auth
-  extends Kansas_Module_Abstract {
+  extends System_Configurable_Abstract
+  implements Kansas_Module_Interface {
 
   /// Constantes
-	// Roles predeterminadas
-	const ROLE_ADMIN			= 'admin'; // Usuario con todos los permisos
-	const ROLE_GUEST			= 'guest'; // Usuario no autenticado
+  // Roles predeterminadas
+  const ROLE_ADMIN			= 'admin'; // Usuario con todos los permisos
+  const ROLE_GUEST			= 'guest'; // Usuario no autenticado
+
+  const TYPE_FORM       = 'form';
+  const TYPE_FEDERATED  = 'federated';
   
   /// Campos
-	private $_router;
-	private $_authServices = [];
-	private $_rolePermisions;
-	private $_events;
+  private $_router;
+  private $_authServices = [];
+  private $_session;
+  private $_user;
+  private $_callbacks = [
+    'onChangedPassword' => []
+  ];
+  private $_authTypes = [];
+
+  private $_rolePermisions;
   private static $_defaultScope;
   
   /// Constructor
-	public function __construct(array $options) {
-    parent::__construct($options, __FILE__);
-		global $application;
-		@session_start();
-		$_events = new Kansas_Auth_Events();
-		$application->registerPreInitCallbacks( [$this, "appPreInit"]);
-		$application->registerRouteCallbacks(   [$this, "appRoute"]);
-    $application->registerRenderCallbacks(  [$this, "appRender"]);
-	}
+  public function __construct(array $options) {
+    parent::__construct($options);
+    global $application;
+    $application->registerCallback('preinit', [$this, "appPreInit"]);
+    $application->registerCallback('route',   [$this, "appRoute"]);
+  }
   
   /// Miembros de Kansas_Module_Interface
+  public function getDefaultOptions($environment) {
+    switch ($environment) {
+    case 'production':
+    case 'development':
+    case 'test':
+      return [
+      'router' =>  [
+        'base_path' => 'cuenta'
+      ],
+      'actions' => [
+        'account' => [
+          'path'        => '',
+          'controller'	=> 'Auth',
+          'action'	    => 'index'],
+        'signout' => [
+          'path' 			  => '/cerrar-session',
+          'controller'	=> 'Auth',
+          'action'		  => 'signOut']
+      ],
+      'session'	  => 'Kansas_Auth_Session_Default',
+      'lifetime'  => 60*60*24*15, // 15 días
+      'roles'     => []
+      ];
+    default:
+      require_once 'System/NotSuportedException.php';
+      throw new System_NotSuportedException("Entorno no soportado [$environment]");
+    }
+  }
+
   public function getVersion() {
-		global $environment;
-		return $environment->getVersion();
-	}	
-	
+    global $environment;
+    return $environment->getVersion();
+  }	
+  
   /// Eventos de la aplicación
-	public function appPreInit() { // añadir router
-		global $application;
+  public function appPreInit() { // añadir router
+    global $application;
+    $this->getSession()->initialize();
+    $this->_user = $this->_session->getIdentity();
     $zones = $application->hasModule('zones');
     if($zones && $zones->getZone() instanceof Kansas_Module_Admin) {
       $admin = $zones->getZone();
-		  $admin->registerMenuCallbacks([$this, "adminMenu"]);
+      $admin->registerMenuCallbacks([$this, "adminMenu"]);
     } else    
       $application->addRouter($this->getRouter());
+  }
+
+  public function appRoute(Kansas_Request $request, $params) { // Añadir datos de usuario
+    $result = [];
+    if($this->_user)
+      $result['identity'] = $this->_user;
+    if(array_search(self::TYPE_FORM, $this->_authTypes) !== FALSE)
+      $result['authForm'] = TRUE;
+    return $result;
+  }
+
+
+  public function getSession() {
+    if(!isset($this->_session)) {
+      try {
+        require_once 'Kansas/Loader.php';
+        Kansas_Loader::loadClass($this->options['session']);
+        $this->_session = new $this->options['session']();
+      } catch(Exception $ex) {
+        var_dump($ex);
+        throw $ex;
+      }
+    }
+    return $this->_session;
+  }
+
+  public function setIdentity($user, $remember = false, $domain = NULL) {
+    $this->_user = $user;
+    // Registrar eventos de inicio de sesión
+    $lifetime = $remember ? $this->options['lifetime'] : 0;
+    $this->getSession()->setIdentity($user, $lifetime, $domain);
+  }
+
+  public function getIdentity() {
+    return ($this->_user)
+      ? $this->_user
+      : FALSE;
+  }
+
+  public function registerChangedPassword($callback) {
+		if(is_callable($callback))
+			$this->_callbacks['onChangedPassword'][] = $callback;
 	}
-  
-	public function appRoute(Kansas_Request $request, $params) { // Añadir datos de usuario
-		return $this->hasIdentity() ? ['identity' => $this->getIdentity()]
-																: [];
-	}
-	
-  public function appRender() { // desbloquear sesión
-    session_write_close();
-	}
-  
+
   /// Eventos de zona Admin
   public function adminMenu() {
     // TODO: Comprobar permisos
@@ -90,60 +163,51 @@ class Kansas_Module_Auth
   }
   
   
-	public function getRouter() {
-		if($this->_router == null) {
-			$this->_router = new Kansas_Router_Account($this->getOptions('router'));
+  public function getRouter() {
+    if($this->_router == null) {
+      require_once 'Kansas/Router/Auth.php';
+      $this->_router = new Kansas_Router_Auth($this->options['router']);
+      $this->_router->addActions($this->options['actions']);
       foreach ($this->_authServices as $authService)
         $this->_router->addActions($authService->getActions());
     }
-		return $this->_router;
-	}
-	
-	public function createAuthMembership($service = 'membership', array $params = []) {
-		return call_user_func_array(
-			$this->getAuthServiceFactory($service),
-			$params);
-	}
-	
-	protected function getAuthServiceFactory($serviceName) {
-		$factory = $this->getAuthService($serviceName);
-		return $factory ?	[$factory, 'factory']:
-											function() { return false; };
-	}
-	
-	public function getAuthService($serviceName = 'membership') { // Devuelve un servicio de autenticación por el nombre
-		return isset($this->_authServices[$serviceName]) ? 	$this->_authServices[$serviceName]:
-																												false;
-	}
-	
-	public function getAuthServices($serviceAuthType = 'form') { // Devuelve los servicios de autenticación por el tipo
-		$result = [];
-		foreach($this->_authServices as $name => $service)
-			if($service->getAuthType() == $serviceAuthType)
-				$result[$name] = $service;
-		return $result;
-	}
-	
-	public function setAuthService($serviceName, Kansas_Auth_Service_Interface $service) {
-		$this->_authServices[$serviceName] = $service;
-	}
-	
-	public function getBasePath() {
-		return $this->getOptions(['router', 'basePath']);
-	}
-	
-	// Obtiene los rols del usuario actual, invitado si no esta autenticado
-	public function getCurrentRoles(System_Guid $scope = null) {
+    return $this->_router;
+  }
+  
+  public function getAuthService($serviceName = 'membership') { // Devuelve un servicio de autenticación por el nombre
+    return isset($this->_authServices[$serviceName])
+      ? $this->_authServices[$serviceName]
+      : false;
+  }
+  
+  public function getAuthServices($serviceAuthType = 'form') { // Devuelve los servicios de autenticación por el tipo
+    $result = [];
+    foreach($this->_authServices as $name => $service)
+      if($service->getAuthType() == $serviceAuthType)
+        $result[$name] = $service;
+    return $result;
+  }
+  
+  public function addAuthService(Kansas_Auth_Service_Interface $authService) {
+    $this->_authServices[$authService->getName()] = $authService;
+    if(!array_search($this->_authTypes, $authService->getAuthType()))
+    $this->_authTypes[] = $authService->getAuthType();
+  }
+
+
+  
+  // Obtiene los rols del usuario actual, invitado si no esta autenticado
+  public function getCurrentRoles(System_Guid $scope = null) {
     global $application;
     if($scope == null)
       $scope = self::getDefaultScope();
-    $user;
-    if(!$user = $this->hasIdentity())
+    $user = $this->getSession()->getIdentity();
+    if($user === FALSE)
       return [
         'scope' => $scope['id'],
         'name'  => self::ROLE_GUEST];
     return $application->getProvider('users')->getUserRoles(new System_Guid($user['id']), $scope);
-	}
+  }
   
   public static function getRolesByScope(array $scope = NULL) {
     global $application;
@@ -199,50 +263,22 @@ class Kansas_Module_Auth
     return [$config['defaultDomain'] => self::getDefaultScope()];
   }
   
-	
-	// Obtiene el usuario actual, o false si no está autenticado
-  public function getIdentity() {
-    return (isset($_SESSION['auth'])) ? $_SESSION['auth']
-                                      : false;
+  // Obtiene si el usuario actual tiene permisos para realizar una acción
+  public function hasPermision($permisionName) {
+    if(!isset($_SESSION['auth']))
+      return false;
+    else if($this->getIdentity()->isInRole(Kansas_User_Abstract::ROLE_ADMIN))
+      return true;
+    else
+      return $this->getRolePermisions()->hasPermision($this->getIdentity(), $permisionName);
   }
-	
-	// Obtiene si el usuario actual tiene permisos para realizar una acción
-	public function hasPermision($permisionName) {
-		if(!isset($_SESSION['auth']))
-			return false;
-		else if($this->getIdentity()->isInRole(Kansas_User_Abstract::ROLE_ADMIN))
-			return true;
-		else
-			return $this->getRolePermisions()->hasPermision($this->getIdentity(), $permisionName);
-	}
-	
-	// Obt
-	protected function getRolePermisions() {
-		if($this->_rolePermisions == null) {
-			
-		}
-		return $this->_rolePermisions;
-	}
-	
-  public function authenticate(Kansas_Auth_Adapter_Interface $adapter) {
-    $result = $adapter->authenticate();
-		$this->_events->autenthicationAttempt($adapter, $result);
-
-    if (isset($_SESSION['auth']))
-      unset($_SESSION['auth']);
-
-    if ($result->isValid())
-      $_SESSION['auth'] = $result->getIdentity();
-
-    return $result;
-  }	
-	
-  public function hasIdentity() {
-    return isset($_SESSION['auth']);
+  
+  // Obt
+  protected function getRolePermisions() {
+    if($this->_rolePermisions == null) {
+      
+    }
+    return $this->_rolePermisions;
   }
-
-  public function clearIdentity() {
-    unset($_SESSION['auth']);
-  }
-    
+  
 }

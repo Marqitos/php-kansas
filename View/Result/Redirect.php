@@ -1,4 +1,5 @@
 <?php 
+require_once 'Kansas/View/Result/Interface.php';
 
 class Kansas_View_Result_Redirect
   implements Kansas_View_Result_Interface {

@@ -1,4 +1,5 @@
 <?php
+require_once 'Kansas/View/Result/String/Abstract.php';
 
 class Kansas_View_Result_Javascript
 	extends Kansas_View_Result_String_Abstract {

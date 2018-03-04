@@ -1,4 +1,5 @@
 <?php
+require_once 'Kansas/Module/Interface.php';
 
 // Representa una zona
 interface Kansas_Module_Zone_Interface

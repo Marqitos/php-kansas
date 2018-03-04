@@ -1,20 +1,29 @@
 <?php
-
+require_once 'System/Configurable/Abstract.php';
 
 class Kansas_Module_RedirectionError
-  extends Kansas_Module_Abstract {
+  extends System_Configurable_Abstract {
 
 	public function __construct(array $options) {
-    parent::__construct($options, pathinfo(__FILE__));
+    parent::__construct($options);
 		global $application;
-		$application->set('error', [$this, "errorManager"]);
+		$application->set('error', [$this, 'errorManager']);
 	}
   
-  public function getDefaultOptions() {
-    return [
-      'basePath' => false,
-      'append'   => true
-    ];
+  /// Miembros de Kansas_Module_Interface
+  public function getDefaultOptions($environment) {
+    switch ($environment) {
+      case 'production':
+      case 'development':
+      case 'test':
+        return [
+          'basePath' => false,
+          'append'   => true
+        ];
+      default:
+        require_once 'System/NotSuportedException.php';
+        throw new System_NotSuportedException("Entorno no soportado [$environment]");
+    }
   }
   
   public function getVersion() {
@@ -24,9 +33,9 @@ class Kansas_Module_RedirectionError
   
   public function errorManager($params) {
     global $application;
-    if($params['code'] == 404 && $path = $this->getOptions('basePath')) {
+    if($params['code'] == 404 && $path = $this->options['basePath']) {
       global $environment;
-      if($this->getOptions('append'))
+      if($this->options['append'])
         $path = rtrim($path, '/') . $environment->getRequest()->getRequestUri();
       $result = Kansas_View_Result_Redirect::gotoUrl($path);
       $result->executeResult();

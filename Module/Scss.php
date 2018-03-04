@@ -1,43 +1,54 @@
 <?php
-
+require_once 'System/Configurable/Abstract.php';
+require_once 'Kansas/Module/Interface.php';
+require_once 'Kansas/Controller/Index.php';
 use Leafo\ScssPhp\Compiler;
 
-class Kansas_Module_Scss {
+class Kansas_Module_Scss
+	extends System_Configurable_Abstract
+	implements Kansas_Module_Interface {
 		
 	private $_parser;
 	private $_router;
-	private $_cache = true;
-	private $_formater = 'Leafo\ScssPhp\Formatter\Compressed';
 
 	public function __construct(array $options = []) {
-		global $application;
-		if(isset($options['formater']))
-			$this->_formater = $options['formater'];			
-		$application->registerPreInitCallbacks([$this, "appPreInit"]);
+		parent::__construct($options);
+
+    Kansas_Controller_Index::addAction('scss', [$this, 'controllerAction']);
 	}
-	
-	public function appPreInit() { // añadir rutas
-		global $application;
-    $application->setRoute('css', [
-      'controller'  => 'index',
-      'action'      => 'scss',
-      'file'        => 'default.scss'
-    ]);
-	}
+
+  /// Miembros de Kansas_Module_Interface
+  public function getDefaultOptions($environment) {
+    switch ($environment) {
+      case 'production':
+        return [
+          'formater' => 'Leafo\ScssPhp\Formatter\Compressed',
+          'cache' => true,
+          'environment' => $environment
+				];
+      case 'development':
+      case 'test':
+        return [
+          'formater' => 'Leafo\ScssPhp\Formatter\Expanded',
+          'cache' => false,
+          'environment' => $environment
+				];
+      default:
+        require_once 'System/NotSupportedException.php';
+        throw new System_NotSupportedException("Entorno no soportado [$environment]");
+    }
+  }
+		
+  public function getVersion() {
+		global $environment;
+		return $environment->getVersion();
+	}  
 
 	public function getParser() {
 		if($this->_parser == null) {
-			global $environment;
 			$this->_parser = new Compiler();
 			$this->_parser->addImportPath([$this, 'getFile']);
-			switch($environment->getStatus()) {
-				case Kansas_Environment::DEVELOPMENT:
-					$this->_parser->setFormatter('Leafo\ScssPhp\Formatter\Expanded');
-					break;
-				default:
-					$this->_parser->setFormatter($this->_formater);
-			}
-			 	
+			$this->_parser->setFormatter($this->options['formater']);
 		} 
 		return $this->_parser;
 	}
@@ -46,7 +57,9 @@ class Kansas_Module_Scss {
     global $environment;
     $ext = strtolower(substr($fileName, strrpos($fileName, '.') + 1));
     // if the last char isn't *, and it's not (.scss|.css)
-    if(substr($fileName, -1) != '*' && $ext !== 'scss' && $ext !== 'css' &&
+    if( substr($fileName, -1) != '*' &&
+        $ext !== 'scss' &&
+        $ext !== 'css' &&
 			  $result = $this->getFile($fileName . '.scss', $first))
 			return $result;
 		if(file_exists($fileName))
@@ -65,10 +78,11 @@ class Kansas_Module_Scss {
 	public function toCss($file, &$md5 = false) {
 		global $application;
 		$file = $this->getFile($file, null, true);
-		if($cache = $application->hasModule('BackendCache')) {
+		if($this->options['cache'] &&
+			$cache = $application->hasModule('BackendCache')) {
       $test = false;
-      if($cache->test('scss-' . md5($file))) {
-        $data = $cache->load('scss-' . md5($file));
+      if($cache->test('scss-list-' . md5($file))) {
+        $data = $cache->load('scss-list-' . md5($file));
         $md5 = md5($data);
         $fileList = unserialize($data);
         $test = true;
@@ -79,8 +93,8 @@ class Kansas_Module_Scss {
           }
         }
       }
-      if($test && $cache->test('scss-' . $md5))
-        return $cache->load('scss-' . $md5);
+      if($test && $cache->test('scss-' . $md5 . '.css'))
+        return $cache->load('scss-' . $md5 . '.css');
       else {
         $css = $this->getParser()->compile(file_get_contents($file));
         $fileList = [$file => hash_file("crc32b", $file)];
@@ -88,16 +102,17 @@ class Kansas_Module_Scss {
           $fileList[$path] = hash_file("crc32b", $path);
         $data = serialize($fileList);
         $md5 = md5($data);
-        $cache->save($data, 'scss-' . md5($file));        
-        $cache->save($css, 'scss-' . $md5);
+        $cache->save($data, 'scss-list-' . md5($file));        
+        $cache->save($css, 'scss-' . $md5 . '.css', ['scss']);
         return $css;
       }
 		} else
 			return $this->getParser()->compile(file_get_contents($file));
 	}
+
+	public function controllerAction($controller, array $vars = []) {
+    require_once 'Kansas/View/Result/Scss.php';
+		return new Kansas_View_Result_Scss($vars['file']);
+	}
 	
-  public function getVersion() {
-		global $environment;
-		return $environment->getVersion();
-	}  
 }

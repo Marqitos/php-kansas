@@ -968,7 +968,7 @@ class Kansas_Request implements Kansas_Request_Interface {
   
 	public function getPartialPath(string $basePath) {
 		$path = trim($this->getUri()->getPath(), '/');
-		if(Kansas_String::startWith($path, $basePath))
+		if(System_String::startWith($path, $basePath))
 			return trim(substr($path, strlen($basePath)), '/');
 		return false;
 	}    

@@ -98,13 +98,12 @@ class Kansas_Loader {
      * @throws Zend_Exception
      */
     public static function loadClass($class, $dirs = null) {
-        if (class_exists($class, false) || interface_exists($class, false)) {
+        if (class_exists($class, false) || interface_exists($class, false))
             return;
-        }
 
         if ((null !== $dirs) && !is_string($dirs) && !is_array($dirs)) {
-            require_once 'Zend/Exception.php';
-            throw new Zend_Exception('Directory argument must be a string or an array');
+            require_once 'System/ArgumentOutOfRangeException.php';
+            throw new System_ArgumentOutOfRangeException('dirs', 'Debe ser una cadena de texto o un array');
         }
 
         // Autodiscover the path from the class name
@@ -174,9 +173,8 @@ class Kansas_Loader {
          */
         $incPath = false;
         if (!empty($dirs) && (is_array($dirs) || is_string($dirs))) {
-            if (is_array($dirs)) {
+            if (is_array($dirs))
                 $dirs = implode(PATH_SEPARATOR, $dirs);
-            }
             $incPath = get_include_path();
             set_include_path($dirs . PATH_SEPARATOR . $incPath);
         }
@@ -197,9 +195,8 @@ class Kansas_Loader {
         /**
          * If searching in directories, reset include_path
          */
-        if ($incPath) {
+        if ($incPath)
             set_include_path($incPath);
-        }
 
         return true;
     }
@@ -217,33 +214,19 @@ class Kansas_Loader {
      * @param string   $filename
      * @return boolean
      */
-    public static function isReadable($filename)
-    {
-        if (is_readable($filename)) {
-            // Return early if the filename is readable without needing the
-            // include_path
-            return true;
-        }
+    public static function isReadable($filename) {
+        if (is_readable($filename)) // Return early if the filename is readable without needing the
+            return true;            // include_path
 
         if (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN'
-            && preg_match('/^[a-z]:/i', $filename)
-        ) {
-            // If on windows, and path provided is clearly an absolute path,
-            // return false immediately
-            return false;
-        }
+            && preg_match('/^[a-z]:/i', $filename)  // If on windows, and path provided is clearly an absolute path,
+        ) return false;                             // return false immediately
 
         foreach (self::explodeIncludePath() as $path) {
-            if ($path == '.') {
-                if (is_readable($filename)) {
-                    return true;
-                }
-                continue;
-            }
+            if ($path == '.') continue;
             $file = $path . '/' . $filename;
-            if (is_readable($file)) {
+            if (is_readable($file))
                 return true;
-            }
         }
         return false;
     }
@@ -257,20 +240,14 @@ class Kansas_Loader {
      * @param  string|null $path
      * @return array
      */
-    public static function explodeIncludePath($path = null)
-    {
-        if (null === $path) {
+    public static function explodeIncludePath($path = null) {
+        if (null === $path)
             $path = get_include_path();
-        }
 
-        if (PATH_SEPARATOR == ':') {
-            // On *nix systems, include_paths which include paths with a stream
-            // schema cannot be safely explode'd, so we have to be a bit more
-            // intelligent in the approach.
+        if (PATH_SEPARATOR == ':') // On *nix systems, include_paths which include paths with a stream schema cannot be safely explode'd, so we have to be a bit more intelligent in the approach.
             $paths = preg_split('#:(?!//)#', $path);
-        } else {
+        else
             $paths = explode(PATH_SEPARATOR, $path);
-        }
         return $paths;
     }
 
@@ -280,16 +257,12 @@ class Kansas_Loader {
      *
      * @param  string $filename
      * @return void
-     * @throws Zend_Exception
+     * @throws FileNotFoundException
      */
-    protected static function _securityCheck($filename)
-    {
-        /**
-         * Security check
-         */
+    protected static function _securityCheck($filename) {
         if (preg_match('/[^a-z0-9\\/\\\\_.:-]/i', $filename)) {
-            require_once 'Zend/Exception.php';
-            throw new Zend_Exception('Security check: Illegal character in filename');
+            require_once 'System/IO/FileNotFoundException.php';
+            throw new FileNotFoundException('Comprobación de seguridad: Caracteres no admitidos en el nombre de archivo');
         }
     }
 

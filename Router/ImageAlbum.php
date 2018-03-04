@@ -9,7 +9,7 @@ class Kansas_Router_ImageAlbum
 
 	public function __construct(Kansas_Media_Group_Image_Album_Interface $album, array $options, $galleryRouter = null) {
 		parent::__construct();
-    $this->setOptions($options);
+		$this->setOptions($options);
 		$this->_galleryRouter = $galleryRouter;
 		$this->_album	= $album;
 	}
@@ -18,11 +18,11 @@ class Kansas_Router_ImageAlbum
 		return array_replace_recursive(parent::getDefaultOptions(), [
 			'album'			=> [
 				'controller'	=> 'image',
-				'action'			=> 'album',
+				'action'		=> 'album',
 				'body_class'	=> 'album-full'],
 			'photo'			=> [
 				'controller'	=> 'image',
-				'action'			=> 'image']
+				'action'		=> 'image']
       ]);
 	}
 	
@@ -46,7 +46,7 @@ class Kansas_Router_ImageAlbum
 		$params = false;
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
     
-    if(Kansas_String::startWith($this->getBasePath(), $path))
+    if(System_String::startWith($this->getBasePath(), $path))
       $path = substr($this->getBasePath(), strlen($this->getBasePath()));
     else
 			return false;

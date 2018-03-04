@@ -1,4 +1,5 @@
 <?php
+require_once 'Kansas/Db.php'
 
 class Kansas_Db_Users
 	extends Kansas_Db {

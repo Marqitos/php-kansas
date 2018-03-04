@@ -1,50 +1,43 @@
 <?php
+require_once 'System/Configurable/Abstract.php';
+require_once 'Kansas/Router/Interface.php';
 
 abstract class Kansas_Router_Abstract
-	implements Kansas_Router_Interface, Serializable {
+	extends System_Configurable_Abstract
+	implements Kansas_Router_Interface {
 	
-	protected $options;
-
-	protected function __construct() {
-    $this->options = $this->getDefaultOptions();
-  }
-	
-	public function setOptions(array $options) {
-		$this->options = array_replace_recursive($this->options, $options);
-	}
-	
-	protected function getDefaultParams() {
-		return $this->options['params'];
+	protected function getParams(array $params) {
+		return array_merge($this->options['params'], $params);
 	}
   
-  protected function getDefaultOptions() {
-    return [
-  		'basePath'	=> '',
-  		'params'		=> []
-  	];
-  }
+	public function getDefaultOptions($environment) {
+		return [
+			'base_path'	=> '',
+  			'params'	=> []
+		];
+	}
 	
 	/* Miembros de Kansas_Router_Interface */
 	public function getBasePath() {
-		return $this->options['basePath'];
+		return $this->options['base_path'];
 	}
 	public function setBasePath($basePath) {
-		$this->options['basePath'] = trim((string) $basePath, '/');
+		$this->options['base_path'] = trim((string) $basePath, '/');
 	}
 	
-  public function assemble($data = [], $reset = false, $encode = false) {
+	public function assemble($data = [], $reset = false, $encode = false) {
 		return isset($data['basepath']) ?
 			$data['basepath']:
 			'/' . $this->getBasePath();
 	}
-	
-	/* Miembros de Serializable */
-	public function serialize() {
-		return serialize($this->options);
+
+	public static function getPath(Kansas_Router_Interface $router) {
+		global $environment;
+		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+		return (System_String::startWith($path, $router->getBasePath()))
+			? substr($path, strlen($router->getBasePath()))
+			: false;
 	}
 	
-	public function unserialize($serialized) {
-		$this->options = unserialize($serialized);
-	}
-	
+
 }

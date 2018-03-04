@@ -1,4 +1,6 @@
 <?php
+require_once 'Kansas/Module/Zone/Abstract.php';
+require_once 'Kansas/Router/Interface.php';
 
 class Kansas_Module_Admin
   extends Kansas_Module_Zone_Abstract
@@ -13,12 +15,27 @@ class Kansas_Module_Admin
   
   /// Constructor
 	public function __construct(array $options) {
-    parent::__construct($options, __FILE__);
+    parent::__construct($options);
 		global $application;
-		$application->registerPreInitCallbacks([$this, "appPreInit"]);
+		$application->registerCallback('preinit', [$this, "appPreInit"]);
 	}
   
   /// Miembros de Kansas_Module_Interface
+  public function getDefaultOptions($environment) {
+    switch ($environment) {
+      case 'production':
+      case 'development':
+      case 'test':
+        return [
+          'base_path' => 'admin',
+          'params' => []
+        ];
+      default:
+        require_once 'System/NotSuportedException.php';
+        throw new System_NotSuportedException("Entorno no soportado [$environment]");
+    }
+  }
+
   public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
@@ -30,7 +47,7 @@ class Kansas_Module_Admin
     global $environment;
 		$params = false;
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
-    if(Kansas_String::startWith($path, $this->getBasePath()))
+    if(System_String::startWith($path, $this->getBasePath()))
       $path = substr($path, strlen($this->getBasePath()));
     else
 			return false;
@@ -51,12 +68,12 @@ class Kansas_Module_Admin
 			$menu = array_merge($menu, call_user_func($callback));
 
     if($path == '') { // Escritorio
-      $params = array_merge($this->getOptions('params'), [
+      $params = array_merge($this->options['params'], [
         'controller'  => 'admin',
         'action'      => 'index'
       ]);
     } elseif($path == '/tasks') { // Panel de tareas
-      $params = array_merge($this->getOptions('params'), [
+      $params = array_merge($this->options['params'], [
         'controller'  => 'admin',
         'action'      => 'tasks'
       ]);
@@ -139,7 +156,7 @@ class Kansas_Module_Admin
   
   /// Metodos privados
   private function dispatch($dispatch) {
-    return array_merge($this->getOptions('params'), [
+    return array_merge($this->options['params'], [
       'controller'  => 'admin',
       'action'      => 'dispatch',
       'dispatch'    => $dispatch          

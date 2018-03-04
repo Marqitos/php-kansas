@@ -1,30 +1,60 @@
 <?php
+require_once 'System/Configurable/Abstract.php';
+require_once 'Kansas/Module/Interface.php';
 
-class Kansas_Module_Token {
+//use Lcobucci\JWT\Parser;
+//use Lcobucci\JWT\Signer\Hmac\Sha256;
 
-  protected $options;
-  
+class Kansas_Module_Token
+	extends System_Configurable_Abstract
+	implements Kansas_Module_Interface {
+
+	/// Constructor
 	public function __construct(array $options) {
-    $this->options = $options;
+		parent::__construct($options);
+		if(!$this->options['secret']) {
+			require_once 'System/ArgumentOutOfRangeException.php';
+			throw new System_ArgumentOutOfRangeException('secret');
+		}
 		global $application;
-		$usersModule = $application->getModule('Users');
-		$usersModule->setAuthService('token', $this);
-		$usersModule->getRouter()->setRoute('token', [
-			'controller'	=> 'Token',
-			'action'			=> 'index'
-		]);
-		
+		$application->registerCallback('preinit', [$this, 'appPreInit']);
 	}
 
-	public function factory($token) {
-		global $application;
-		return new Kansas_Auth_Membership(
-			$application->getProvider('SignIn'),
-			$application->getProvider('Token'),
-			$token
-		);
+//		$usersModule->getRouter()->setRoute('token', [
+//			'controller'	=> 'Token',
+//			'action'		=> 'index'
+//		]);
+		
+	/// Miembros de Kansas_Module_Interface
+	public function getDefaultOptions($environment) {
+		switch ($environment) {
+			case 'production':
+			case 'development':
+			case 'test':
+				return [
+					'secret'  => FALSE
+				];
+			default:
+				require_once 'System/NotSuportedException.php';
+				throw new System_NotSuportedException("Entorno no soportado [$environment]");
+		}
 	}
+
+	public function getVersion() {
+		global $environment;
+		return $environment->getVersion();
+	}
+
 	
+
+	public function parse($tokenString) {
+		$parser = new Parser();
+		$signer = new Sha256();
+		$token = $parser->parse($tokenString);
+		$token->verify($signer, $this->options['secret']);
+		return $token;
+	}
+            
 	public function getToken($device = true) {
 		global $application;
 		$auth = $application->getModule('auth');

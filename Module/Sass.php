@@ -1,6 +1,7 @@
 <?php
 
-require_once('Phpsass/SassParser.php');
+require_once 'Kansas/Module/Abstract.php';
+require_once 'Kansas/Controller/Index.php';
 
 class Kansas_Module_Sass
   extends Kansas_Module_Abstract {
@@ -9,20 +10,34 @@ class Kansas_Module_Sass
 	private $_router;
 
 	public function __construct(array $options) {
-		global $application;
-    parent::__construct($options, __FILE__);
-		$application->registerPreInitCallbacks([$this, "appPreInit"]);
-	}
-  
-	public function appPreInit() { // añadir rutas
-		global $application;
-    $application->setRoute('css', [
-      'controller'  => 'index',
-      'action'      => 'sass',
-      'file'        => 'default.scss'
-    ]);
+    parent::__construct($options);
+    Kansas_Controller_Index::addAction('sass', [$this, 'controllerAction']);
 	}
 
+  /// Miembros de Kansas_Module_Interface
+  public function getDefaultOptions($environment) {
+    switch ($environment) {
+      case 'production':
+        return [ 'cache' => TRUE ];
+			case 'test':
+			case 'development':
+				return [ 'cache' => FALSE ];
+      default:
+        require_once 'System/NotSupportedException.php';
+        throw new System_NotSupportedException("Entorno no soportado [$environment]");
+    }
+  }
+
+  public function getVersion() {
+		global $environment;
+		return $environment->getVersion();
+	}	
+
+
+	public function controllerAction(array $vars) {
+		return new Kansas_View_Result_Sass($this->getParam('file'));
+	}
+	
 	public function getParser() {
 		if($this->_parser == null) {
 			$options = $this->getOptions();
@@ -37,7 +52,8 @@ class Kansas_Module_Sass
         global $environment;
 				$options['load_paths'] = $environment->getThemePaths();
 			}
-
+			
+			require_once 'Phpsass/SassParser.php';
 			$this->_parser = new SassParser($options); 
 		}
 		return $this->_parser;
@@ -61,8 +77,4 @@ class Kansas_Module_Sass
 			return $this->getParser()->toCss($file);
 	}
 
-  public function getVersion() {
-		global $environment;
-		return $environment->getVersion();
-	}	
 }

@@ -2,9 +2,20 @@
 
 function smarty_function_title(array $params, Smarty_Internal_Template $template) {
   global $application;
-  $title = $params['title'] ?: ($template->getTemplateVars('title')? $template->getTemplateVars('title')->value: false);
+  $templateVars = $template->getTemplateVars();
+  $title = isset($params['title'])
+    ? $params['title']
+    : (isset($templateVars['title'])
+      ? $templateVars['title']
+      : false
+    );
   if(!$title) {
-    @$page = $params['page'] ?: ($template->getTemplateVars('page')? $template->getTemplateVars('title')->value: false);
+    $page = isset($params['page'])
+      ? $params['page']
+      : (isset($templateVars['page'])
+        ? $templateVars['page']
+        : false
+      );
     if($page)
       $title = $page->getTitle();
   }

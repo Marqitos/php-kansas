@@ -3,22 +3,21 @@
 class Kansas_Controller_Account
 	extends Kansas_Controller_Abstract {
 		
-	
-	public function init(array $params) {
-		parent::init($params);
-	}
-	
-	static function getSignInRedirection($ru = '/') {
-		return Kansas_View_Result_Redirect::gotoUrl(self::getRouter()->assemble([
-			'action' => 'signin',
+	static function getRedirection($action = 'signin', $ru = '/') {
+    global $application;
+    $router = $application->getModule('Auth')->getRouter();
+		return Kansas_View_Result_Redirect::gotoUrl($router->assemble([
+			'action' => $action,
 			'ru'     => $ru
 		]));
 	}
+
+
 	
 	public function index() {
 		global $application;
 		if(!$application->getModule('Auth')->hasIdentity())
-			return self::getSignInRedirection('/' . trim($this->getRequest()->getUri()->getPath(), '/'));
+			return self::getRedirection('/' . trim($this->getRequest()->getUri()->getPath(), '/'));
 		else
 			return $this->createViewResult('page.account.tpl', [
         'title' => 'Perfil de usuario'

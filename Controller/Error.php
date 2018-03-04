@@ -1,31 +1,33 @@
 <?php
+require_once 'Kansas/Controller/Abstract.php';
 
 class Kansas_Controller_Error
 	extends Kansas_Controller_Abstract {
 	
-	public function Index(array $params) {
+	public function Index(array $vars) {
 		global $application;
 		global $environment;
 		$application->getView()->setCaching(false);
 		
-    switch($this->getParam('code')) {
+    switch($vars['code']) {
 			case 403:
 				header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden', true, 403);
+        $vars['pageTitle'] = 'No tiene acceso a la acción solicitada';
 				break;
 			case 404:
 				header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found', true, 404);
+        $vars['pageTitle'] = 'El documento no ha sido encontrado';
 				break;
 			default:
         header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error', true, 500);
+        $vars['pageTitle'] = 'Error interno de la aplicación';
 		}
-		
-		return $this->createViewResult('page.error.tpl', [
-      'title'       => 'Error',
-      'env'         => $application->getEnvironment(),
-      'pageTitle'   => $this->getParam('message'),
-      'requestUri'  => $environment->getRequest()->getUriString(),
+
+		return $this->createViewResult('page.error.tpl', array_merge($vars, [
+      'title'       => ['Error'],
+      'env'         => $environment->getStatus(),
       'sugestions'  => []
-    ]);
+    ]));
 	}
 	
   // Visor de errores

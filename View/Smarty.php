@@ -1,22 +1,19 @@
 <?php
-
-require_once 'Smarty/Smarty.class.php';
+require_once 'System/Configurable/Abstract.php';
 require_once 'Kansas/View/Interface.php';
 
 class Kansas_View_Smarty
+	extends System_Configurable_Abstract
   implements Kansas_View_Interface {
 		
-  protected $_smarty;
-	private $_config;
-	private $_cacheId = null;
-	private $_scriptPath;
+  private $_smarty;
+  private $_compileDir;
+	private $_templateDir;
+	private $_configDir;
+	private $_cacheDir;
   
-  public function __construct(array $config) {
-		if(!isset($config['compileDir']))
-			throw new Exception('compileDir is not set for '.get_class($this));
-		else
-			$config['compileDir'] = realpath($config['compileDir']);
-			
+	private $_cacheId = null;
+  /*			
 		foreach(['configDir', 'pluginDir', 'cacheDir'] as $config_dir) {
 			if(isset($config[$config_dir]) && is_string($config[$config_dir]))
 				$config[$config_dir] = realpath($config[$config_dir]);
@@ -27,54 +24,96 @@ class Kansas_View_Smarty
 				$pluginDir[] = realpath($dir);
       $config['pluginDir'] = $pluginDir;
     }
-			
-		if(isset($config['scriptPath']))
-			$this->setScriptPath($config['scriptPath']);
-			
-		$this->_config = $config;
   }
-  
+  */
+  /// Miembros de System_Configurable_Interface
+  public function getDefaultOptions($environment) {
+    switch ($environment) {
+      case 'production':
+        return [
+          'compile_dir' => realpath(BASE_PATH . 'tmp/view-compile/'),
+          'config_dir' => [
+            realpath(HOME_PATH . 'view-config')
+          ],
+          'cache_dir' => realpath(BASE_PATH . 'tmp/cache/'),
+          'plugin_dir' => [
+            realpath(LIBRARY_PATH . 'Kansas/View/Smarty/')],
+          'template_dir' => realpath(HOME_PATH . 'layout'),
+          'caching' => true,
+          'debugging' => false
+        ];
+      case 'development':
+        return [
+          'compile_dir' => realpath(BASE_PATH . 'tmp/view-compile/'),
+          'config_dir' => [
+            realpath(HOME_PATH . 'view-config')
+          ],
+          'cache_dir' => realpath(BASE_PATH . 'tmp/cache/'),
+          'plugin_dir' => [
+            realpath(LIBRARY_PATH . 'Kansas/View/Smarty/')],
+          'template_dir' => realpath(HOME_PATH . 'layout'),
+          'caching' => false,
+          'debugging' => true
+        ];
+      case 'test':
+        return [
+          'compile_dir' => realpath(BASE_PATH . 'tmp/view-compile/'),
+          'config_dir' => [
+            realpath(HOME_PATH . 'view-config')
+          ],
+          'cache_dir' => realpath(BASE_PATH . 'tmp/cache/'),
+          'plugin_dir' => [],
+          'template_dir' => realpath(HOME_PATH . 'layout'),
+          'caching' => false,
+          'debugging' => false
+        ];
+      default:
+        require_once 'System/NotSupportedException.php';
+        throw new System_NotSupportedException("Entorno no soportado [$environment]");
+    }
+  }
+
+  public function getCompileDir() {
+    if($this->_compileDir === null) {
+      $this->_compileDir = realpath($this->options['compile_dir']);
+    }
+    return $this->_compileDir;
+  }
+
   public function getEngine() {
 		if($this->_smarty == null) {
+      require_once 'Smarty/Autoloader.php';
+      Smarty_Autoloader::register();
+      require_once 'Smarty/Smarty.class.php';
+      
 			$this->_smarty = new Smarty();
-		
-			$this->_smarty->setCompileDir($this->_config['compileDir']);
-		
-			if(isset($this->_config['configDir']))
-				$this->_smarty->config_dir = $this->_config['configDir'];
-	
-			if(isset($this->_config['pluginDir']))
-        foreach((array)$this->_config['pluginDir'] as $dir)
-          $this->_smarty->addPluginsDir($dir);
-        
-			if(isset($this->_config['cacheDir']))
-				$this->_smarty->cache_dir = $this->_config['cacheDir'];
-	
-			if(isset($this->_config['caching']))
-				$this->_smarty->caching = (bool)$this->_config['caching'];
-	
-			if(isset($this->_config['debugging']))
-				$this->_smarty->debugging = (bool)$this->_config['debugging'];
-			
+			$this->_smarty->setCompileDir($this->getCompileDir());
+      $this->_smarty->config_dir = $this->options['config_dir'];
+      $this->_smarty->cache_dir = $this->options['cache_dir'];
+      $this->_smarty->caching = (bool)$this->options['caching'];
+      $this->_smarty->debugging = (bool)$this->options['debugging'];
+      foreach((array)$this->options['plugin_dir'] as $dir)
+        $this->_smarty->addPluginsDir($dir);
 		}
 		
     return $this->_smarty;
   }
 	
-	public function setScriptPath($path) {
-		if(is_array($path)) {
-			$this->_scriptPath = [];
-			foreach($path as $key => $value)
-				$this->_scriptPath[$key] = realpath($value);
-		}	elseif(is_string($path))
-			$this->_scriptPath = realpath($path);
-		else
-			throw new System_ArgumentOutOfRangeException();
-	}
-	
 	public function getScriptPaths() {
-		return $this->_scriptPath;
+    if($this->_templateDir == null) {
+      $this->_templateDir = [];
+      if(is_array($this->options['template_dir'])) {
+        foreach($this->options['template_dir'] as $key => $value)
+          $this->_templateDir[$key] = realpath($value);
+      }	else
+        $this->_templateDir[] = realpath($this->options['template_dir']);
+    }
+		return $this->_templateDir;
 	}
+  public function setScriptPath($path) {
+    $this->options['template_dir'] = $path;
+    $this->_templateDir = null;
+  }
   
   public function __set($key,$val) {
     $this->getEngine()->assign($key,$val);
