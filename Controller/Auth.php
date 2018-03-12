@@ -1,6 +1,6 @@
 <?php
 
-class Kansas_Controller_Account
+class Kansas_Controller_Auth
 	extends Kansas_Controller_Abstract {
 		
 	static function getRedirection($action = 'signin', $ru = '/') {
@@ -14,15 +14,25 @@ class Kansas_Controller_Account
 
 
 	
-	public function index() {
-		global $application;
-		if(!$application->getModule('Auth')->hasIdentity())
-			return self::getRedirection('/' . trim($this->getRequest()->getUri()->getPath(), '/'));
+	public function index(array $vars) {
+    global $application;
+    $identity = $application->getModule('Auth')->getIdentity();
+		if($identity == FALSE) {
+      return $this->sessionInfo($vars);
+    }
 		else
 			return $this->createViewResult('page.account.tpl', [
         'title' => 'Perfil de usuario'
       ]);
-	}
+  }
+  
+  public function sessionInfo(array $vars) {
+    // sessiones abiertas
+    // session actual
+    return $this->createViewResult('page.auth-sessions.tpl', [
+      'title' => 'Información de sesiones'
+    ]);
+}
 	
 	protected static function getExternalSignIn($params) {
 		global $application;

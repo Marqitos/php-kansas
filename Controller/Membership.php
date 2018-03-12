@@ -2,7 +2,7 @@
 require_once 'Kansas/Controller/Account.php';
 
 class Kansas_Controller_Membership
-    extends Kansas_Controller_Account {
+    extends Kansas_Controller_Auth {
     
     /* Devuelve la vista de inicio de sesión o
      * autentica al usuario mediante usuario y contraseña y devuelve la redireccion a la página donde se encontraba
