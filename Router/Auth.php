@@ -56,7 +56,7 @@ class Kansas_Router_Auth
   public function getActionPath($path) {
     return (substr($path, 0, 1) == '/')
       ? $path
-      : parent::assemble() . '/' . $path;
+      : rtrim(parent::assemble() . '/' . $path, '/');
   }
   
   public function addActions(array $actions = []) {
