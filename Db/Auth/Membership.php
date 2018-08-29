@@ -1,10 +1,20 @@
 <?php
+namespace Kansas\Db\Auth;
 
-require_once 'Kansas/Db.php';
+use Exception;
+use System\Guid;
+use Kanasa\Auth\AuthException;
+use Kansas\Db\AbstractDb;
+use function password_hash;
+use function strlen;
+
+require_once 'Kansas/AbstractDb.php';
+require_once 'System/Guid.php';
+
 /*
 CREATE TABLE IF NOT EXISTS `membership` (
-  `Id` binary(16) NOT NULL,
-  `Password` binary(20) NOT NULL,
+  `id` binary(16) NOT NULL,
+  `password` binary(20) NOT NULL,
   `isLockedOut` int(1) DEFAULT '0',
   `lastLockOutDate` datetime DEFAULT NULL,
 	PRIMARY KEY (`Id`)
@@ -17,14 +27,11 @@ INSERT INTO `Membership` (`Id`, `Password`) VALUES
 
 */
 
-class Kansas_Db_Auth_Membership
-	extends Kansas_Db {
+class Membership extends AbstractDb {
 		
-	public function __construct(Zend_Db_Adapter_Abstract $db) {
-		parent::__construct($db);
-	}
-	
 	public function createMembership($id, $password) {
+		$hash = password_hash($password, PASSWORD_BCRYPT);
+		var_dump(strlen($password), strlen($hash));
 		
 	}
 	public function changePassword($id, $oldPassword, $newPassword) {
@@ -38,28 +45,32 @@ class Kansas_Db_Auth_Membership
 	 * @return Array Datos del usuario
 	 */
 	public function validate($email, $password) {
-		require_once 'Kansas/Auth/Exception.php';
-		$sql = 'SELECT HEX(USR.Id) as id, USR.name, USR.email, USR.isApproved, USR.isEnabled, USR.comment, MBS.lastLockOutDate, MBS.isLockedOut FROM `users` AS USR INNER JOIN `membership` AS MBS ON USR.Id = MBS.Id WHERE USR.Email = ? AND MBS.Password = UNHEX(SHA1(?));';
+		$hash = password_hash($password, PASSWORD_BCRYPT);
+		var_dump(strlen($password), strlen($hash));
+
+		require_once 'Kansas/Auth/AuthException.php';
+		$sql = 'SELECT HEX(USR.Id) as id, MBS.password, USR.name, USR.email, USR.isApproved, USR.isEnabled, USR.comment, MBS.lastLockOutDate, MBS.isLockedOut FROM `users` AS USR INNER JOIN `membership` AS MBS ON USR.Id = MBS.Id WHERE USR.Email = ?;';
 		try {
-			$row = $this->db->fetchRow($sql, array(strtolower($email), $password));
+			$row = $this->db->fetchRow($sql, array(strtolower($email), $hash));
 			if($row == null) {
-				throw new Kansas_Auth_Exception(Kansas_Auth_Exception::FAILURE_CREDENTIAL_INVALID);
+				throw new AuthException(Kansas_Auth_Exception::FAILURE_CREDENTIAL_INVALID);
 			} else {
+
 				$error = 0;
 				if($row['isApproved'] == 0)
-					$error += Kansas_Auth_Exception::FAILURE_IDENTITY_NOT_APPROVED;
+					$error += AuthException::FAILURE_IDENTITY_NOT_APPROVED;
 				if($row['isEnabled'] == 0)
-					$error += Kansas_Auth_Exception::FAILURE_IDENTITY_NOT_ENABLED;
+					$error += AuthException::FAILURE_IDENTITY_NOT_ENABLED;
 				if($row['isLockedOut'] == 1)
-					$error += Kansas_Auth_Exception::FAILURE_IDENTITY_LOCKEDOUT;
+					$error += AuthException::FAILURE_IDENTITY_LOCKEDOUT;
 				if($error != 0)
-					throw new Kansas_Auth_Exception($error);
+					throw new AuthException($error);
 				return $row;
 			}
 		} catch(Exception $ex) {
-			if($ex instanceof Kansas_Auth_Exception)
+			if($ex instanceof AuthException)
 				throw $ex;
-			throw new Kansas_Auth_Exception(Kansas_Auth_Exception::FAILURE_UNCATEGORIZED);
+			throw new AuthException(Kansas_Auth_Exception::FAILURE_UNCATEGORIZED);
 		}
 	}
 

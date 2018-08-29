@@ -1,16 +1,13 @@
 <?php
-require_once 'Kansas/Db.php'
+namespace Kansas\Db;
 
-class Kansas_Db_Users
-	extends Kansas_Db {
-	
-  private $_cache;
-  
-	public function __construct(Zend_Db_Adapter_Abstract $db) {
-		global $application;
-    parent::__construct($db);
-    $this->_cache = $application->hasModule('BackendCache');
-	}
+use System\Guid;
+use Kansas\Db\AbstractDb;
+
+require_once 'Kansas/AbstractDb.php';
+require_once 'System/Guid.php';
+
+class Users extends AbstractDb {
 	
   /// Usuarios
 	// Devuelve un usuario por su email
@@ -22,27 +19,27 @@ class Kansas_Db_Users
     if($row == null)
       return false;
       
-    if($this->_cache)
-      $this->_cache->save(serialize($row), 'user-id-' . $row['id'], ['user']);
+    if($this->cache)
+      $this->cache->save(serialize($row), 'user-id-' . $row['id'], ['user']);
 
 		return $row;
 	}
 	
 	// Devuelve un usuario por su Id
-	public function getById(System_Guid $id) {
-		if(System_Guid::isEmpty($id))
+	public function getById(Guid $id) {
+		if(Guid::isEmpty($id))
 			return false;
 			
-    if($this->_cache && $this->_cache->test('user-id-' . $id->getHex()))
-      return unserialize($this->_cache->load('user-id-' . $id->getHex()));
+    if($this->cache && $this->cache->test('user-id-' . $id->getHex()))
+      return unserialize($this->cache->load('user-id-' . $id->getHex()));
           
 		$sql = 'SELECT HEX(id) as id, name, email, isApproved, isLockedOut, lastLockOutDate, comment FROM `users` WHERE `Id` = UNHEX(?);';
 		$row = $this->db->fetchRow($sql, $id->getHex());
     if($row == null)
       return false;
     
-    if($this->_cache)
-      $this->_cache->save(serialize($row), 'user-id-' . $id->getHex(), ['user']);
+    if($this->cache)
+      $this->cache->save(serialize($row), 'user-id-' . $id->getHex(), ['user']);
 
 		return $row;
 	}
@@ -52,8 +49,8 @@ class Kansas_Db_Users
 		$sql = 'SELECT HEX(id) as id, name, email, isApproved, isLockedOut, lastLockOutDate, comment FROM `users`;';
 		$rows = $this->db->fetchAll($sql);
     foreach($rows as $row) {
-      if($this->_cache)
-        $this->_cache->save(serialize($row), 'user-id-' . $row['id'], ['user']);
+      if($this->cache)
+        $this->cache->save(serialize($row), 'user-id-' . $row['id'], ['user']);
       yield $row;      
     }
   }
@@ -63,7 +60,7 @@ class Kansas_Db_Users
     if(isset($row['id']))
       throw new System_NotSuportedException();
     
-    $id = System_Guid::newGuid();
+    $id = Guid::newGuid();
     $sql = "INSERT INTO `users` (`id`, `name`, `email`, `comment`) VALUES (UNHEX(?), ?, ?, ?)";
 		$this->db->beginTransaction();
 		try {
@@ -86,7 +83,7 @@ class Kansas_Db_Users
     return $result;
 	}
   
-  public function addRol(array $row, System_Guid $user) {
+  public function addRol(array $row, Guid $user) {
     if(!isset($row['scope']))
       throw new System_ArgumentOutOfRangeException('rol');    
     if(isset($row['rol'])){
@@ -124,12 +121,12 @@ class Kansas_Db_Users
     ])->rowCount();
   }
 	
-  public function changeUserName(System_Guid $id, $name) {
-    if(System_Guid::isEmpty($id))
+  public function changeUserName(Guid $id, $name) {
+    if(Guid::isEmpty($id))
 			return false;
       
-    if($this->_cache && $this->_cache->test('user-id-' . $id->getHex()))
-      $this->_cache->remove('user-id-' . $id->getHex());
+    if($this->cache && $this->cache->test('user-id-' . $id->getHex()))
+      $this->cache->remove('user-id-' . $id->getHex());
           
 		$sql = "UPDATE `users` SET `name` = ? WHERE `id` = UNHEX(?)";
 		return $this->db->query($sql, [
@@ -138,68 +135,68 @@ class Kansas_Db_Users
 		])->rowCount();
 	}
 	
-	public function approveUser(System_Guid $id) {
+	public function approveUser(Guid $id) {
 		
 		
 	}
 	
-	public function unlockOutUser(System_Guid $id, $date) {
+	public function unlockOutUser(Guid $id, $date) {
 		
 	}
 	
-	public function lockOutUser(System_Guid $id) {
+	public function lockOutUser(Guid $id) {
 		
 	}
   
-  public function deleteUser(System_Guid $id) {
-    if($this->_cache && $this->_cache->test('user-id-' . $id->getHex()))
-      $this->_cache->remove('user-id-' . $id->getHex());
+  public function deleteUser(Guid $id) {
+    if($this->cache && $this->cache->test('user-id-' . $id->getHex()))
+      $this->cache->remove('user-id-' . $id->getHex());
           
     $sql = "DELETE FROM `users` WHERE `id` = UNHEX(?)";
     return $this->db->query($sql, $id->getHex())->rowCount();
   }
   
   ///Roles
-	public function getRolesByScope(System_Guid $scope) {
-		if(System_Guid::isEmpty($scope))
+	public function getRolesByScope(Guid $scope) {
+		if(Guid::isEmpty($scope))
 			return false;
 		
 		$sql = 'SELECT HEX(id) as rol, HEX(list) as scope, value as name FROM `lists` WHERE `list` = UNHEX(?);';
 		$rows = $this->db->fetchAll($sql, [$scope->getHex()]);
     
-    if($this->_cache)
-      $this->_cache->save(serialize($rows), 'scope-roles-' . $scope->getHex(), ['roles-scope', 'roles', 'scope']);
+    if($this->cache)
+      $this->cache->save(serialize($rows), 'scope-roles-' . $scope->getHex(), ['roles-scope', 'roles', 'scope']);
 
 		return $rows;
   }
 	
   ///Roles
-	public function getRolesByUser(System_Guid $user, System_Guid $scope = null) {
+	public function getRolesByUser(Guid $user, Guid $scope = null) {
     if($scope == null) {
-      if($this->_cache && $this->_cache->test('user-roles-' . $user->getHex()))
-        return unserialize($this->_cache->load('user-roles-' . $user->getHex()));
+      if($this->cache && $this->cache->test('user-roles-' . $user->getHex()))
+        return unserialize($this->cache->load('user-roles-' . $user->getHex()));
  
   		$sql = 'SELECT HEX(roles.rol) as rol, HEX(roles.scope) as scope, HEX(roles.user) as user, lists.value as name FROM `roles` INNER JOIN `lists` ON roles.scope = lists.list AND roles.rol = lists.id WHERE `roles`.user = UNHEX(?);';
       $rows = $this->db->fetchAll($sql, [$user->getHex()]);
       
-      if($this->_cache)
-        $this->_cache->save(serialize($rows), 'user-roles-' . $user->getHex(), ['roles-user', 'roles']);
+      if($this->cache)
+        $this->cache->save(serialize($rows), 'user-roles-' . $user->getHex(), ['roles-user', 'roles']);
       return $rows;
     } else {
-      if($this->_cache && $this->_cache->test('user-roles-scope-' . $user->getHex() . $scope->getHex()))
-        return unserialize($this->_cache->load('user-roles-scope-' . $user->getHex() . $scope->getHex()));
+      if($this->cache && $this->cache->test('user-roles-scope-' . $user->getHex() . $scope->getHex()))
+        return unserialize($this->cache->load('user-roles-scope-' . $user->getHex() . $scope->getHex()));
         
   		$sql = 'SELECT HEX(roles.rol) as rol, HEX(roles.scope) as scope, HEX(roles.user) as user, lists.value as name FROM `roles` INNER JOIN `lists` ON roles.scope = lists.list AND roles.rol = lists.id WHERE `roles`.user = UNHEX(?) AND `roles`.scope = UNHEX(?);';
       $rows = $this->db->fetchAll($sql, [$user->getHex(), $scope->getHex()]);
-      if($this->_cache)
-        $this->_cache->save(serialize($rows), 'user-roles-scope-' . $user->getHex() . $scope->getHex(), ['roles-user', 'roles']);
+      if($this->cache)
+        $this->cache->save(serialize($rows), 'user-roles-scope-' . $user->getHex() . $scope->getHex(), ['roles-user', 'roles']);
       return $rows;
       
     }
 
     
-    if($this->_cache)
-      $this->_cache->save(serialize($rows), 'user-roles-scope-' . $scope->getHex(), ['roles-user']);
+    if($this->cache)
+      $this->cache->save(serialize($rows), 'user-roles-scope-' . $scope->getHex(), ['roles-user']);
 
 		return $rows;
   }  
