@@ -1,6 +1,8 @@
 <?php
 
-interface Kansas_TitleBuilder_Interface {
+namespace Kansas\TitleBuilder;
+
+interface TitleBuilderInterface {
 	public function getSeparator();
 	public function setSeparator($separator);
 	

@@ -1,8 +1,10 @@
 <?php
-require_once 'Kansas/TitleBuilder/Default.php';
 
-class Kansas_TitleBuilder_FullTitle 
-	extends Kansas_TitleBuilder_Default {
+namespace Kansas\TitleBuilder;
+
+require_once 'Kansas/TitleBuilder/DefaultTitleBuilder.php';
+
+class FullTitleBuilder extends DefaultTitleBuilder {
 
 	public function setFullTitle($title) {
 		$this->options['full_title'] = $title;

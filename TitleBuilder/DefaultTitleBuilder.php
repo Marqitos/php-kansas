@@ -1,9 +1,19 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
 
-class Kansas_TitleBuilder_Default
-	extends System_Configurable_Abstract
-	implements Kansas_TitleBuilder_Interface {
+namespace Kansas\TitleBuilder;
+
+use System\Configurable;
+use System\NotSupportedException;
+use Kansas\TitleBuilder\TitleBuilderInterface;
+
+use function array_merge;
+use function array_unshift;
+use function count;
+use function implode;
+
+require_once 'System/Configurable.php';
+
+class DefaultTitleBuilder extends Configurable implements TitleBuilderInterface {
 		
 	const APPEND	= 'APPEND';
 	const SET		= 'SET';
@@ -24,7 +34,7 @@ class Kansas_TitleBuilder_Default
 				];
 			default:
 				require_once 'System/NotSupportedException.php';
-				throw new System_NotSupportedException("Entorno no soportado [$environment]");
+				throw new NotSupportedException("Entorno no soportado [$environment]");
 		}
 	}
 	
