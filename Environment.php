@@ -44,7 +44,7 @@ class Environment {
   protected function __construct($status) {
     $this->_status = $status;
     $this->t_inicio = microtime(true);
-    $this->_version = new Version('0.3');
+    $this->_version = new Version('0.4');
   }
   
   public static function getInstance($status = null, $t_inicio = null) {
