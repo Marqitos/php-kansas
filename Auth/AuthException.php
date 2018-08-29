@@ -1,7 +1,10 @@
 <?php
 
-class Kansas_Auth_Exception
-    extends Exception {
+namespace Kansas\Auth;
+
+use Exception;
+
+class AuthException extends Exception {
     /**
      * Usuario no encontrado
      */
