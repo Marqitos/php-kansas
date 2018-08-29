@@ -1,8 +1,13 @@
 <?php
-require_once 'Kansas/Router/Abstract.php';
 
-class Kansas_Router_Auth
-  extends Kansas_Router_Abstract {
+namespace Kansas\Router;
+
+use Kansas\Router;
+use System\NotSuportedException;
+
+require_once 'Kansas/Router.php';
+
+class Auth extends Router {
 
   private $_actions = [];
 
@@ -18,7 +23,7 @@ class Kansas_Router_Auth
     ];
       default:
         require_once 'System/NotSuportedException.php';
-        throw new System_NotSuportedException("Entorno no soportado [$environment]");
+        throw new NotSuportedException("Entorno no soportado [$environment]");
     }
   }
     
@@ -46,7 +51,9 @@ class Kansas_Router_Auth
        if(isset($this->_actions[$data['action']]['path'])) {
         $path = $this->getActionPath($this->_actions[$data['action']]['path']);
         unset($data['action']);
-        return $path . '?' . http_build_query($data);
+        return count($data) == 0
+          ? $path
+          : $path . '?' . http_build_query($data);
       }	else
         return false;
     }

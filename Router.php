@@ -1,10 +1,15 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
-require_once 'Kansas/Router/Interface.php';
 
-abstract class Kansas_Router_Abstract
-	extends System_Configurable_Abstract
-	implements Kansas_Router_Interface {
+namespace Kansas;
+
+use System\Configurable;
+use Kansas\Router\RouterInterface;
+use System\String;
+
+require_once 'System/Configurable.php';
+require_once 'Kansas/Router/RouterInterface.php';
+
+abstract class Router extends Configurable implements RouterInterface {
 	
 	protected function getParams(array $params) {
 		return array_merge($this->options['params'], $params);
@@ -31,10 +36,10 @@ abstract class Kansas_Router_Abstract
 			'/' . $this->getBasePath();
 	}
 
-	public static function getPath(Kansas_Router_Interface $router) {
+	public static function getPath(RouterInterface $router) {
 		global $environment;
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
-		return (System_String::startWith($path, $router->getBasePath()))
+		return (String::startWith($path, $router->getBasePath()))
 			? substr($path, strlen($router->getBasePath()))
 			: false;
 	}
