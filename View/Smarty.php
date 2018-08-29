@@ -1,10 +1,15 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
-require_once 'Kansas/View/Interface.php';
 
-class Kansas_View_Smarty
-	extends System_Configurable_Abstract
-  implements Kansas_View_Interface {
+namespace Kansas\View;
+
+use System\Configurable;
+use Kansas\View\ViewInterface;
+use System\NotSupportedException;
+
+require_once 'System/Configurable.php';
+require_once 'Kansas/View/ViewInterface.php';
+
+class Smarty extends Configurable implements ViewInterface {
 		
   private $_smarty;
   private $_compileDir;
@@ -69,7 +74,7 @@ class Kansas_View_Smarty
         ];
       default:
         require_once 'System/NotSupportedException.php';
-        throw new System_NotSupportedException("Entorno no soportado [$environment]");
+        throw new NotSupportedException("Entorno no soportado [$environment]");
     }
   }
 
@@ -83,10 +88,10 @@ class Kansas_View_Smarty
   public function getEngine() {
 		if($this->_smarty == null) {
       require_once 'Smarty/Autoloader.php';
-      Smarty_Autoloader::register();
+      \Smarty_Autoloader::register();
       require_once 'Smarty/Smarty.class.php';
       
-			$this->_smarty = new Smarty();
+			$this->_smarty = new \Smarty();
 			$this->_smarty->setCompileDir($this->getCompileDir());
       $this->_smarty->config_dir = $this->options['config_dir'];
       $this->_smarty->cache_dir = $this->options['cache_dir'];

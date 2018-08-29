@@ -1,13 +1,8 @@
 <?php
-/**
- * Zend Framework
- *
- * @package    Zend_View
- * @version    $Id: Interface.php 20210 2010-01-12 02:06:34Z yoshida@zend.co.jp $
- * Interface class for Zend_View compatible template engine implementations
- */
-interface Kansas_View_Interface
-{
+
+namespace Kansas\View;
+
+interface ViewInterface {
     /**
      * Return the template engine object, if any
      *
