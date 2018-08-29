@@ -1,8 +1,15 @@
 <?php
-require_once 'Kansas/Controller/Abstract.php';
 
-class Kansas_Controller_Index
-	extends Kansas_Controller_Abstract {
+namespace Kansas\Controller;
+use Kansas\Controller\AbstractController;
+use Kansas\View\Result\Redirect;
+use System\NotImplementedException;
+use System\ArgumentOutOfRangeException;
+use System\ArgumentNullException;
+
+require_once 'Kansas/Controller/AbstractController.php';
+
+class Index	extends AbstractController {
 	
 	private static $actions = [];
 
@@ -11,25 +18,22 @@ class Kansas_Controller_Index
 			return $this->$action($vars);
 		if(isset(self::$actions[$action]))
 			return call_user_func(self::$actions[$action], $this, $vars);
-		throw new System_NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
+		throw new NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
 	}
 
 	public static function addAction($actionName, $callback) {
 		if(!is_string($actionName)) {
-			require_once 'System/ArgumentOutOfRangeException.php';
-			throw new System_ArgumentOutOfRangeException('actionName');
+			throw new ArgumentOutOfRangeException('actionName');
 		}
 		if(!is_callable($callback)) {
-			require_once 'System/ArgumentOutOfRangeException.php';
-			throw new System_ArgumentOutOfRangeException('callback');
+			throw new ArgumentOutOfRangeException('callback');
 		}
 		self::$actions[$actionName] = $callback;
 	}
 
 	public function template(array $vars = []) {
 		if(!isset($vars['template'])) {
-			require_once 'System/ArgumentNullException.php';
-			throw new System_ArgumentNullException('vars["template"]');
+			throw new ArgumentNullException('vars["template"]');
 		}
 		$template = $vars['template'];
 		unset($vars['template']);
@@ -38,10 +42,10 @@ class Kansas_Controller_Index
 	
 	public function redirection(array $vars = []) {
 		if(!isset($vars['gotoUrl'])) {
-			require_once 'System/ArgumentNullException.php';
-			throw new System_ArgumentNullException('vars["gotoUrl"]');
+			throw new ArgumentNullException('vars["gotoUrl"]');
 		}
-		return Kansas_View_Result_Redirect::gotoUrl($vars['gotoUrl']);
+		
+		return Redirect::gotoUrl($vars['gotoUrl']);
 	}
 	
 	public function css(array $vars) {
@@ -75,7 +79,7 @@ class Kansas_Controller_Index
 		global $application;
 		$application->getView()->getEngine()->clearAllCache();
 
-		return Kansas_View_Result_Redirect::gotoUrl($this->getParam('ru', '/'));
+		return Redirect::gotoUrl($this->getParam('ru', '/'));
 	}
 	
 	public function phpInclude(array $vars) {

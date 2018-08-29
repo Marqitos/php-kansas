@@ -1,22 +1,30 @@
 <?php
-require_once 'Kansas/Controller/Account.php';
 
-class Kansas_Controller_Membership
-    extends Kansas_Controller_Auth {
+namespace Kansas\Controller;
+
+use Kansas\Controller\Auth;
+use Kansas\View\Result\Redirect;
+use Kansas\Module\Membership as MembershipModule;
+use System\Guid;
+
+require_once 'Kansas/Controller/Auth.php';
+
+class Membership extends Auth {
     
     /* Devuelve la vista de inicio de sesión o
      * autentica al usuario mediante usuario y contraseña y devuelve la redireccion a la página donde se encontraba
      */ 
     public function signIn(array $vars) {
+        require_once 'System/Guid.php';
         global $application;
         $ru		= $this->getParam('ru', '/');
         $auth 	= $application->getModule('Auth');
         $identity = $auth->getSession()->getIdentity();
         $error  = 0;
-        if ($identity != FALSE &&
-            !System_Guid::isEmpty($identity)) {
+        if ($identity !== FALSE &&
+            !Guid::isEmpty($identity)) {
             require_once 'Kansas/View/Result/Redirect.php';
-            return Kansas_View_Result_Redirect::gotoUrl($ru);
+            return Redirect::gotoUrl($ru);
         }
         $application->getView()->setCaching(false);
 
@@ -29,9 +37,9 @@ class Kansas_Controller_Membership
             require_once 'Kansas/Module/Membership.php';
             require_once 'Kansas/Auth/Exception.php';
             try {
-                $user = Kansas_Module_Membership::authenticate($email, $password, $remember);
+                $user = MembershipModule::authenticate($email, $password, $remember);
                 require_once 'Kansas/View/Result/Redirect.php';
-                return Kansas_View_Result_Redirect::gotoUrl($ru);
+                return Redirect::gotoUrl($ru);
             } catch(Kansas_Auth_Exception $ex) {
                 $error = $ex->getErrorCode();
             }

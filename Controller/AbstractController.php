@@ -1,8 +1,13 @@
 <?php
-require_once 'Kansas/Controller/Interface.php';
 
-abstract class Kansas_Controller_Abstract
-	implements Kansas_Controller_Interface {
+namespace Kansas\Controller;
+use Kansas\Controller\ControllerInterface;
+use Kansas\View\Result\Template;
+use Kansas\View\Result\Redirect;
+use System\NotImplementedException;
+use function is_callable;
+
+abstract class AbstractController implements ControllerInterface {
 		
 	private $_params;
 		
@@ -12,8 +17,7 @@ abstract class Kansas_Controller_Abstract
 
 	public function callAction ($action, array $vars) {
 		if(!is_callable([$this, $action])) {
-			require_once 'System/NotImplementedException.php';
-			throw new System_NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
+			throw new NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
 		}
 		return $this->$action($vars);
 	}
@@ -30,13 +34,14 @@ abstract class Kansas_Controller_Abstract
 		global $application;
 		$view = $application->getView();
 		$template = $view->createTemplate($this->getParam('template', $defaultTemplate), array_merge($this->_params, $data));
-		return new Kansas_View_Result_Template($template, $mimeType);
+		return new Template($template, $mimeType);
 	}
 	protected function isCached($defaultTemplate) {
 		global $view;
 		$template = $this->getParam('template', $defaultTemplate);
 		return $view->isCached($template);
 	}
+	
 	protected function isAuthenticated(&$result, $ru = null) {
 		global $application;
 		$auth = $application->getModule('auth');
@@ -47,9 +52,7 @@ abstract class Kansas_Controller_Abstract
 			global $environment;
 			if($ru  == null)
 				$ru = $environment->getRequest()->getRequestUri();
-			require_once 'Kansas/View/Result/Redirect.php';
-			$result	= new Kansas_View_Result_Redirect();
-			$result->setGotoUrl(
+			Redirect::gotoUrl(
 				$auth->getRouter()->assemble(['action' => 'signin', 'ru' => $ru])
 			);
 			return false;

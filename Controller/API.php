@@ -8,7 +8,7 @@ class Kansas_Controller_API
 		// Cargar autenticación
 		global $application;
 		$application->setModule('Digest', []);
-		$auth					= $application->getModule('Auth');
+		$auth			= $application->getModule('Auth');
 		$authAdapter 	= $auth->createAuthMembership('digest', ['API']);
 		$authResult		= $auth->authenticate($authAdapter);
 		if(!$authResult->isValid()) {
@@ -25,8 +25,8 @@ class Kansas_Controller_API
 		global $application;
 		$auth = $application->getModule('Auth');
 		return new Kansas_View_Result_Json([
-			'host'				=> $this->getRequest()->getHttpHost(),
-			'name'				=> $application->createTitle()->__toString(),
+			'host'			=> $this->getRequest()->getHttpHost(),
+			'name'			=> $application->createTitle()->__toString(),
 			'username'		=> $auth->getIdentity()->getName(),
 			'environment'	=> $application->getEnvironment()
 		]);

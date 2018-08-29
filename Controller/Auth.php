@@ -1,23 +1,33 @@
 <?php
 
-class Kansas_Controller_Auth
-	extends Kansas_Controller_Abstract {
+namespace Kansas\Controller;
+
+use System\Guid;
+use Kansas\Controller\AbstractController;
+use Kansas\View\Result\Redirect;
+
+require_once 'Kansas/Controller/AbstractController.php';
+
+class Auth extends AbstractController {
 		
 	static function getRedirection($action = 'signin', $ru = '/') {
     global $application;
     $router = $application->getModule('Auth')->getRouter();
-		return Kansas_View_Result_Redirect::gotoUrl($router->assemble([
+    require_once 'Kansas/View/Result/Redirect.php';
+		return Redirect::gotoUrl($router->assemble([
 			'action' => $action,
 			'ru'     => $ru
 		]));
 	}
-
-
 	
 	public function index(array $vars) {
     global $application;
     $identity = $application->getModule('Auth')->getIdentity();
 		if($identity == FALSE) {
+      $router = $application->getModule('Auth')->getRouter();
+      $vars['ru'] = $router->assemble([
+        'action' => 'sessionInfo'
+      ]);
       return $this->sessionInfo($vars);
     }
 		else
@@ -27,11 +37,17 @@ class Kansas_Controller_Auth
   }
   
   public function sessionInfo(array $vars) {
-    // sessiones abiertas
+    global $application;
+    $identity = $application->getModule('Auth')->getIdentity();
+		if($identity) {
+      $vars['title'] = 'Permisos en dispositivos y datos de navegación';
+      // sessiones abiertas
+    } else {
+      $vars['title'] = 'Información sobre datos de navegación';  
+    }
     // session actual
-    return $this->createViewResult('page.auth-sessions.tpl', [
-      'title' => 'Información de sesiones'
-    ]);
+    $vars['content_file'] = 'part.auth-sessions.tpl';
+    return $this->createViewResult('page.default.tpl', $vars);
 }
 	
 	protected static function getExternalSignIn($params) {
@@ -47,30 +63,30 @@ class Kansas_Controller_Auth
 		global $application;
 		$ru	= $this->getParam('ru', '/');
 		$application->getModule('Auth')->clearIdentity();
-		$redirect = new Kansas_View_Result_Redirect();
-		$redirect->setGotoUrl($ru);
-		return $redirect;
+    require_once 'Kansas/View/Result/Redirect.php';
+		return Redirect::gotoUrl($ru);
 	}
 	
 	public function fbSignIn() {
 		global $application;
-		$facebook = $this->getModule()->getAuthService('facebook')->getCore();
+		$facebook = $application->getModule()->getAuthService('facebook')->getCore();
 		$ru				= $this->getParam('ru', '/');
-		if(intval($facebook->getClass()->getUser()) == 0)
-      return Kansas_View_Result_Redirect::gotoUrl('/account/signin' . http_build_query([
+    require_once 'Kansas/View/Result/Redirect.php';
+		if(intval($facebook->getClass()->getUser()) == 0) {
+      return Redirect::gotoUrl('/account/signin' . http_build_query([
         'ru'  => $ru
       ]));
-		elseif($facebook->isRegistered()) {
+    } elseif($facebook->isRegistered()) {
 			$authResult				= $application->getModule('Auth')->authenticate($facebook);
 			if($authResult->isValid())
-				return Kansas_View_Result_Redirect::gotoUrl($ru);
+				return Redirect::gotoUrl($ru);
 			else
-				return Kansas_View_Result_Redirect::gotoUrl('/account/signin' . http_build_query([
+				return Redirect::gotoUrl('/account/signin' . http_build_query([
           'ru'	=> $ru
         ]));
 				
 		} else
-      return Kansas_View_Result_Redirect::gotoUrl('/account/fb/register' . http_build_query([
+      return Redirect::gotoUrl('/account/fb/register' . http_build_query([
         'ru'	=> $ru
       ]));
 	}
@@ -82,7 +98,7 @@ class Kansas_Controller_Auth
 		if(isset($_REQUEST['signed_request'])) {
 			$facebook->register();
 			$result	= $application->getModule('Auth')->authenticate($facebook);
-			$redirect = new Kansas_View_Result_Redirect();
+			$redirect = new Redirect();
 			if($result->isValid())
 				$redirect->setGotoUrl($ru);
 			else
@@ -135,7 +151,7 @@ class Kansas_Controller_Auth
       }
       $data['users'] = [];
       foreach($users as $user) {
-        $user['roles'] = $provider->getRolesByUser(new System_Guid($user['id']), new System_Guid($defaultScope['id']));
+        $user['roles'] = $provider->getRolesByUser(new Guid($user['id']), new Guid($defaultScope['id']));
         $data['users'][$user['id']] = $user;
       }
       if(!isset($data['selectedRol']) || !isset($data['roles'][$data['selectedRol']])) {
@@ -229,8 +245,8 @@ class Kansas_Controller_Auth
         $id;
         if(count($user['roles']) == 0)
           unset($user['roles']);
-        if(!isset($_REQUEST['id']) || !System_Guid::tryParse($_REQUEST['id'], $id))
-          $id = System_Guid::newGuid();
+        if(!isset($_REQUEST['id']) || !Guid::tryParse($_REQUEST['id'], $id))
+          $id = Guid::newGuid();
         $cache->save(serialize($user), 'model-user-'. $id->getHex(), ['model']);
         return Kansas_View_Result_Redirect::gotoUrl('/admin/account?' . http_build_query([
           'createResult'  => $validationErrors,
@@ -270,7 +286,7 @@ class Kansas_Controller_Auth
   public function adminDeleteUser(array $vars = []) {
     global $application;
     $provider = $application->getProvider('users');
-    $userId = new System_Guid($vars['user']);
+    $userId = new Guid($vars['user']);
     return Kansas_View_Result_Redirect::gotoUrl('/admin/account?' . http_build_query([
       'deleteResult'  => $provider->deleteUser($userId) == 1
     ]));

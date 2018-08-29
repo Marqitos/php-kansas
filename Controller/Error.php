@@ -1,9 +1,12 @@
 <?php
-require_once 'Kansas/Controller/Abstract.php';
 
-class Kansas_Controller_Error
-	extends Kansas_Controller_Abstract {
-	
+namespace Kansas\Controller;
+use Kansas\Controller\AbstractController;
+
+require_once 'Kansas/Controller/AbstractController.php';
+
+class Error	extends AbstractController {
+
 	public function Index(array $vars) {
 		global $application;
 		global $environment;
