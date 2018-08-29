@@ -1,13 +1,11 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework 2.0
  *
- * @package    Zend_Cache
- * @subpackage Zend_Cache_Backend
- * @version    $Id: Interface.php 20096 2010-01-06 02:05:09Z bkarwin $
  */
+namespace Kansas\Cache;
 
-interface Kansas_Cache_Interface {
+interface CacheInterface {
   /**
     * Set the frontend directives
     *

@@ -1,13 +1,18 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
 /**
- * Zend Framework
- * @package    Zend_Cache
- * @version    $Id: Cache.php 23154 2010-10-18 17:41:06Z mabe $
+ * Zend Framework 2.0
  */
 
-abstract class Kansas_Cache
-  extends System_Configurable_Abstract {
+namespace Kansas;
+
+use System\Configurable;
+use System\ArgumentOutOfRangeException;
+use System\IO\File;
+use Kansas\Cache\CacheInterface;
+
+require_once 'System/Configurable.php';
+
+abstract class Cache extends Configurable implements CacheInterface {
 
     /**
      * =====> (int) lifetime :
@@ -32,7 +37,6 @@ abstract class Kansas_Cache
     const CLEANING_MODE_MATCHING_TAG     = 'matchingTag';
     const CLEANING_MODE_NOT_MATCHING_TAG = 'notMatchingTag';
     const CLEANING_MODE_MATCHING_ANY_TAG = 'matchingAnyTag';
-
     
     /**
      * Factory
@@ -41,18 +45,18 @@ abstract class Kansas_Cache
      * @param array  $backendOptions  associative array of options for the corresponding backend constructor
      * @param boolean $customBackendNaming if true, the backend argument is used as a complete class name ; if false, the backend argument is used as the end of "Zend_Cache_Backend_[...]" class name
      * @param boolean $autoload if true, there will no require_once for backend and frontend (useful only for custom backends/frontends)
-     * @throws System_ArgumentOutOfRangeException
-     * @return Kansas_Cache_Interface
+     * @throws System\ArgumentOutOfRangeException
+     * @return Kansas\Cache\CacheInterface
      */
     public static function factory($backend, array $backendOptions = [], $customBackendNaming = false, $autoload = false) {
 			if (is_string($backend))
 				return self::_makeBackend($backend, $backendOptions, $customBackendNaming, $autoload);
-			elseif ($backend instanceof Kansas_Cache_Interface) {
+			elseif ($backend instanceof CacheInterface) {
 				return $backend;
       }
 			else {
 				require_once 'System/ArgumentOutOfRange.php';
-				throw new System_ArgumentOutOfRangeException('backend must be a backend name (string) or an object which implements Kansas_Cache_Interface');
+				throw new ArgumentOutOfRangeException('backend must be a backend name (string) or an object which implements Kansas_Cache_Interface');
 			}
     }
 
@@ -72,15 +76,15 @@ abstract class Kansas_Cache
         // we use a custom backend
         if (!preg_match('~^[\w]+$~D', $backend)) {
 					require_once 'System/ArgumentOutOfRange.php';
-					throw new System_ArgumentOutOfRangeException("Invalid backend name [$backend]");
+					throw new ArgumentOutOfRangeException("Invalid backend name [$backend]");
 				}
         if (!$customBackendNaming) // we use this boolean to avoid an API break
-          $backendClass = 'Kansas_Cache_' . $backend;
+          $backendClass = 'Kansas\\Cache\\' . $backend;
         else
           $backendClass = $backend;
         if (!$autoload) {
           $file = str_replace('_', DIRECTORY_SEPARATOR, $backendClass) . '.php';
-          if (!(self::_isReadable($file))) {
+          if (!(File::IsReadable($file))) {
             self::throwException("file $file not found in include_path");
           }
           require_once $file;
@@ -106,23 +110,6 @@ abstract class Kansas_Cache
     }
 
     /**
-     * Returns TRUE if the $filename is readable, or FALSE otherwise.
-     * This function uses the PHP include_path, where PHP's is_readable()
-     * does not.
-     *
-     * Note : this method comes from Zend_Loader (see #ZF-2891 for details)
-     *
-     * @param string   $filename
-     * @return boolean
-     */
-    private static function _isReadable($filename) {
-			if (!$fh = @fopen($filename, 'r', true))
-				return false;
-			@fclose($fh);
-			return true;
-    }
-
-    /**
      * Set the frontend directives
      *
      * @param  array $directives Assoc of directives
@@ -133,7 +120,7 @@ abstract class Kansas_Cache
       while (list($name, $value) = each($directives)) {
         if (!is_string($name)) {
 					require_once 'System/ArgumentOutOfRange.php';
-					throw new System_ArgumentOutOfRangeException("Incorrect option name : $name");
+					throw new ArgumentOutOfRangeException("Incorrect option name : $name");
 				}
         $name = strtolower($name);
         if (array_key_exists($name, $this->_directives))

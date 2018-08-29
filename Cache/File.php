@@ -1,6 +1,18 @@
 <?php
+
+namespace Kansas\Cache;
+
+use Kansas\Cache;
+use Kansas\Cache\ExtendedCacheInterface;
+use System\NotSuportedException;
+use System\IO\DirectoryNotFoundException;
+use Kansas\Environment;
+use System\IO\IOException;
+use System\ArgumentOutOfRangeException;
+use System\IO\File as IOFile;
+
 require_once 'Kansas/Cache.php';
-require_once 'Kansas/Cache/ExtendedInterface.php';
+require_once 'Kansas/Cache/ExtendedCacheInterface.php';
 
 /**
  * Zend Framework
@@ -9,9 +21,7 @@ require_once 'Kansas/Cache/ExtendedInterface.php';
  * @version    $Id: File.php 21636 2010-03-24 17:10:23Z mabe $
  */
 
-class Kansas_Cache_File
-  extends Kansas_Cache
-  implements Kansas_Cache_ExtendedInterface {
+class File extends Cache implements ExtendedCacheInterface {
     /**
      * Available options
      *
@@ -80,13 +90,13 @@ class Kansas_Cache_File
             'read_control_type' => 'crc32',
             'hashed_directory_level' => 0,
             'hashed_directory_umask' => 0700,
-            'file_name_prefix' => 'backend_cache',
+            'file_name_prefix' => 'cache',
             'cache_file_umask' => 0600,
             'metadatas_array_max_size' => 100
         ];
       default:
         require_once 'System/NotSuportedException.php';
-        throw new System_NotSuportedException("Entorno no soportado [$environment]");
+        throw new NotSuportedException("Entorno no soportado [$environment]");
     }
   }
 
@@ -101,14 +111,14 @@ class Kansas_Cache_File
         if($this->_cacheDir == null) {
             $value = ($this->options['cache_dir'] !== null)
                 ? $this->options['cache_dir']
-                : Kansas_Environment::getTmpDir();
+                : Environment::getTmpDir();
             if (!is_dir($value)) {
                 require_once 'System/IO/DirectoryNotFoundException.php';
-                throw new System_IO_DirectoryNotFoundException();
+                throw new DirectoryNotFoundException();
             }
             if (!is_writable($value)) {
                 require_once 'System/IO/IOException.php';
-                throw new System_IO_IOException('No se puede escribir en el directorio cache');
+                throw new IOException('No se puede escribir en el directorio cache');
             }
             $this->_cacheDir = rtrim(realpath($value), '\\/') . DIRECTORY_SEPARATOR; // add a trailing DIRECTORY_SEPARATOR if necessary
         }
@@ -126,7 +136,7 @@ class Kansas_Cache_File
             if (isset($this->options['file_name_prefix'])) {
                 if (!preg_match('~^[a-zA-Z0-9_]+$~D', $this->options['file_name_prefix'])) {
                     require_once 'System/IO/IOException.php';
-                    throw new System_IO_IOException('Prefijo incorrecto: debe usar solo [a-zA-Z0-9_]');
+                    throw new IOException('Prefijo incorrecto: debe usar solo [a-zA-Z0-9_]');
                 }
                 $this->_fileNamePrefix = $this->options['file_name_prefix'];
             } else
@@ -145,7 +155,7 @@ class Kansas_Cache_File
         if($this->_metadatasArrayMaxSize == null) {
             if ($this->options['metadatas_array_max_size'] < 10) {
                 require_once 'System/ArgumentOutOfRangeException.php';
-                throw new System_ArgumentOutOfRangeException('Invalid metadatas_array_max_size, must be > 10');
+                throw new ArgumentOutOfRangeException('Invalid metadatas_array_max_size, must be > 10');
             }
             $this->_metadatasArrayMaxSize = $this->options['metadatas_array_max_size'];
         }
@@ -192,9 +202,8 @@ class Kansas_Cache_File
         if (!($this->_test($id, $doNotTestCacheValidity))) // The cache is not hit !
             return false;
         $metadatas = $this->_getMetadatas($id);
-        $file = $this->_file($id);
-        require_once 'System/IO/File.php';
-        $data = System_IO_File::Read($file);
+        $file = $this->getFile($id);
+        $data = $file->Read();
         if ($this->options['read_control']) {
             $hashData = $this->_hash($data);
             $hashControl = $metadatas['hash'];
@@ -233,14 +242,7 @@ class Kansas_Cache_File
      */
     public function save($data, $id, array $tags = [], $specificLifetime = false) {
         clearstatcache();
-        $file = $this->_file($id);
-        if ($this->options['hashed_directory_level'] > 0) {
-            $path = $this->_path($id);
-            if (!is_writable($path)) // maybe, we just have to build the directory structure
-                $this->_recursiveMkdirAndChmod($id);
-            if (!is_writable($path))
-                return false;
-        }
+        $file = $this->getFile($id);
         if ($this->options['read_control'])
             $hash = $this->_hash($data);
         else
@@ -257,8 +259,7 @@ class Kansas_Cache_File
             $application->log(E_USER_NOTICE, 'Kansas_Cache_File::save() / error on saving metadata');
             return false;
         }
-        require_once 'System/IO/File.php';
-        $result = System_IO_File::Write($file, $data, $this->getCacheFileUmask());
+        $file->Write($file, $data, $this->getCacheFileUmask());
         return ($result !== false);
     }
 
@@ -539,9 +540,9 @@ class Kansas_Cache_File
      * @return string Metadatas file name (with path)
      */
     protected function _metadatasFile($id) {
-			$path = $this->_path($id);
-			$fileName = $this->_idToFileName($id . '.metadatas');
-			return $path . $fileName;
+        $path;
+        $filename = $this->getFilename($id . '.metadatas', $path);
+		return $path . $fileName;
     }
 
     /**
@@ -610,7 +611,7 @@ class Kansas_Cache_File
                 $fileName = basename($file);
                 if ($this->_isMetadatasFile($fileName)) {
                     // in CLEANING_MODE_ALL, we drop anything, even remainings old metadatas files
-                    if ($mode != Kansas_Cache::CLEANING_MODE_ALL)
+                    if ($mode != Cache::CLEANING_MODE_ALL)
                         continue;
                 }
                 $id = $this->_fileNameToId($fileName);
@@ -618,17 +619,17 @@ class Kansas_Cache_File
                 if ($metadatas === FALSE)
                     $metadatas = array('expire' => 1, 'tags' => array());
                 switch ($mode) {
-                    case Kansas_Cache::CLEANING_MODE_ALL:
+                    case Cache::CLEANING_MODE_ALL:
                         $res = $this->remove($id);
                         if (!$res) // in this case only, we accept a problem with the metadatas file drop
                             $res = $this->_remove($file);
                         $result = $result && $res;
                         break;
-                    case Kansas_Cache::CLEANING_MODE_OLD:
+                    case Cache::CLEANING_MODE_OLD:
                         if (time() > $metadatas['expire'])
                             $result = $this->remove($id) && $result;
                         break;
-                    case Kansas_Cache::CLEANING_MODE_MATCHING_TAG:
+                    case Cache::CLEANING_MODE_MATCHING_TAG:
                         $matching = true;
                         foreach ($tags as $tag) {
                             if (!in_array($tag, $metadatas['tags'])) {
@@ -639,7 +640,7 @@ class Kansas_Cache_File
                         if ($matching)
                             $result = $this->remove($id) && $result;
                         break;
-                    case Kansas_Cache::CLEANING_MODE_NOT_MATCHING_TAG:
+                    case Cache::CLEANING_MODE_NOT_MATCHING_TAG:
                         $matching = false;
                         foreach ($tags as $tag) {
                             if (in_array($tag, $metadatas['tags'])) {
@@ -650,7 +651,7 @@ class Kansas_Cache_File
                         if (!$matching)
                             $result = $this->remove($id) && $result;
                         break;
-                    case Kansas_Cache::CLEANING_MODE_MATCHING_ANY_TAG:
+                    case Cache::CLEANING_MODE_MATCHING_ANY_TAG:
                         $matching = false;
                         foreach ($tags as $tag) {
                             if (in_array($tag, $metadatas['tags'])) {
@@ -663,7 +664,7 @@ class Kansas_Cache_File
                         break;
                     default:
                         require_once 'System/ArgumentOutOfRangeException.php';
-                        throw new System_ArgumentOutOfRangeException('Invalid mode for clean() method');
+                        throw new ArgumentOutOfRangeException('Invalid mode for clean() method');
                         break;
                 }
             }
@@ -740,7 +741,7 @@ class Kansas_Cache_File
                         break;
                     default:
                     require_once 'System/ArgumentOutOfRangeException.php';
-                        throw new System_ArgumentOutOfRangeException('Invalid mode for _get() method');
+                        throw new ArgumentOutOfRangeException('Invalid mode for _get() method');
                         break;
                 }
             }
@@ -788,7 +789,7 @@ class Kansas_Cache_File
             return hash('adler32', $data);
         default:
             require_once 'System/ArgumentOutOfRangeException.php';
-            throw new System_ArgumentOutOfRangeException("Incorrect hash function : " . $this->options['read_control_type']);
+            throw new ArgumentOutOfRangeException("Incorrect hash function : " . $this->options['read_control_type']);
         }
     }
 
@@ -798,20 +799,22 @@ class Kansas_Cache_File
      * @param  string $id Cache id
      * @return string File name
      */
-    protected function _idToFileName($id) {
-        return $this->getFileNamePrefix() . '---' . $id;
+    protected function getFilename($id, &$path) {
+        $path = $this->getPath($id);
+        return $this->getFileNamePrefix() . '-' . $id;
     }
 
     /**
-     * Make and return a file name (with path)
+     * Devuelve un archivo
      *
      * @param  string $id Cache id
      * @return string File name (with path)
      */
-    protected function _file($id) {
-        $path = $this->_path($id);
-        $fileName = $this->_idToFileName($id);
-        return $path . $fileName;
+    protected function getFile($id) {
+        global $environment;
+        $path;
+        $fileName = $this->getFileName($id, $path);
+        $file = $environment->getFile($path . $fileName);
     }
 
     /**
@@ -821,7 +824,7 @@ class Kansas_Cache_File
      * @param  boolean $parts if true, returns array of directory parts instead of single string
      * @return string Complete directory path
      */
-    protected function _path($id, $parts = false) {
+    protected function getPath($id, $parts = false) {
         $partsArray = array();
         $root = $this->getCacheDir();
         if ($this->options['hashed_directory_level']>0) {
@@ -830,6 +833,10 @@ class Kansas_Cache_File
                 $root = $root . $this->getFileNamePrefix() . '--' . substr($hash, 0, $i + 1) . DIRECTORY_SEPARATOR;
                 $partsArray[] = $root;
             }
+            if (!is_writable($path)) // maybe, we just have to build the directory structure
+                $this->_recursiveMkdirAndChmod($partsArray);
+            if (!is_writable($path))
+                return $root;
         }
         if ($parts)
             return $partsArray;
@@ -843,10 +850,7 @@ class Kansas_Cache_File
      * @param string $id cache id
      * @return boolean true
      */
-    protected function _recursiveMkdirAndChmod($id) {
-        if ($this->options['hashed_directory_level'] <=0)
-            return true;
-        $partsArray = $this->_path($id, true);
+    protected function _recursiveMkdirAndChmod(array $partsArray) {
         foreach ($partsArray as $part) {
             if (!is_dir($part)) {
                 @mkdir($part, $this->getHashedDirectoryUmask());
