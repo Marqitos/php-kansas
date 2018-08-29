@@ -1,15 +1,27 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
+namespace Kansas\Module;
 
-class Kansas_Module_Javascript
-  extends System_Configurable_Abstract {
+use System\Configurable;
+use Kansas\Controller\ControllerInterface;
+use Kansas\Controller\Index;
+use Kansas\Module\ModuleInterface;
+use System\NotSuportedException;
+use Kansas\View\Result\Javascript as ViewResultJavascript;
+use JShrink\Minifier;
+
+require_once 'System/Configurable.php';
+require_once 'Kansas/Module/ModuleInterface.php';
+
+class Javascript extends Configurable implements ModuleInterface {
   
   private $_packager;
   
 	public function __construct(array $options = []) {
-		parent::__construct($options);
-
-    Kansas_Controller_Index::addAction('javascript', [$this, 'controllerAction']);
+    require_once 'packager/packager.php';
+    require_once 'Kansas/Controller/Index.php';
+    parent::__construct($options);
+    // Añade una acción al controlador principal
+    Index::addAction('javascript', [$this, 'controllerAction']);
 	}
   
   /// Miembros de Kansas_Module_Interface
@@ -30,7 +42,7 @@ class Kansas_Module_Javascript
         ];
       default:
         require_once 'System/NotSuportedException.php';
-        throw new System_NotSuportedException("Entorno no soportado [$environment]");
+        throw new NotSuportedException("Entorno no soportado [$environment]");
     }
   }
 
@@ -40,9 +52,8 @@ class Kansas_Module_Javascript
 	}
 
   public function getPackager() {
-    require_once 'packager/packager.php';
     if($this->_packager == null)
-      $this->_packager = new Packager($this->options['packages']);
+      $this->_packager = new \Packager($this->options['packages']);
     return $this->_packager;
   }
   
@@ -89,15 +100,15 @@ class Kansas_Module_Javascript
     $jsCode = $this->getPackager()->build_from_components($components);
     if($minifier) {
       require_once 'JShrink/Minifier.php';
-      return \JShrink\Minifier::minify($jsCode, $minifier); 
+      return Minifier::minify($jsCode, $minifier); 
     } else 
       return $jsCode;
   }
 
-	public function controllerAction(Kansas_Controller_Interface $controller, array $vars) {
+	public function controllerAction(ControllerInterface $controller, array $vars) {
     $components = $vars['component'];
     require_once 'Kansas/View/Result/Javascript.php';
-    return new Kansas_View_Result_Javascript($components);
+    return new ViewResultJavascript($components);
 	}		
    
 }

@@ -1,10 +1,14 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
-require_once 'Kansas/Cache/Interface.php';
+namespace Kansas\Module;
 
-class Kansas_Module_BackendCache
-	extends System_Configurable_Abstract
-  implements Kansas_Module_Interface, Kansas_Cache_Interface {
+use System\Configurable;
+use Kansas\Cache;
+use Kansas\Cache\CacheInterface;
+use Kansas\Module\ModuleInterface;
+use System\NotSupportedException;
+use Exception;
+
+class BackendCache extends Configurable implements ModuleInterface, CacheInterface {
   
   /// Campos
   private $_router;
@@ -14,7 +18,7 @@ class Kansas_Module_BackendCache
   public function __construct(array $options) {
     global $application;
     parent::__construct($options);
-    $this->_cache = Kansas_Cache::Factory( // Creamos el almacenamiento de cache
+    $this->_cache = Cache::Factory( // Creamos el almacenamiento de cache
       $this->options['cache_type'],
       $this->options['cache_options']
     );
@@ -45,8 +49,7 @@ class Kansas_Module_BackendCache
           'log' => true
         ];
       default:
-        require_once 'System/NotSupportedException.php';
-        throw new System_NotSupportedException("Entorno no soportado [$environment]");
+        throw new NotSupportedException("Entorno no soportado [$environment]");
     }
   }
   

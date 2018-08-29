@@ -1,11 +1,16 @@
 <?php
 
-require_once 'Kansas/Module/Zone/Abstract.php';
+namespace Kansas\Module;
 
-class Kansas_Module_API
-  extends Kansas_Module_Zone_Abstract {
+use Kansas\Module\AbstractZone;
+use System\NotSupportedException;
+use Kansas\Router\API as RouterAPI;
+
+require_once 'Kansas/Module/AbstractZone.php';
+
+class API extends AbstractZone {
 	
-	private $_router;
+	private $router;
 
   /// Constructor
 	public function __construct(array $options) {
@@ -26,7 +31,7 @@ class Kansas_Module_API
         ];
       default:
         require_once 'System/NotSupportedException.php';
-        throw new System_NotSupportedException("Entorno no soportado [$environment]");
+        throw new NotSupportedException("Entorno no soportado [$environment]");
     }
   }
 
@@ -37,17 +42,17 @@ class Kansas_Module_API
   
 	public function appPreInit() { // añadir router
 		global $application;
-    if($this->zones->getZone() instanceof Kansas_Module_API) {
+    if($this->zones->getZone() instanceof Kansas\Module\API) {
       $application->addRouter($this->getRouter());
     }
 	}
 
 	public function getRouter() {
-		if($this->_router == null) {
+		if($this->router == null) {
 			require_once 'Kansas/Router/API.php';
-			$this->_router = new Kansas_Router_API([$this->options]);
+			$this->router = new RouterAPI($this->options);
 		}
-		return $this->_router;
+		return $this->router;
 	}
 
 }

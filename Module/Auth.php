@@ -1,10 +1,22 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
-require_once 'Kansas/Module/Interface.php';
 
-class Kansas_Module_Auth
-  extends System_Configurable_Abstract
-  implements Kansas_Module_Interface {
+namespace Kansas\Module;
+
+use Exception;
+use System\Guid;
+use System\Configurable;
+use System\NotSuportedException;
+use Kansas\Loader;
+use Kansas\Auth\ServiceInterface as AuthService;
+use Kansas\Module\ModuleInterface;
+use Kansas\Router\Auth as AuthRouter;
+use Psr\Http\Message\RequestInterface;
+
+
+require_once 'System/Configurable.php';
+require_once 'Kansas/Module/ModuleInterface.php';
+
+class Auth extends Configurable implements ModuleInterface {
 
   /// Constantes
   // Roles predeterminadas
@@ -50,18 +62,22 @@ class Kansas_Module_Auth
           'path'        => '',
           'controller'	=> 'Auth',
           'action'	    => 'index'],
+        'sessionInfo' => [
+          'path'        => 'sesiones',
+          'controller'  => 'Auth',
+          'action'      => 'sessionInfo'],
         'signout' => [
           'path' 			  => '/cerrar-session',
           'controller'	=> 'Auth',
           'action'		  => 'signOut']
       ],
-      'session'	  => 'Kansas_Auth_Session_Default',
+      'session'	  => 'Kansas\Auth\Session\Default',
       'lifetime'  => 60*60*24*15, // 15 días
       'roles'     => []
       ];
     default:
       require_once 'System/NotSuportedException.php';
-      throw new System_NotSuportedException("Entorno no soportado [$environment]");
+      throw new NotSuportedException("Entorno no soportado [$environment]");
     }
   }
 
@@ -83,7 +99,7 @@ class Kansas_Module_Auth
       $application->addRouter($this->getRouter());
   }
 
-  public function appRoute(Kansas_Request $request, $params) { // Añadir datos de usuario
+  public function appRoute(RequestInterface $request, $params) { // Añadir datos de usuario
     $result = [];
     if($this->_user)
       $result['identity'] = $this->_user;
@@ -97,7 +113,7 @@ class Kansas_Module_Auth
     if(!isset($this->_session)) {
       try {
         require_once 'Kansas/Loader.php';
-        Kansas_Loader::loadClass($this->options['session']);
+        Loader::loadClass($this->options['session']);
         $this->_session = new $this->options['session']();
       } catch(Exception $ex) {
         var_dump($ex);
@@ -166,7 +182,7 @@ class Kansas_Module_Auth
   public function getRouter() {
     if($this->_router == null) {
       require_once 'Kansas/Router/Auth.php';
-      $this->_router = new Kansas_Router_Auth($this->options['router']);
+      $this->_router = new AuthRouter($this->options['router']);
       $this->_router->addActions($this->options['actions']);
       foreach ($this->_authServices as $authService)
         $this->_router->addActions($authService->getActions());
@@ -188,16 +204,16 @@ class Kansas_Module_Auth
     return $result;
   }
   
-  public function addAuthService(Kansas_Auth_Service_Interface $authService) {
+  public function addAuthService(AuthService $authService) {
     $this->_authServices[$authService->getName()] = $authService;
-    if(!array_search($this->_authTypes, $authService->getAuthType()))
-    $this->_authTypes[] = $authService->getAuthType();
+    if(!array_search($authService->getAuthType(), $this->_authTypes))
+      $this->_authTypes[] = $authService->getAuthType();
   }
 
 
   
   // Obtiene los rols del usuario actual, invitado si no esta autenticado
-  public function getCurrentRoles(System_Guid $scope = null) {
+  public function getCurrentRoles(Guid $scope = null) {
     global $application;
     if($scope == null)
       $scope = self::getDefaultScope();
@@ -206,7 +222,7 @@ class Kansas_Module_Auth
       return [
         'scope' => $scope['id'],
         'name'  => self::ROLE_GUEST];
-    return $application->getProvider('users')->getUserRoles(new System_Guid($user['id']), $scope);
+    return $application->getProvider('users')->getUserRoles(new Guid($user['id']), $scope);
   }
   
   public static function getRolesByScope(array $scope = NULL) {
@@ -218,7 +234,7 @@ class Kansas_Module_Auth
       $default = call_user_func($scope['default']);
     if($default)
       $default = array_combine(array_column($default, 'rol'), $default);
-    $result = $application->getProvider('users')->getRolesByScope(new System_Guid($scope['id']), $default);
+    $result = $application->getProvider('users')->getRolesByScope(new Guid($scope['id']), $default);
     if($default) {
       $default  = array_combine(array_map([self, 'rolKey'], $default), $default);
       $result   = array_combine(array_map([self, 'rolKey'], $result), $result);

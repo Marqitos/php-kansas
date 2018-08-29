@@ -1,10 +1,13 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
-require_once 'Kansas/Module/Zone/Interface.php';
+namespace Kansas\Module;
 
-abstract class Kansas_Module_Zone_Abstract
-  extends System_Configurable_Abstract
-  implements Kansas_Module_Zone_Interface {
+use System\Configurable;
+use Kansas\Module\Zone\ZoneInterface;
+
+require_once 'System/Configurable.php';
+require_once 'Kansas/Module/Zone/ZoneInterface.php';
+
+abstract class AbstractZone extends Configurable implements ZoneInterface {
   
   /// Campos
   protected $zones;
@@ -17,7 +20,7 @@ abstract class Kansas_Module_Zone_Abstract
     $this->zones->addZone($this);
 	}
   
-  /// Miembros de Kansas_Module_Zone_Interface
+  /// Miembros de ZoneInterface
   // Obtiene la ruta inicial de la zona  
   public function getBasePath() {
     return $this->options['base_path'];

@@ -1,8 +1,15 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
+namespace Kansas\Module;
 
-class Kansas_Module_RedirectionError
-  extends System_Configurable_Abstract {
+use System\Configurable;
+use System\NotSuportedException;
+use Kansas\Module\ModuleInterface;
+use Kansas\View\Result\Redirect;
+
+require_once 'System/Configurable.php';
+require_once 'Kansas/Module/ModuleInterface.php';
+
+class RedirectionError extends Configurable implements ModuleInterface {
 
 	public function __construct(array $options) {
     parent::__construct($options);
@@ -22,7 +29,7 @@ class Kansas_Module_RedirectionError
         ];
       default:
         require_once 'System/NotSuportedException.php';
-        throw new System_NotSuportedException("Entorno no soportado [$environment]");
+        throw new NotSuportedException("Entorno no soportado [$environment]");
     }
   }
   
@@ -37,7 +44,8 @@ class Kansas_Module_RedirectionError
       global $environment;
       if($this->options['append'])
         $path = rtrim($path, '/') . $environment->getRequest()->getRequestUri();
-      $result = Kansas_View_Result_Redirect::gotoUrl($path);
+      require_once 'Kansas/View/Result/Redirect.php';
+      $result = Redirect::gotoUrl($path);
       $result->executeResult();
     } else {
       $application->errorManager($params);

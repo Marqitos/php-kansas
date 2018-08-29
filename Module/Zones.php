@@ -1,8 +1,18 @@
 <?php
 
-class Kansas_Module_Zones
-	extends System_Configurable_Abstract
-  implements Kansas_Module_Interface {
+namespace Kansas\Module;
+
+use System\Configurable;
+use Kansas\Module\ModuleInterface;
+use System\NotSuportedException;
+use System\String;
+use Kansas\Module\Zone\ZoneInterface;
+
+require_once 'Kansas/Module/Zone/ZoneInterface.php';
+require_once 'System/Configurable.php';
+require_once 'Kansas/Module/ModuleInterface.php';
+
+class Zones extends Configurable implements ModuleInterface {
   
   /// Campos
   private $_zones = [];
@@ -22,7 +32,7 @@ class Kansas_Module_Zones
         return [];
       default:
         require_once 'System/NotSuportedException.php';
-        throw new System_NotSuportedException("Entorno no soportado [$environment]");
+        throw new NotSuportedException("Entorno no soportado [$environment]");
     }
   }
 
@@ -39,7 +49,7 @@ class Kansas_Module_Zones
       $path = trim($environment->getRequest()->getUri()->getPath(), '/');
       $this->_zone = false;
       foreach($this->_zones as $zone) {
-        if(System_String::startWith($path, $zone->getBasePath())) {
+        if(String::startWith($path, $zone->getBasePath())) {
           $this->_zone = $zone;
           break;
         }
@@ -49,7 +59,7 @@ class Kansas_Module_Zones
   }
   
   // Agrega una nueva zona
-  public function addZone(Kansas_Module_Zone_Interface $zone) {
+  public function addZone(ZoneInterface $zone) {
     $this->_zones[$zone->getBasePath()] = $zone;
     if($this->_zone === FALSE) unset($this->_zone);
   }

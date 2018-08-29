@@ -1,11 +1,18 @@
 <?php
-//require_once 'System/Configurable/Abstract.php';
-//require_once 'Kansas/Auth/Service/Interface.php';
-//require_once 'Kansas/Module/Interface.php';
 
-class Kansas_Module_Membership
-  extends System_Configurable_Abstract
-  implements Kansas_Module_Interface, Kansas_Auth_Service_Interface {
+namespace Kansas\Module;
+
+use System\Configurable;
+use Kansas\Module\ModuleInterface;
+use Kansas\Auth\ServiceInterface;
+use System\NotSuportedException;
+use Kansas\Auth\Exception as AuthException;
+
+require_once 'System/Configurable.php';
+require_once 'Kansas/Module/ModuleInterface.php';
+require_once 'Kansas/Auth/ServiceInterface.php';
+
+class Membership extends Configurable implements ModuleInterface, ServiceInterface {
 
   /// Constructor
   public function __construct(array $options) {
@@ -46,7 +53,7 @@ class Kansas_Module_Membership
         ];
       default:
         require_once 'System/NotSuportedException.php';
-        throw new System_NotSuportedException("Entorno no soportado [$environment]");
+        throw new NotSuportedException("Entorno no soportado [$environment]");
     }
   }
 
@@ -80,8 +87,8 @@ class Kansas_Module_Membership
       $user = $provider->validate($email, $password);
       $authModule->setIdentity($user, $remember);
       return $user;
-    } catch(Kansas_Auth_Exception $ex) {
-      if($ex->getErrorCode() != Kansas_Auth_Exception::FAILURE_UNCATEGORIZED) {
+    } catch(AuthException $ex) {
+      if($ex->getErrorCode() != AuthException::FAILURE_UNCATEGORIZED) {
         // Registar evento de intento de inicio de sesión
         // Comprobar si hay q bloquear el usuario, y realizar el bloqueo
       }

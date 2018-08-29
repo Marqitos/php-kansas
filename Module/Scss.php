@@ -1,12 +1,20 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
-require_once 'Kansas/Module/Interface.php';
-require_once 'Kansas/Controller/Index.php';
+
+namespace Kansas\Module;
+
+use System\Configurable;
+use System\NotSupportedException;
+use Kansas\Controller\ControllerInterface;
+use Kansas\Controller\Index;
+use Kansas\Module\ModuleInterface;
+use Kansas\View\Result\Scss as ScssViewResult;
 use Leafo\ScssPhp\Compiler;
 
-class Kansas_Module_Scss
-	extends System_Configurable_Abstract
-	implements Kansas_Module_Interface {
+require_once 'System/Configurable.php';
+require_once 'Kansas/Module/ModuleInterface.php';
+require_once 'Kansas/Controller/Index.php';
+
+class Scss extends Configurable	implements ModuleInterface {
 		
 	private $_parser;
 	private $_router;
@@ -14,7 +22,7 @@ class Kansas_Module_Scss
 	public function __construct(array $options = []) {
 		parent::__construct($options);
 
-    Kansas_Controller_Index::addAction('scss', [$this, 'controllerAction']);
+    Index::addAction('scss', [$this, 'controllerAction']);
 	}
 
   /// Miembros de Kansas_Module_Interface
@@ -34,8 +42,7 @@ class Kansas_Module_Scss
           'environment' => $environment
 				];
       default:
-        require_once 'System/NotSupportedException.php';
-        throw new System_NotSupportedException("Entorno no soportado [$environment]");
+        throw new NotSupportedException("Entorno no soportado [$environment]");
     }
   }
 		
@@ -46,6 +53,7 @@ class Kansas_Module_Scss
 
 	public function getParser() {
 		if($this->_parser == null) {
+      require_once 'Leafo/ScssPhp/Compiler.php';
 			$this->_parser = new Compiler();
 			$this->_parser->addImportPath([$this, 'getFile']);
 			$this->_parser->setFormatter($this->options['formater']);
@@ -110,9 +118,9 @@ class Kansas_Module_Scss
 			return $this->getParser()->compile(file_get_contents($file));
 	}
 
-	public function controllerAction($controller, array $vars = []) {
+	public function controllerAction(ControllerInterface $controller, array $vars = []) {
     require_once 'Kansas/View/Result/Scss.php';
-		return new Kansas_View_Result_Scss($vars['file']);
+		return new ScssViewResult($vars['file']);
 	}
 	
 }

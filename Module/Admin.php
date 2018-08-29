@@ -1,10 +1,17 @@
 <?php
-require_once 'Kansas/Module/Zone/Abstract.php';
-require_once 'Kansas/Router/Interface.php';
 
-class Kansas_Module_Admin
-  extends Kansas_Module_Zone_Abstract
-  implements Kansas_Router_Interface {
+namespace Kansas\Module;
+
+use Kansas\Module\AbstractZone;
+use Kansas\Module\Zone\ZoneInterface;
+use Kansas\Router\RouterInterface;
+use System\NotSuportedException;
+use System\String;
+
+require_once 'Kansas/Module/AbstractZone.php';
+require_once 'Kansas/Router/RouterInterface.php';
+
+class Admin extends AbstractZone implements RouterInterface {
 	
   /// Campos
   private $_callbacks = [
@@ -32,7 +39,7 @@ class Kansas_Module_Admin
         ];
       default:
         require_once 'System/NotSuportedException.php';
-        throw new System_NotSuportedException("Entorno no soportado [$environment]");
+        throw new NotSuportedException("Entorno no soportado [$environment]");
     }
   }
 
@@ -43,11 +50,12 @@ class Kansas_Module_Admin
   
   /// Miembros de Kansas_Router_Interface
 	public function match() {
+    require_once 'System/String.php';
 		global $application;
     global $environment;
 		$params = false;
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
-    if(System_String::startWith($path, $this->getBasePath()))
+    if(String::startWith($path, $this->getBasePath()))
       $path = substr($path, strlen($this->getBasePath()));
     else
 			return false;
