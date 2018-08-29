@@ -1,35 +1,33 @@
 <?php
 /**
- * Zend Framework
- *
- * @package    Zend_Loader
- * @version    $Id: Loader.php 23484 2010-12-10 03:57:59Z mjh_ca $
+ * Based on Zend Framework 2.0 / Zend_Loader
  */
 
+namespace Kansas;
 /**
  * Static methods for loading classes and files.
  */
-class Kansas_Loader {
+class Loader {
 	
     /**
-     * @var Zend_Loader_Autoloader Singleton instance
+     * @var Loader Singleton instance
      */
-    protected static $_instance;
+    protected static $instance;
 
     /**
      * @var bool Whether or not to suppress file not found warnings
      */
-    protected $_suppressNotFoundWarnings = false;
+    protected $suppressNotFoundWarnings = false;
 
     /**
      * Retrieve singleton instance
      *
-     * @return Zend_Loader_Autoloader
+     * @return Kansas\Loader
      */
     public static function autoload() {
-        if (null === self::$_instance)
-            self::$_instance = new self();
-        return self::$_instance;
+        if (!isset(self::$instance))
+            self::$instance = new self();
+        return self::$instance;
     }
 
 
@@ -41,8 +39,8 @@ class Kansas_Loader {
      */
     public function suppressNotFoundWarnings($flag = null) {
         if (null === $flag)
-            return $this->_suppressNotFoundWarnings;
-        $this->_suppressNotFoundWarnings = (bool) $flag;
+            return $this->suppressNotFoundWarnings;
+        $this->suppressNotFoundWarnings = (bool) $flag;
         return $this;
     }
 

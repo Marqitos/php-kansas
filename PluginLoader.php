@@ -1,21 +1,20 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework 2.0
  *
- * @package    Zend_Loader
  * @subpackage PluginLoader
- * @version    $Id: PluginLoader.php 22603 2010-07-17 00:02:10Z ramon $
  */
+namespace Kansas;
 
-require_once 'Kansas/PluginLoader/Interface.php';
+use Kansas\Autoloader;
+use Kansas\Loader\PluginInterface;
+use Kansas\Loader\NotFoundException;
 
-/** Zend_Loader */
-require_once 'Kansas/Loader.php';
 
 /**
  * Generic plugin class loader
  */
-class Kansas_PluginLoader implements Kansas_PluginLoader_Interface {
+class PluginLoader implements PluginInterface {
     /**
      * Class map cache file
      * @var string
@@ -287,7 +286,7 @@ class Kansas_PluginLoader implements Kansas_PluginLoader_Interface {
 
 				foreach ($paths as $path) {
 					$loadFile = $path . $classFile;
-					if (Kansas_Loader::isReadable($loadFile)) {
+					if (Autoloader::isReadable($loadFile)) {
 						include_once $loadFile;
 						if (class_exists($className, false)) {
 							if (null !== $incFile) {
@@ -304,8 +303,7 @@ class Kansas_PluginLoader implements Kansas_PluginLoader_Interface {
 				if (!$throwExceptions)
 					return false;
 
-				require_once 'Kansas/PluginLoader/NotFoundException.php';
-				throw new Kansas_PluginLoader_NotFoundException($name, $registry);
+				throw new NotFoundException($name, $registry);
 		  }
 
 			$this->_loadedPlugins[$name]     = $className;

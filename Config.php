@@ -1,11 +1,17 @@
 <?php
 /**
- * Zend Framework
- *
+ * Zend Framework 2.0
  * @package    Zend_Config
- * @version    $Id: Ini.php 23484 2010-12-10 03:57:59Z mjh_ca $
  */
-class Kansas_Config {
+
+namespace Kansas;
+
+use System\ArgumentOutOfRangeException;
+use Kansas\Config\Exception as ConfigException;
+
+use function is_array;
+
+class Config {
   
   /**
    * Loads the section $section from the config file $filename for
@@ -44,14 +50,17 @@ class Kansas_Config {
    *      );
    *
    * @param  string        $filename
+   * @param  array         $options
    * @param  string|null   $section
-   * @param  boolean|array $options
-   * @throws Zend_Config_Exception
-   * @return void
+   * @throws ArgumentOutOfRangeException
+   * @throws Kansas\Config\Exception
+   * @return array
    */  
   public static function ParseIni($filename, array $options, $section = null) {
-    if (empty($filename))
-      throw new System_ArgumentOutOfRangeException('filename');
+    if (empty($filename)) {
+      require_once 'System/ArgumentOutOfRangeException.php';
+      throw new ArgumentOutOfRangeException('filename');
+    }
 
     $nestSeparator    = isset($options['nestSeparator'])      ? (string) $options['nestSeparator']    : '.'; // String that separates nesting levels of configuration data identifiers
     $sectionSeparator = isset($options['sectionSeparator'])   ? (string) $options['sectionSeparator'] : ':'; // String that separates the parent section name
@@ -72,8 +81,8 @@ class Kansas_Config {
         $section = [$section];
       foreach ($section as $sectionName) {
         if (!isset($iniArray[$sectionName])) {
-            require_once 'Zend/Config/Exception.php';
-            throw new Zend_Config_Exception("Section '$sectionName' cannot be found in $filename");
+            require_once 'Kansas/Config/Exception.php';
+            throw new ConfigException("Section '$sectionName' cannot be found in $filename");
         }
         $dataArray = array_replace_recursive (self::processIniSection($iniArray, $sectionName, $skipExtends, $nestSeparator), $dataArray);
       }
@@ -90,7 +99,7 @@ class Kansas_Config {
      * parse_ini_file().
      *
      * @param string $filename
-     * @throws Zend_Config_Exception
+     * @throws Kansas\Config\Exception
      * @return array
      */
     protected static function loadIniFile($filename, $sectionSeparator) {
@@ -109,8 +118,8 @@ class Kansas_Config {
               break;
 
             default:
-              require_once 'Zend/Config/Exception.php';
-              throw new Zend_Config_Exception("Section '$thisSection' may not extend multiple sections in $filename");
+              require_once 'Kansas/Config/Exception.php';
+              throw new ConfigException("Section '$thisSection' may not extend multiple sections in $filename");
           }
         }
 
@@ -125,7 +134,7 @@ class Kansas_Config {
      * @param  array  $iniArray
      * @param  string $section
      * @param  array  $config
-     * @throws Zend_Config_Exception
+     * @throws Kansas\Config\Exception
      * @return array
      */
     protected static function processIniSection($iniArray, $section, $skipExtends, $nestSeparator, $config = []) {
@@ -136,8 +145,8 @@ class Kansas_Config {
                 if (isset($iniArray[$value])) {
                   $config = self::processIniSection($iniArray, $value, $skipExtends, $nestSeparator, $config);
                 } else {
-                  require_once 'Zend/Config/Exception.php';
-                  throw new Zend_Config_Exception("Parent section '$section' cannot be found");
+                  require_once 'Kansas/Config/Exception.php';
+                  throw new ConfigException("Parent section '$section' cannot be found");
                 }
             } else {
               $config = self::processIniKey($config, $key, $value, $nestSeparator);
@@ -153,7 +162,7 @@ class Kansas_Config {
      * @param  array  $config
      * @param  string $key
      * @param  string $value
-     * @throws Zend_Config_Exception
+     * @throws Kansas\Config\Exception
      * @return array
      */
     protected static function processIniKey($config, $key, $value, $nestSeparator)
@@ -168,13 +177,13 @@ class Kansas_Config {
                   $config[$pieces[0]] = [];
                 }
               } elseif (!is_array($config[$pieces[0]])) {
-                require_once 'Zend/Config/Exception.php';
-                throw new Zend_Config_Exception("Cannot create sub-key for '{$pieces[0]}' as key already exists");
+                require_once 'Kansas/Config/Exception.php';
+                throw new ConfigException("Cannot create sub-key for '{$pieces[0]}' as key already exists");
               }
             $config[$pieces[0]] = self::processIniKey($config[$pieces[0]], $pieces[1], $value, $nestSeparator);
           } else {
-            require_once 'Zend/Config/Exception.php';
-            throw new Zend_Config_Exception("Invalid key '$key'");
+            require_once 'Kansas/Config/Exception.php';
+            throw new ConfigException("Invalid key '$key'");
           }
         } else {
           $config[$key] = $value;
