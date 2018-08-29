@@ -1,8 +1,11 @@
 <?php
-require_once 'Kansas/Router/Abstract.php';
+namespace Kansas\Router;
 
-class Caybe_Router_Pages
-	extends Kansas_Router_Abstract {
+use Kansas\Router;
+
+require_once 'Kansas/Router.php';
+
+class Pages extends Router {
 
 	/// Miembros de System_Configurable_Interface
     public function getDefaultOptions($environment) {
@@ -24,9 +27,6 @@ class Caybe_Router_Pages
         elseif(isset($pages[$path]))
             $params = $this->getParams($pages[$path]);
             
-        if($params)
-            $params['router']	= get_class($this);
-        
         return $params;
     }
 
