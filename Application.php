@@ -1,15 +1,33 @@
 <?php
-require_once 'System/Configurable/Abstract.php';
 
-class Kansas_Application extends System_Configurable_Abstract {
+namespace Kansas;
+
+use Exception;
+use SplPriorityQueue;
+use System\ArgumentOutOfRangeException;
+use System\Configurable;
+use System\NotSupportedException;
+use System\Net\WebException;
+use Kansas\Loader\PluginInterface;
+use Kansas\PluginLoader;
+use Kansas\Router\RouterInterface;
+use Kansas\View\Smarty;
+use Kansas\View\Result\ViewResultInterface;
+
+use function is_string;
+use function set_error_handler;
+use function set_exception_handler;
+use function Kansas\Request\getRequestType;
+
+class Application extends Configurable {
 
     private $_providers = [];
     private $_db;
 
     private $_loaders = [
-        'controller' => ['Kansas_Controller_' => 'Kansas/Controller/'],
-        'module'     => ['Kansas_Module_'	=> 'Kansas/Module/'],
-        'provider'	 => ['Kansas_Db_' => 'Kansas/Db/']
+        'controller' => ['Kansas\\Controller\\' => 'Kansas/Controller/'],
+        'module'     => ['Kansas\\Module\\'	=> 'Kansas/Module/'],
+        'provider'	 => ['Kansas\\Db\\' => 'Kansas/Db/']
     ];
 
     private $_modules	    = [];
@@ -20,7 +38,7 @@ class Kansas_Application extends System_Configurable_Abstract {
     private $_view;
     private $_title;
     
-    private $_logCallback = ['Kansas_Environment', 'log'];
+    private $_logCallback = ['Kansas\\Environment', 'log'];
     private $_errorCallback;
     
     // Eventos
@@ -36,8 +54,8 @@ class Kansas_Application extends System_Configurable_Abstract {
     protected static $_instance;
 
     public function __construct($options) {
-        set_error_handler([$this, 'error_handler']);
-        set_exception_handler([$this, 'exception_handler']);
+        set_error_handler([$this, 'errorHandler']);
+        set_exception_handler([$this, 'exceptionHandler']);
         $this->_errorCallback = [$this, 'errorManager'];
         $this->_routers = new SplPriorityQueue();
         $this->registerOptionChanged([$this, 'onOptionChanged']);
@@ -66,7 +84,7 @@ class Kansas_Application extends System_Configurable_Abstract {
             ];
         default:
             require_once 'System/NotSupportedException.php';
-            throw new System_NotSupportedException("Entorno no soportado [$environment]");
+            throw new NotSupportedException("Entorno no soportado [$environment]");
         }
     }
 
@@ -75,19 +93,19 @@ class Kansas_Application extends System_Configurable_Abstract {
         case 'loader':
             if(!is_array($this->options['loader'])){
                 require_once 'System/ArgumentOutOfRangeException.php';
-                throw new System_ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException();
             }
             foreach($this->options['loader'] as $loaderName => $options) {
                 if(!isset($this->_loaders[$loaderName]))
                     continue;
-                if($this->_loaders[$loaderName] instanceof Kansas_PluginLoader_Interface)
+                if($this->_loaders[$loaderName] instanceof Kansas\Loader\PluginInterface)
                     foreach($options as $prefix => $path)
                     $loader->addPrefixPath($prefix, $path);
                 elseif(is_array($this->_loaders[$loaderName]))
                     $this->_loaders[$loaderName] = array_merge($this->_loaders[$loaderName], $options);
                 else{
                     require_once 'System/ArgumentOutOfRangeException.php';
-                    throw new System_ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException();
                 }
             }
             break;
@@ -102,19 +120,20 @@ class Kansas_Application extends System_Configurable_Abstract {
     public function getLoader($loaderName) {
         if(!isset($this->_loaders[$loaderName]))
             return false;
-        if(!($this->_loaders[$loaderName] instanceof Kansas_PluginLoader_Interface))
-            $this->_loaders[$loaderName] = new Kansas_PluginLoader($this->_loaders[$loaderName]);
+        if(is_array($this->_loaders[$loaderName]))
+            $this->_loaders[$loaderName] = new PluginLoader($this->_loaders[$loaderName]);
         return $this->_loaders[$loaderName];
     }
 
     public function getModules() {
         $result = [];
         foreach($this->options['module'] as $moduleName => $options) {
-        $module = $this->getModule($moduleName);
-        $result[$moduleName] = [
-            'options'	=> $module->getOptions(),
-            'version'	=> 'v' . (string)$module->getVersion()
-        ];
+            if($module = $this->getModule($moduleName)) {
+                $result[$moduleName] = [
+                    'options'	=> $module->getOptions(),
+                    'version'	=> 'v' . (string)$module->getVersion()
+                ];
+            }
         }
         $this->_modulesLoaded = true;
         return $result;
@@ -123,7 +142,7 @@ class Kansas_Application extends System_Configurable_Abstract {
     public function getModule($moduleName) { // Obtiene el modulo seleccionado, lo carga si es necesario
         if(!is_string($moduleName)) {
             require_once 'System/ArgumentOutOfRangeException.php';
-            throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
+            throw new ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
         }
         $moduleName = ucfirst($moduleName);
         if(isset($this->_modules[$moduleName]))
@@ -142,8 +161,10 @@ class Kansas_Application extends System_Configurable_Abstract {
         return $module;
     }
     public function setModule($moduleName, $options) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
-        if(!is_string($moduleName))
-            throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
+        if(!is_string($moduleName)) {
+            require_once 'System/ArgumentOutOfRangeException.php';
+            throw new ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
+        }
         $moduleName = ucfirst($moduleName);
         if(isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof Kansas_Module_Interface)) {
             if(!is_array($options)) $options = [];
@@ -154,8 +175,10 @@ class Kansas_Application extends System_Configurable_Abstract {
             $this->getModule($moduleName);
     }
     public function hasModule($moduleName) { // Obtiene el modulo seleccionado si está cargado o false en caso contrario
-        if(!is_string($moduleName))
-            throw new System_ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
+        if(!is_string($moduleName)) {
+            require_once 'System/ArgumentOutOfRangeException.php';
+            throw new ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
+        }
         $moduleName = ucfirst($moduleName);
         return isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof Kansas_Module_Interface)
             ? $this->_modules[$moduleName]
@@ -164,11 +187,11 @@ class Kansas_Application extends System_Configurable_Abstract {
     
     public function getProvider($providerName) {
         if(!is_string($providerName))
-            throw new System_ArgumentOutOfRangeException('providerName', $providerName, 'Se esperaba una cadena');
+            throw new ArgumentOutOfRangeException('providerName', $providerName, 'Se esperaba una cadena');
         $providerName = ucfirst($providerName);
         if(!isset($this->_providers[$providerName])) {
             $providerClass = $this->getLoader('provider')->load($providerName);
-            $provider = new $providerClass($this->getDb());
+            $provider = new $providerClass();
             $this->_providers[$providerName] = $provider;
             $this->raiseCreateProvider($provider, $providerName);
         }
@@ -197,22 +220,26 @@ class Kansas_Application extends System_Configurable_Abstract {
         $this->getModules();
         $params = false;
         if($environment->getStatus() == 'install') {
-            $router = new Kansas_Router_Install();
-            $params = $router->match();
+          $router = new Kansas_Router_Install();
+          $params = $router->match();
         } else {
-            // PreInit
-            $this->raisePreInit();
-            foreach($this->_routers as $router) {
-                if($params = $router->match())
+          $this->raisePreInit(); // PreInit event
+          foreach($this->_routers as $router) {
+            if($params = $router->match()) {
+                $params['router'] = get_class($router);
                 break;
             }
+          }
         }
-        if($params) {  // Route event
-            $params = array_merge($this->raiseRoute($params), $this->getDefaultParams());
-            $result = $this->dispatch($params);
+        if($params) {
+          $params = array_merge($params, $this->getDefaultParams());
+          $params = $this->raiseRoute($params); // Route event
+          $result = $this->dispatch($params);
         }
-        if(!isset($result) || $result == null)
-            throw new System_Net_WebException(404);
+        if(!isset($result) || $result === null) {
+            require_once 'System/Net/WebException.php';
+            throw new WebException(404);
+        }
         // Render
         $this->raiseRender($result);
         $result->executeResult();
@@ -220,14 +247,13 @@ class Kansas_Application extends System_Configurable_Abstract {
     
     // Asocia los parametros indicados y los básicos a la petición actual
     public static function getDefaultParams() {
+        require_once 'Kansas/Request/getRequestType.php';
         global $environment;
         $request = $environment->getRequest();
         return [
-            'url'           => trim($request->getUri()->getPath(), '/'),
-            'uri'           => $request->getUriString(),
-            'requestType'   => $request->isXmlHttpRequest() ? 'XMLHttpRequest' : 
-                                $request->isFlashRequest()  ? 'flash'
-                                                            : 'HttpRequest'
+            'url'         => trim($request->getUri()->getPath(), '/'),
+            'uri'         => $request->getRequestTarget(),
+            'requestType' => getRequestType($request)
         ];
     }
     
@@ -241,18 +267,18 @@ class Kansas_Application extends System_Configurable_Abstract {
         foreach ($this->_callbacks['preinit'] as $callback)
             call_user_func($callback);
     }
-    protected function raiseRoute($params = array()) {
+    protected function raiseRoute($params = []) {
         global $environment;
         $request	= $environment->getRequest();
         foreach ($this->_callbacks['route'] as $callback)
             $params = array_merge($params, call_user_func($callback, $request, $params));
         return $params;
     }
-    protected function raiseRender(Kansas_View_Result_Interface $result) {
+    protected function raiseRender(ViewResultInterface $result) {
         foreach ($this->_callbacks['render'] as $callback)
             call_user_func($callback, $result);
     }
-    protected function raiseDispatch($params = array()) {
+    protected function raiseDispatch($params = []) {
         global $environment;
         $request	= $environment->getRequest();
         foreach ($this->_callbacks['dispatch'] as $callback)
@@ -342,7 +368,7 @@ class Kansas_Application extends System_Configurable_Abstract {
         global $environment;
         require_once 'Kansas/View/Smarty.php';
         if($this->_view == null) {
-        $this->_view = new Kansas_View_Smarty($this->options['view']);
+        $this->_view = new Smarty($this->options['view']);
         if($this->_view->getCaching())
             $this->_view->setCacheId($environment->getRequest()->getRequestUri());
         $this->raiseCreateView($this->_view);
@@ -353,8 +379,8 @@ class Kansas_Application extends System_Configurable_Abstract {
     public function createTitle() {
         if($this->_title == NULL) {
         $titleClass = (isset($this->options['title']['class']))
-            ?	$this->options['title']['class']
-            : 'Kansas_TitleBuilder_Default';
+            ? $this->options['title']['class']
+            : 'Kansas\\TitleBuilder\\DefaultTitleBuilder';
         unset($this->options['title']['class']);
         $this->_title = new $titleClass($this->options['title']);
         }
@@ -366,7 +392,7 @@ class Kansas_Application extends System_Configurable_Abstract {
     }
     
     /* Gestion de errores */
-    public function error_handler($errno, $errstr, $errfile, $errline, $errcontext) {
+    public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
         if (!(error_reporting() & $errno))
             return false; // Este código de error no está incluido en error_reporting
         $trace = debug_backtrace();
@@ -389,7 +415,7 @@ class Kansas_Application extends System_Configurable_Abstract {
         return true; // No ejecutar el gestor de errores interno de PHP
     }
     
-    public function exception_handler(Exception $ex) {
+    public function exceptionHandler(Exception $ex) {
         $errData = self::getErrorData($ex);
         if(error_reporting() != 0)
         call_user_func($this->_logCallback, E_USER_ERROR, $errData);
@@ -405,26 +431,26 @@ class Kansas_Application extends System_Configurable_Abstract {
     
     public function errorManager($params) {
         $result = $this->dispatch(array_merge($params, [
-        'controller'	=> 'Error',
-        'action'			=> 'Index'
-        ], $this->getDefaultParams()));
+            'controller'	=> 'Error',
+            'action'		=> 'Index'
+            ], $this->getDefaultParams()));
         $result->executeResult();
     }
     
     public static function getErrorData(Exception $ex) {
         return [
-        'exception'   => get_class($ex),
-        'errorLevel'	=> E_USER_ERROR,
-        'code'				=> ($ex instanceof System_Net_WebException ? $ex->getStatus() : 500),
-        'message'			=> $ex->getMessage(),
-        'trace'				=> $ex->getTrace(),
-        'line'				=> $ex->getLine(),
-        'file'				=> $ex->getFile()
+            'exception'     => get_class($ex),
+            'errorLevel'	=> E_USER_ERROR,
+            'code'			=> ($ex instanceof WebException ? $ex->getStatus() : 500),
+            'message'		=> $ex->getMessage(),
+            'trace'			=> $ex->getTrace(),
+            'line'			=> $ex->getLine(),
+            'file'			=> $ex->getFile()
         ];
     }
     
     /* Enrutamiento */
-    public function addRouter(Kansas_Router_Interface $router, $priority = 0) {
+    public function addRouter(RouterInterface $router, $priority = 0) {
         $this->_routers->insert($router, $priority);
     }
   
