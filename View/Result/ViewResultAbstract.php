@@ -1,7 +1,16 @@
 <?php
 
-abstract class Kansas_View_Result_Abstract
-  implements Kansas_View_Result_Interface {
+namespace Kansas\View\Result;
+
+use Kansas\View\Result\ViewResultInterface;
+
+use function header;
+use function is_int;
+use function is_string;
+use function gmdate;
+use function trim;
+
+abstract class ViewResultAbstract implements ViewResultInterface {
 		
 	protected $_mimeType;
 	

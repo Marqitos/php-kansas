@@ -1,19 +1,22 @@
 <?php
-require_once 'Kansas/View/Result/String/Abstract.php';
+namespace Kansas\View\Result;
 
-class Kansas_View_Result_Javascript
-	extends Kansas_View_Result_String_Abstract {
-		
-	private $_components;
-	
-	public function __construct($components) {
+use Kansas\View\Result\StringAbstract;
+
+require_once('Kansas/View/Result/StringAbstract.php');
+
+class Javascript extends StringAbstract {
+        
+    private $components;
+    
+    public function __construct($components) {
     parent::__construct('application/javascript; charset: UTF-8');
-		$this->_components	= $components;
-	}
-	
-	public function getResult(&$cache) {
-		global $application;
-		return $application->getModule('Javascript')->build($this->_components, $cache);
-	}
+        $this->components	= $components;
+    }
+    
+    public function getResult(&$cache) {
+        global $application;
+        return $application->getModule('Javascript')->build($this->components, $cache);
+    }
 
 }

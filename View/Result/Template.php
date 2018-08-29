@@ -1,19 +1,23 @@
 <?php
-require_once('Kansas/View/Result/String/Abstract.php');
+
+namespace Kansas\View\Result;
+
+use Kansas\View\Result\StringAbstract;
+
+require_once('Kansas/View/Result/StringAbstract.php');
 
 /// Representa una respuesta a una solicitud basada en una plantilla
-class Kansas_View_Result_Template
-	extends Kansas_View_Result_String_Abstract {
+class Template extends StringAbstract {
 		
-	private $_template;
+	private $template;
 	
 	public function __construct($template, $mimeType) {
     parent::__construct($mimeType);
-		$this->_template	= $template;
+		$this->template	= $template;
 	}
 	
 	public function getResult(&$noCache) {
     $noCache = true;
-		return $this->_template->fetch();
+		return $this->template->fetch();
 	}
 }

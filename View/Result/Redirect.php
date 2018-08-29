@@ -1,8 +1,13 @@
 <?php 
-require_once 'Kansas/View/Result/Interface.php';
 
-class Kansas_View_Result_Redirect
-  implements Kansas_View_Result_Interface {
+namespace Kansas\View\Result;
+
+use Kansas\View\Result\ViewResultInterface;
+use System\Net\WebException;
+
+require_once 'Kansas/View/Result/ViewResultInterface.php';
+
+class Redirect implements ViewResultInterface {
     
   const MOVED_PERMANENTLY = 301;
   const MOVED_TEMPORARILY = 302;
@@ -20,13 +25,13 @@ class Kansas_View_Result_Redirect
   /**
    * Establece el tipo de redirección
    * @param int $code Codigo de redirección
-   * @throws System_Net_WebException Si se indica un codigo de redirección no válido.
+   * @throws WebException Si se indica un codigo de redirección no válido.
    */
   public function setCode($code) {
     $this->_code      = (int)$code;
     if ((300 > $this->_code) || (307 < $this->_code) || (304 == $this->_code) || (306 == $this->_code)) {
       require_once 'System/Net/WebException.php';
-      throw new System_Net_WebException($code, 'Invalid redirect HTTP status code (' . $code  . ')');
+      throw new WebException($code, 'Invalid redirect HTTP status code (' . $code  . ')');
     }
   }
   
@@ -44,7 +49,7 @@ class Kansas_View_Result_Redirect
    * @see Kansas_View_Result_Interface::executeResult()
    */
   public function executeResult () {
-		Kansas_Response::redirect($this->_location);
+    self::redirect($this->_location);
 		return true;
   }
   
@@ -54,6 +59,13 @@ class Kansas_View_Result_Redirect
     $result->setGotoUrl($url);
     return $result;    
   }
+
+  public static function redirect($location, $exit = true) {
+		header("Location: " . $location);
+		if($exit)
+			exit;
+	}
+
 
     
 }
