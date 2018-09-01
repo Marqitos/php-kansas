@@ -3,11 +3,13 @@
 namespace Kansas\View;
 
 use System\Configurable;
-use Kansas\View\ViewInterface;
 use System\NotSupportedException;
+use Kansas\Environment;
+use Kansas\View\ViewInterface;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/View/ViewInterface.php';
+require_once 'Kansas/Environment.php';
 
 class Smarty extends Configurable implements ViewInterface {
 		
@@ -31,50 +33,49 @@ class Smarty extends Configurable implements ViewInterface {
     }
   }
   */
-  /// Miembros de System_Configurable_Interface
-  public function getDefaultOptions($environment) {
-    switch ($environment) {
+  /// Miembros de ConfigurableInterface
+  public function getDefaultOptions($environmentStatus) {
+    global $environment;
+    switch ($environmentStatus) {
       case 'production':
         return [
-          'compile_dir' => realpath(BASE_PATH . 'tmp/view-compile/'),
+          'compile_dir' => $environment->getSpecialFolder(Environment::SF_COMPILE),
           'config_dir' => [
-            realpath(HOME_PATH . 'view-config')
-          ],
-          'cache_dir' => realpath(BASE_PATH . 'tmp/cache/'),
+            $environment->getSpecialFolder(Environment::SF_HOME) . 'view-config'],
+          'cache_dir' => $environment->getSpecialFolder(Environment::SF_CACHE),
           'plugin_dir' => [
-            realpath(LIBRARY_PATH . 'Kansas/View/Smarty/')],
-          'template_dir' => realpath(HOME_PATH . 'layout'),
+            $environment->getSpecialFolder(Environment::SF_LIBS) . 'Kansas/View/Smarty/'],
+          'template_dir' => $environment->getSpecialFolder(Environment::SF_LAYOUT),
           'caching' => true,
           'debugging' => false
         ];
       case 'development':
         return [
-          'compile_dir' => realpath(BASE_PATH . 'tmp/view-compile/'),
+          'compile_dir' => $environment->getSpecialFolder(Environment::SF_COMPILE),
           'config_dir' => [
-            realpath(HOME_PATH . 'view-config')
-          ],
-          'cache_dir' => realpath(BASE_PATH . 'tmp/cache/'),
+            $environment->getSpecialFolder(Environment::SF_HOME) . 'view-config'],
+          'cache_dir' => $environment->getSpecialFolder(Environment::SF_CACHE),
           'plugin_dir' => [
-            realpath(LIBRARY_PATH . 'Kansas/View/Smarty/')],
-          'template_dir' => realpath(HOME_PATH . 'layout'),
+            $environment->getSpecialFolder(Environment::SF_LIBS) . 'Kansas/View/Smarty/'],
+          'template_dir' => $environment->getSpecialFolder(Environment::SF_LAYOUT),
           'caching' => false,
           'debugging' => true
         ];
       case 'test':
         return [
-          'compile_dir' => realpath(BASE_PATH . 'tmp/view-compile/'),
+          'compile_dir' => $environment->getSpecialFolder(Environment::SF_COMPILE),
           'config_dir' => [
-            realpath(HOME_PATH . 'view-config')
-          ],
-          'cache_dir' => realpath(BASE_PATH . 'tmp/cache/'),
-          'plugin_dir' => [],
-          'template_dir' => realpath(HOME_PATH . 'layout'),
+            $environment->getSpecialFolder(Environment::SF_HOME) . 'view-config'],
+          'cache_dir' => $environment->getSpecialFolder(Environment::SF_CACHE),
+          'plugin_dir' => [
+            $environment->getSpecialFolder(Environment::SF_LIBS) . 'Kansas/View/Smarty/'],
+          'template_dir' => $environment->getSpecialFolder(Environment::SF_LAYOUT),
           'caching' => false,
           'debugging' => false
         ];
       default:
         require_once 'System/NotSupportedException.php';
-        throw new NotSupportedException("Entorno no soportado [$environment]");
+        throw new NotSupportedException("Entorno no soportado [$environmentStatus]");
     }
   }
 

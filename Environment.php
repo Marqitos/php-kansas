@@ -4,9 +4,13 @@ namespace Kansas;
 use Exception;
 use System\ArgumentOutOfRangeException;
 use System\IO\File;
+use System\IO\IOException;
 use System\Version;
+use Kansas\Config;
 use Kansas\Http\ServerRequest;
 use function microtime;
+use function ini_get;
+use function getenv;
 use function Kansas\Http\normalizeServer;
 use function Kansas\Http\normalizeUploadedFiles;
 use function Kansas\Http\marshalHeadersFromSapi;
@@ -15,39 +19,48 @@ use function Kansas\Http\marshalUriFromSapi;
 use function Kansas\Http\marshalMethodFromSapi;
 use function Kansas\Http\marshalProtocolVersionFromSapi;
 
+require_once 'System/Version.php';
+
 class Environment {
   
-  private $_status;
-  private $request;
-  private $request_time;
-  private $t_inicio;
-  private $_version;
-  private $_phpVersion;
-  private $_theme = ['shared'];
-  private static $apacheRequestHeaders = 'apache_request_headers';
-  protected static $instance;
-  private $fileClass = 'System\IO\File\FileSystem';
-  
-  const ENV_CONSTRUCTION	= 'construction';
-  const ENV_DEVELOPMENT 	= 'development';
-  const ENV_PRODUCTION		= 'production';
-  const ENV_TEST					= 'test';
+    private $status;
+    private $request;
+    private $request_time;
+    private $t_inicio;
+    private $version;
+    private $phpVersion;
+    private $theme = ['shared'];
+    private static $apacheRequestHeaders = 'apache_request_headers';
+    protected static $instance;
+    private $fileClass = 'System\IO\File\FileSystem';
+    private $specialFolders;
+    
+    const ENV_CONSTRUCTION	= 'construction';
+    const ENV_DEVELOPMENT 	= 'development';
+    const ENV_PRODUCTION	= 'production';
+    const ENV_TEST			= 'test';
 
-  const SF_HOME			= 0x0001;
-  const SF_PUBLIC 	= 0x0002;
-  const SF_LIBS			= 0x0003;
-  const SF_LAYOUTS 	= 0x0004;
-  const SF_CACHE		= 0x0005;
-  const SF_COMPILE	= 0x0006;
-  const SF_FILES		= 0x0007;
+    const SF_PUBLIC 	= 0x0001;
+    const SF_HOME		= 0x0002;
+    const SF_LIBS		= 0x0004;
+    const SF_LAYOUT 	= 0x0008;
+    const SF_THEMES 	= 0x0108;
+    const SF_TEMP       = 0x000F;
+    const SF_CACHE	    = 0x010F;
+    const SF_COMPILE	= 0x020F;
+    const SF_SESSIONS	= 0x030F;
+    const SF_TRACK 	    = 0x040F;
+    const SF_ERRORS 	= 0x050F;
+    const SF_FILES	    = 0x0010;
 
-  protected function __construct($status) {
-    $this->_status = $status;
-    $this->t_inicio = microtime(true);
-    $this->_version = new Version('0.4');
-  }
+    protected function __construct($status, array $specialFolders) {
+        $this->t_inicio = microtime(true);
+        $this->status = $status;
+        $this->specialFolders = $specialFolders;
+        $this->version = new Version('0.4');
+    }
   
-  public static function getInstance($status = null, $t_inicio = null) {
+  public static function getInstance($status = null, array $specialFolders = []) {
     if(self::$instance == null) {
       global $environment;
       if(empty($status))
@@ -56,13 +69,13 @@ class Environment {
         $status = APP_ENVIRONMENT;
       if(empty($status))
         $status = self::ENV_PRODUCTION;
-      $environment = self::$instance = new self($status, $t_inicio);
+      $environment = self::$instance = new self($status, $specialFolders);
     }
     return self::$instance;
   }
   
   public function getStatus() {
-    return $this->_status;
+    return $this->status;
   }
   
   public function getRequestTime() {
@@ -120,42 +133,37 @@ class Environment {
     return $this->request;
   }
   
-  public function setTheme($theme) {
-    if(is_string($theme))
-      $theme = explode(':', $theme);
-    if(!is_array($theme)) {
-      throw new ArgumentOutOfRangeException();
+    public function setTheme($theme) {
+        if(is_string($theme))
+            $theme = explode(':', $theme);
+        if(!is_array($theme)) {
+            require_once 'System/ArgumentOutOfRangeException.php';
+            throw new ArgumentOutOfRangeException();
+        }
+        if($theme[0] == '') {
+            unset($theme[0]);
+            $this->theme = array_merge($this->theme, $theme);        
+        } else
+            $this->theme = $theme;
     }
-    if($theme[0] == '') {
-      unset($theme[0]);
-      $this->_theme = array_merge($this->_theme, $theme);        
-    } else
-      $this->_theme = $theme;
-  }
   
-  public function getViewPaths() {
-    $func = function($theme) {
-      return realpath(LAYOUTS_PATH . $theme . '/');
-    };
-    return array_reverse(array_map($func, $this->_theme));
-  }
-  
-  public function getThemePaths() {
-    $func = function($theme) {
-      return realpath(THEMES_PATH . $theme . '/');
-    };
-    return array_reverse(array_map($func, $this->_theme));
-  }
+    public function getThemePaths() {
+        $func = function($theme) {
+            return realpath(
+                $this->getSpecialFolder(self::SF_THEMES). '/' . $theme . '/');
+        };
+        return array_reverse(array_map($func, $this->theme));
+    }
 
-  public function getFile($filename, $specialFolder) {
-    if($specialFolder != 0) {
-      require_once 'System/NotSuportedException.php';
-      throw new NotSuportedException();
+    public function getFile($filename, $specialFolder = 0) {
+        if($specialFolder != 0) {
+            $path = $this->getSpecialFolder($especialFolder);
+            $filename = $path . $filename;
+        }
+        if(class_exists($this->fileClass)) {
+            return new $this->fileClass($filename);
+        }
     }
-    if(class_exists($this->fileClass)) {
-      return new $this->fileClass($filename);
-    }
-  }
   
   public static function log($level, $message) {
     $time = self::$instance->getExecutionTime();
@@ -170,7 +178,7 @@ class Environment {
       $message = $message['message'];
     }
             
-    if(self::$instance->_status != self::ENV_DEVELOPMENT && $level != E_USER_WARNING)  
+    if(self::$instance->status != self::ENV_DEVELOPMENT && $level != E_USER_WARNING)  
       return;
       
     $level = ($level == E_USER_ERROR)    ? 'ERROR'
@@ -184,62 +192,99 @@ class Environment {
     echo " -->\n";
   }
   
-/**
-  * Determine system TMP directory and detect if we have read access
-  * inspired from Zend_File_Transfer_Adapter_Abstract
-  *
-  * @return string
-  * @throws System_IO_Exception if unable to determine directory
-  */
-  public static function getTmpDir() {
-    foreach ([$_ENV, $_SERVER] as $tab) {
-      foreach (['TMPDIR', 'TEMP', 'TMP', 'windir', 'SystemRoot'] as $key) {
-        if (isset($tab[$key])) {
-          if (($key == 'windir') or ($key == 'SystemRoot'))
-            $dir = realpath($tab[$key] . '\\temp');
-          else
-            $dir = realpath($tab[$key]);
-          if (File::IsGoodTmpDir($dir))
-            return $dir;
+    public function getSpecialFolder($specialFolder) {
+        if(!is_int($specialFolder)) {
+            require_once 'System/ArgumentOutOfRangeException.php';
+            throw new ArgumentOutOfRangeException('Se esperaba un entero');
         }
-      }
-    }
-    $upload = ini_get('upload_tmp_dir');
-    if ($upload) {
-      $dir = realpath($upload);
-      if (File::IsGoodTmpDir($dir))
-        return $dir;
-    }
-    if (function_exists('sys_get_temp_dir')) {
-      $dir = sys_get_temp_dir();
-      if ($this->_isGoodTmpDir($dir))
-        return $dir;
-    }
-    // Attemp to detect by creating a temporary file
-    $tempFile = tempnam(md5(uniqid(rand(), TRUE)), '');
-    if ($tempFile) {
-      $dir = realpath(dirname($tempFile));
-      unlink($tempFile);
-      if (File::IsGoodTmpDir($dir))
-        return $dir;
-    }
-    if (File::IsGoodTmpDir('/tmp'))
-      return '/tmp';
-    if (File::IsGoodTmpDir('\\temp'))
-      return '\\temp';
-    require_once 'System/IO/IOException.php';
-    throw new System_IO_Exception('Could not determine temp directory, please specify a temp directory manually');
-  }
+        if(isset($this->specialFolders[$specialFolder]) &&
+           $dir = realpath($this->specialFolders[$specialFolder]))
+            return $dir . '/';
 
+        switch($specialFolder) {
+            case self::SF_PUBLIC:
+                return realpath(dirname(__FILE__) . '/../../public') . '/';
+            case self::SF_HOME:
+                return realpath(dirname(__FILE__) . '/../../..') . '/';
+            case self::SF_LIBS:
+                return realpath(dirname(__FILE__) . '/..') . '/';
+            case self::SF_LAYOUT:
+                return realpath(dirname(__FILE__) . '/../../layout') . '/';
+            case self::SF_THEMES:
+                return realpath(dirname(__FILE__) . '/../../themes') . '/';
+            case self::SF_TEMP:
+                require_once 'System/IO/File.php';
+                foreach(self::tmpDirGenerator(dirname(__FILE__) . '/../../../tmp') as $dir) {
+                    if (File::IsGoodTmpDir($dir))
+                    return realpath($dir) . '/';
+                }
+                require_once 'System/IO/IOException.php';
+                throw new IOException('No se puede determinar un directorio temporal, especifique uno manualmente.');
+            case self::SF_CACHE:
+                return realpath($this->getSpecialFolder(self::SF_TEMP) . 'cache') . '/';
+            case self::SF_COMPILE:
+                return realpath($this->getSpecialFolder(self::SF_TEMP) . 'view-compile') . '/';
+            case self::SF_SESSIONS:
+                return realpath($this->getSpecialFolder(self::SF_TEMP) . 'sessions') . '/';
+            case self::SF_TRACK:
+                return realpath($this->getSpecialFolder(self::SF_TEMP) . 'log/hints') . '/';
+            case self::SF_ERRORS:
+                return realpath($this->getSpecialFolder(self::SF_TEMP) . 'log/errors') . '/';
+            case self::SF_FILES:
+                return realpath(dirname(__FILE__) . '/../../../private');
+        }
+        require_once 'System/ArgumentOutOfRangeException.php';
+        throw new ArgumentOutOfRangeException('El valor especificado no es válido');
+    }
 
-  public function getVersion() {
-    return $this->_version;
-  }
+    // Devuelve posibles valores para una carpeta temporal
+    protected static function tmpDirGenerator($tempDir = null) {
+        if(is_string($tempDir))
+            yield $tempDir;
+        foreach ([$_ENV, $_SERVER] as $tab) {
+            foreach (['TMPDIR', 'TEMP', 'TMP', 'windir', 'SystemRoot'] as $key) {
+                if (isset($tab[$key])) {
+                if (($key == 'windir') or ($key == 'SystemRoot'))
+                    yield realpath($tab[$key] . '\\temp');
+                else
+                    yield realpath($tab[$key]);
+                }
+            }
+        }
+        $upload = ini_get('upload_tmp_dir');
+        if ($upload)
+            yield realpath($upload);
 
-  public function getPhpVersion() {
-    if(!isset($this->_phpVersion))
-      $this->_phpVersion = new System_Version(PHP_VERSION);
-    return $this->_phpVersion;
-  }
+        if (function_exists('sys_get_temp_dir'))
+            yield sys_get_temp_dir();
+
+        // Attemp to detect by creating a temporary file
+        $tempFile = tempnam(md5(uniqid(rand(), TRUE)), '');
+        if ($tempFile) {
+            $dir = realpath(dirname($tempFile));
+            unlink($tempFile);
+            yield $dir;
+        }
+        yield '/tmp';
+        yield '\\temp';
+    }
+
+    public function getConfig($filename, array $iniOptions = []) {
+        // Intentar busqueda en cache
+        
+        // Cargar desde archivo ini
+        require_once 'Kansas/Config.php';
+        return Config::ParseIni($filename, $iniOptions, $this->getStatus());
+    }
+
+    public function getVersion() {
+        return $this->version;
+    }
+
+    public function getPhpVersion() {
+        if(!isset($this->phpVersion))
+            $this->phpVersion = new Version(PHP_VERSION);
+        return $this->phpVersion;
+    }
   
 }

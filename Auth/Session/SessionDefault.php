@@ -1,12 +1,20 @@
 <?php
-require_once 'Kansas/Auth/Session/Interface.php';
 
-class Kansas_Auth_Session_Default
-    implements Kansas_Auth_Session_Interface {
+namespace Kansas\Auth\Session;
+
+use Kansas\Auth\Session\SessionInterface;
+use function session_destroy;
+use function session_regenerate_id;
+use function session_set_cookie_params;
+use function session_write_close;
+
+require_once 'Kansas/Auth/Session/SessionInterface.php';
+
+class SessionDefault implements SessionInterface {
 
     private $_initialized = FALSE;
 
-    /// Miembros de Kansas_Auth_Session_Interface
+    /// Miembros de SessionInterface
     public function initialize($force = FALSE, $lifetime = 0, $domain = NULL) {
         $cookieName = session_name();
 

@@ -8,36 +8,32 @@ use Kansas\Module\ModuleInterface;
 use System\NotSupportedException;
 use Exception;
 
-class BackendCache extends Configurable implements ModuleInterface, CacheInterface {
+class BackendCache extends Configurable implements ModuleInterface {
   
   /// Campos
-  private $_router;
-  private $_cache;
+  private $caches = [];
 
   /// Constructor
   public function __construct(array $options) {
     global $application;
     parent::__construct($options);
-    $this->_cache = Cache::Factory( // Creamos el almacenamiento de cache
+    $this->caches['.'] = Cache::Factory( // Creamos el almacenamiento de cache
       $this->options['cache_type'],
       $this->options['cache_options']
     );
 
     $application->registerCallback('preinit', [$this, 'appPreInit']);
-    if($this->options['cacheRouting']) // Cache de rutas
-  		$application->registerCallback('route', [$this, "appRoute"]);
-    if($this->options['log'] && $this->_cache instanceof Kansas_Cache_ExtendedInterface) // Registro de errores
+    if($this->options['log'] && $this->caches['.'] instanceof Kansas_Cache_ExtendedInterface) // Registro de errores
       $application->set('log', [$this, 'log']);
   }
   
-  /// Miembros de System_Configurable_Interface
+  /// Miembros de ConfigurableInterface
   public function getDefaultOptions($environment) {
     switch ($environment) {
       case 'production':
         return [
           'cache_type' => 'File',
           'cache_options' => [],
-          'cacheRouting' => true,
           'log' => true
         ];
       case 'development':
@@ -45,7 +41,6 @@ class BackendCache extends Configurable implements ModuleInterface, CacheInterfa
         return [
           'cache_type' => 'File',
           'cache_options' => [],
-          'cacheRouting' => false,
           'log' => true
         ];
       default:
@@ -53,47 +48,59 @@ class BackendCache extends Configurable implements ModuleInterface, CacheInterfa
     }
   }
   
-  /// Miembros de Kansas_Module_Interface
-  public function getVersion() {
-		global $environment;
-		return $environment->getVersion();
-	}
+    /// Miembros de ModuleInterface
+    public function getVersion() {
+        global $environment;
+        return $environment->getVersion();
+    }
+  
+    public function getCache($category = '.', $cacheType = null, array $cacheOptions = []) {
+        if(!isset($this->caches[$category])) {
+            if(empty($cacheType))
+                $cacheType = $this->options['cache_type'];
+            $cacheOptions = array_merge($this->options['cache_options'], $cacheOptions);
+            $cacheOptions['file_name_prefix'] = $category;
+            $this->cache[$category] = Cache::Factory( // Creamos el almacenamiento de cache
+                $this->options['cache_type'],
+                $this->options['cache_options']
+            );
+        }
+        return $this->caches[$category];
+    }
   
   /// Miembros de Kansas_Cache_Interface
   public function setDirectives(array $directives) {
-    return $this->_cache->setDirectives($directives);
+    return $this->caches['.']->setDirectives($directives);
   }
   
   public function save($data, $id, array $tags = [], $specificLifetime = false) {
-    return $this->_cache->save($data, $id, $tags, $specificLifetime);
+    return $this->caches['.']->save($data, $id, $tags, $specificLifetime);
   }
   
   public function load($id, $doNotTestCacheValidity = false) {
-    return $this->_cache->load($id, $doNotTestCacheValidity);
+    return $this->caches['.']->load($id, $doNotTestCacheValidity);
   }
   
   public function test($cacheId) {
-    return $this->_cache->test($cacheId);
+    return $this->caches['.']->test($cacheId);
   }
   
   public function clean($mode = Kansas_Cache::CLEANING_MODE_ALL, array $tags = []) {
-    return $this->_cache->clean($mode, $tags);
+    return $this->caches['.']->clean($mode, $tags);
   }
   
   public function remove($id) {
-    return $this->_cache->remove($id);
+    return $this->caches['.']->remove($id);
   }
   
   /// Miembros de Kansas_Cache_ExtendedInterface
   public function getIdsMatchingTags($tags = []) {
-    return $this->_cache->getIdsMatchingTags($tags);
+    return $this->caches['.']->getIdsMatchingTags($tags);
   }
     
   /// Eventos de la aplicación
   public function appPreInit() {
     global $application;
-    if($this->options['cacheRouting']) // añadir router
-      $application->addRouter($this->getRouter(), 10);
     $zones = $application->hasModule('zones');
     if($zones && $zones->getZone() instanceof Kansas_Module_Admin) {
       $admin = $zones->getZone();
@@ -103,15 +110,9 @@ class BackendCache extends Configurable implements ModuleInterface, CacheInterfa
     }
   }
 
-  public function appRoute(Kansas_Request $request, $params) { // Guardar ruta en cache
-    if(!isset($params['cache']) && !isset($params['error']))
-      $this->save(serialize($params), self::getCacheId($request), ['route']);
-    return [];
-  }
-      
   /// Eventos de Kansas_Module_Admin
   public function adminAlerts() {
-    $errors = $this->_cache->getIdsMatchingTags(['error']);
+    $errors = $this->caches['.']->getIdsMatchingTags(['error']);
     return [
       'errores'         => [
         'title'         => 'Errores',
@@ -138,11 +139,11 @@ class BackendCache extends Configurable implements ModuleInterface, CacheInterfa
   public function errorMatch($path) {
     $path = substr($path, 8);
     // 32
-    if($this->_cache->test('error-' . $path)) {
+    if($this->caches['.']->test('error-' . $path)) {
       return [
         'controller'  => 'error',
         'action'      => 'adminErrorDetail',
-        'error'       => unserialize($this->_cache->load('error-' . $path))
+        'error'       => unserialize($this->caches['.']->load('error-' . $path))
       ];
     }
     if($path == 'clear') {
@@ -155,26 +156,7 @@ class BackendCache extends Configurable implements ModuleInterface, CacheInterfa
   }
  
   
-  public static function getCacheId(Kansas_Request $request) {
-    global $application;
-    $roles = $application->getModule('auth')->getCurrentRoles();
-        return urlencode(
-            'router|'.
-            implode('/', $roles).
-            '|'.
-            $request->getUriString()
-        );
-    }
-    
-  public function getRouter() {
-    if($this->_router == null) {
-      require_once 'Kansas/Router/Cache.php';
-      $this->_router = new Kansas_Router_Cache($this);
-    }
-    return $this->_router;
-  }
-  
-	public function log($level, $message) {
+  public function log($level, $message) {
 		global $environment;
 		$time = microtime();
 		$executionTime = $environment->getExecutionTime();
