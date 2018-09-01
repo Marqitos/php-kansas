@@ -6,6 +6,7 @@ use System\ArgumentOutOfRangeException;
 use System\IO\File;
 use System\IO\IOException;
 use System\Version;
+use Kansas\Config;
 use Kansas\Http\ServerRequest;
 use function microtime;
 use function ini_get;
@@ -268,6 +269,13 @@ class Environment {
         yield '\\temp';
     }
 
+    public function getConfig($filename, array $iniOptions = []) {
+        // Intentar busqueda en cache
+        
+        // Cargar desde archivo ini
+        require_once 'Kansas/Config.php';
+        return Config::ParseIni($filename, $iniOptions, $this->getStatus());
+    }
 
     public function getVersion() {
         return $this->version;
