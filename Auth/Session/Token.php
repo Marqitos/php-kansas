@@ -1,50 +1,53 @@
 <?php
-require_once 'Kansas/Auth/Session/Interface.php';
+namespace Kansas\Auth\Session;
 
-class Kansas_Auth_Session_Token
-    implements Kansas_Auth_Session_Interface {
+use Kansas\Auth\Session\SessionInterface;
 
-    private $_initialized = FALSE;
-    private $_token = FALSE;
+require_once 'Kansas/Auth/Session/SessionInterface.php';
 
-    /// Miembros de Kansas_Auth_Session_Interface
+class Token implements SessionInterface {
+
+    private $initialized = FALSE;
+    private $token = FALSE;
+    private $user;
+
+    /// Miembros de SessionInterface
     public function initialize($force = FALSE, $lifetime = 0, $domain = NULL) {
       
+        // Obtener sessión de headers
+
+        // Obtener sessión de cookies
         if (isset($_COOKIE['token'])) {
             global $application;
             $tokenModule = $application->getModule('token');
             $tokenString = $_COOKIE['token'];
             $token = $tokenModule->parse($tokenString);
-            echo $this->_token->getHeaders(); // Retrieves the token header
-            echo $this->_token->getClaims(); // Retrieves the token claims
+            echo $this->token->getHeaders(); // Retrieves the token header
+            echo $this->token->getClaims(); // Retrieves the token claims
             
-            // echo $this->_token->getHeader('jti'); // will print "4f1g23a12aa"
-            // echo $this->_token->getClaim('iss'); // will print "http://example.com"
-            // echo $this->_token->getClaim('uid'); // will print "1"
-            $this->_initialized = true;
+            // echo $this->token->getHeader('jti'); // will print "4f1g23a12aa"
+            // echo $this->token->getClaim('iss'); // will print "http://example.com"
+            // echo $this->token->getClaim('uid'); // will print "1"
+            $this->initialized = true;
        }
     }
 
     // Obtiene el usuario actual, o false si no está autenticado
     public function getIdentity() {
-        return (isset($_SESSION['auth']))
-            ? $_SESSION['auth']
-            : false;
+
     }
 
     public function setIdentity($user, $lifetime = 0, $domain = NULL) {
-        if(!$this->_initialized)
-            $this->initialize(TRUE, $lifetime, $domain);
-        $_SESSION['auth'] = $user;
+        $this->user = $user;
+        $this->initialize(TRUE, $lifetime, $domain);
+
     }
 
     public function clearIdentity() {
-        unset($_SESSION['auth']);
-        session_destroy();
-        session_regenerate_id();
+
     }
     
     public function appRender() { // desbloquear sesión
-        session_write_close();
+
     }
 }
