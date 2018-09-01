@@ -2,17 +2,18 @@
 
 namespace Kansas\Cache;
 
+use System\ArgumentOutOfRangeException;
+use System\IO\DirectoryNotFoundException;
+use System\IO\File as IOFile;
+use System\IO\IOException;
+use System\NotSuportedException;
 use Kansas\Cache;
 use Kansas\Cache\ExtendedCacheInterface;
-use System\NotSuportedException;
-use System\IO\DirectoryNotFoundException;
 use Kansas\Environment;
-use System\IO\IOException;
-use System\ArgumentOutOfRangeException;
-use System\IO\File as IOFile;
 
 require_once 'Kansas/Cache.php';
 require_once 'Kansas/Cache/ExtendedCacheInterface.php';
+require_once 'Kansas/Environment.php';
 
 /**
  * Zend Framework
@@ -78,27 +79,28 @@ class File extends Cache implements ExtendedCacheInterface {
      */
     protected $_metadatasArray = [];
 
-  /// Miembros de System_Configurable_Interface
-  public function getDefaultOptions($environment) {
-    switch ($environment) {
-      case 'production':
-      case 'development':
-      case 'test':
-        return $options = [
-            'cache_dir' => realpath(BASE_PATH . 'tmp/cache/'),
-            'read_control' => true,
-            'read_control_type' => 'crc32',
-            'hashed_directory_level' => 0,
-            'hashed_directory_umask' => 0700,
-            'file_name_prefix' => 'cache',
-            'cache_file_umask' => 0600,
-            'metadatas_array_max_size' => 100
-        ];
-      default:
-        require_once 'System/NotSuportedException.php';
-        throw new NotSuportedException("Entorno no soportado [$environment]");
+    /// Miembros de System_Configurable_Interface
+    public function getDefaultOptions($enviromentStatus) {
+        global $environment;
+        switch ($enviromentStatus) {
+        case 'production':
+        case 'development':
+        case 'test':
+            return $options = [
+                'cache_dir' => $environment->getSpecialFolder(Environment::SF_CACHE),
+                'read_control' => true,
+                'read_control_type' => 'crc32',
+                'hashed_directory_level' => 0,
+                'hashed_directory_umask' => 0770,
+                'file_name_prefix' => 'cache',
+                'cache_file_umask' => 0600,
+                'metadatas_array_max_size' => 100
+            ];
+        default:
+            require_once 'System/NotSuportedException.php';
+            throw new NotSuportedException("Entorno no soportado [$enviromentStatus]");
+        }
     }
-  }
 
     /**
      * Obtiene el directorio de cache
