@@ -55,7 +55,7 @@ class Traker extends Configurable implements ModuleInterface {
 
     /// Eventos de la aplicación
     public function appRoute(RequestInterface $request, $params) { // Añadir estado track
-        if(!isset($$this->track))
+        if(!isset($this->track))
             $this->initialize();
         if(isset($params['requestType']))
             $this->track['requestType'] = $params['requestType'];
@@ -65,7 +65,7 @@ class Traker extends Configurable implements ModuleInterface {
     }
 
     public function appCreateView($view) {
-        if(!isset($$this->track))
+        if(!isset($this->track))
             $this->initialize();
         $this->track['responseType'] = 'page';
     }
