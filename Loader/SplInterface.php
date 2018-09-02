@@ -8,7 +8,7 @@ namespace Kansas\Loader;
 use Traversable;
 use System\Configurable\ConfigurableInterface;
 
-require_once 'System\Configurable\ConfigurableInterface.php';
+require_once 'System/Configurable/ConfigurableInterface.php';
 
 /**
  * Defines an interface for classes that may register with the spl_autoload
