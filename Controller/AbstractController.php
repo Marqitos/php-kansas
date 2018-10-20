@@ -17,6 +17,7 @@ abstract class AbstractController implements ControllerInterface {
 
 	public function callAction ($action, array $vars) {
 		if(!is_callable([$this, $action])) {
+			require_once 'System/NotImplementedException.php';
 			throw new NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
 		}
 		return $this->$action($vars);
@@ -43,16 +44,15 @@ abstract class AbstractController implements ControllerInterface {
 	}
 	
 	protected function isAuthenticated(&$result, $ru = null) {
-		global $application;
+		global $application, $environment;
 		$auth = $application->getModule('auth');
 		if($auth->hasIdentity()) {
 			$result = $auth->getIdentity();
 			return true;
 		} else {
-			global $environment;
-			if($ru  == null)
+			if($ru === null)
 				$ru = $environment->getRequest()->getRequestUri();
-			Redirect::gotoUrl(
+			$result = Redirect::gotoUrl(
 				$auth->getRouter()->assemble(['action' => 'signin', 'ru' => $ru])
 			);
 			return false;

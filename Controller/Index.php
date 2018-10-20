@@ -3,6 +3,7 @@
 namespace Kansas\Controller;
 use Kansas\Controller\AbstractController;
 use Kansas\View\Result\Redirect;
+use Kansas\View\Result\File;
 use System\NotImplementedException;
 use System\ArgumentOutOfRangeException;
 use System\ArgumentNullException;
@@ -21,12 +22,9 @@ class Index	extends AbstractController {
 		throw new NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
 	}
 
-	public static function addAction($actionName, $callback) {
+	public static function addAction($actionName, callable $callback) {
 		if(!is_string($actionName)) {
 			throw new ArgumentOutOfRangeException('actionName');
-		}
-		if(!is_callable($callback)) {
-			throw new ArgumentOutOfRangeException('callback');
 		}
 		self::$actions[$actionName] = $callback;
 	}
@@ -72,7 +70,8 @@ class Index	extends AbstractController {
 	
 	
 	public function file(array $vars) {
-		return new Kansas_View_Result_File($vars['file']);
+		require_once 'Kansas/View/Result/File.php';
+		return new File($vars['file']);
 	}
   
 	public function clearCache(array $vars) {

@@ -38,7 +38,6 @@ class Auth extends Router {
         if(substr($actionPath, 1) == $path) {
           unset($action['path']);
           $params = $this->getParams($action);
-          $params['router'] = get_class($this);
           break;
         }
       }
