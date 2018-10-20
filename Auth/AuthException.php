@@ -35,6 +35,16 @@ class AuthException extends Exception {
      */
     const FAILURE_UNCATEGORIZED         = 32;
 
+    /**
+     * Cuenta de usuario no valida
+     */
+    const FAILURE_USERNAME              = 33;
+
+    /**
+     * Contraseña no valida
+     */
+    const FAILURE_PASSWORD              = 34;
+
     private $errorCode;
 
     public function __construct($errorCode) {

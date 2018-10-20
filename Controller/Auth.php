@@ -45,8 +45,12 @@ class Auth extends AbstractController {
     } else {
       $vars['title'] = 'Información sobre datos de navegación';  
     }
-    // session actual
+    if(isset($vars['trail'])) { // session actual
+      $trackModule = $application->getModule('Tracker');
+      $vars['trail'] = $trackModule->fillTrailData();
+    }
     $vars['content_file'] = 'part.auth-sessions.tpl';
+    $vars['noindex'] = true;
     return $this->createViewResult('page.default.tpl', $vars);
 }
 	

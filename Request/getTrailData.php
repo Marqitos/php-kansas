@@ -6,7 +6,8 @@ use Psr\Http\Message\ServerRequestInterface;
 
 require_once 'Psr/Http/Message/ServerRequestInterface.php';
 
-function getTrackData(ServerRequestInterface $request) {
+// Obtiene los datos basicos de navegación de la solicitud actual
+function getTrailData(ServerRequestInterface $request) {
     global $environment;
     $uri = $request->getUri();
     $data = [
