@@ -1,7 +1,15 @@
 <?php 
 
-abstract class Kansas_View_Result_File_Abstract
-  extends Kansas_View_Result_Abstract {
+namespace Kansas\View\Result;
+
+use Kansas\View\Result\ViewResultAbstract;
+use function basename;
+use function header;
+use function is_string;
+
+require_once 'Kansas/View/Result/ViewResultAbstract.php';
+
+abstract class FileAbstract extends ViewResultAbstract {
 		
   protected $download = false;
 	
