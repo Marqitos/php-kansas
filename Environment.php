@@ -7,17 +7,13 @@ use System\IO\File;
 use System\IO\IOException;
 use System\Version;
 use Kansas\Config;
-use Kansas\Http\ServerRequest;
 use function microtime;
 use function ini_get;
 use function getenv;
-use function Kansas\Http\normalizeServer;
-use function Kansas\Http\normalizeUploadedFiles;
-use function Kansas\Http\marshalHeadersFromSapi;
-use function Kansas\Http\parseCookieHeader;
-use function Kansas\Http\marshalUriFromSapi;
-use function Kansas\Http\marshalMethodFromSapi;
-use function Kansas\Http\marshalProtocolVersionFromSapi;
+use function array_merge;
+use function is_string;
+use function realpath;
+use function Kansas\Http\currentServerRequest;
 
 require_once 'System/Version.php';
 
@@ -96,42 +92,13 @@ class Environment {
     return microtime(true) - $this->getRequestTime();
   }
   
-  public function getRequest(array $server = null, array $query = null, array $body = null, array $cookies = null, array $files = null) {
-    if(!isset($this->request)) {
-      require_once 'Kansas/Http/normalizeServer.php';
-      $server = normalizeServer(
-        $server ?: $_SERVER,
-        is_callable(self::$apacheRequestHeaders) ? self::$apacheRequestHeaders : null
-      );
-      require_once 'Kansas/Http/normalizeUploadedFiles.php';
-      $files   = normalizeUploadedFiles($files ?: $_FILES);
-      require_once 'Kansas/Http/marshalHeadersFromSapi.php';
-      $headers = marshalHeadersFromSapi($server);
-
-      if (null === $cookies && array_key_exists('cookie', $headers)) {
-        require_once 'Kansas/Http/parseCookieHeader.php';
-        $cookies = parseCookieHeader($headers['cookie']);
-      }
-
-      require_once 'Kansas/Http/marshalUriFromSapi.php';
-      require_once 'Kansas/Http/marshalMethodFromSapi.php';
-      require_once 'Kansas/Http/marshalProtocolVersionFromSapi.php';
-
-      $this->request = new ServerRequest(
-          $server,
-          $files,
-          marshalUriFromSapi($server, $headers),
-          marshalMethodFromSapi($server),
-          'php://input',
-          $headers,
-          $cookies ?: $_COOKIE,
-          $query ?: $_GET,
-          $body ?: $_POST,
-          marshalProtocolVersionFromSapi($server)
-      );
+    public function getRequest(array $server = null, array $query = null, array $body = null, array $cookies = null, array $files = null) {
+        if(!isset($this->request)) {
+            require_once 'Kansas/Http/currentServerRequest.php';
+            $this->request = currentServerRequest($server, $query, $body, $cookies, $files, self::$apacheRequestHeaders);
+        }
+        return $this->request;
     }
-    return $this->request;
-  }
   
     public function setTheme($theme) {
         if(is_string($theme))
@@ -215,8 +182,7 @@ class Environment {
             case self::SF_TEMP:
                 require_once 'System/IO/File.php';
                 foreach(self::tmpDirGenerator(dirname(__FILE__) . '/../../../tmp') as $dir) {
-                    if (File::IsGoodTmpDir($dir))
-                    return realpath($dir) . '/';
+                    if (File::IsGoodTmpDir($dir)) return realpath($dir) . '/';
                 }
                 require_once 'System/IO/IOException.php';
                 throw new IOException('No se puede determinar un directorio temporal, especifique uno manualmente.');
