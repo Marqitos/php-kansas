@@ -7,14 +7,13 @@
 namespace Kansas;
 
 use Kansas\Autoloader;
-use Kansas\Loader\PluginInterface;
 use Kansas\Loader\NotFoundException;
 
 
 /**
  * Generic plugin class loader
  */
-class PluginLoader implements PluginInterface {
+class PluginLoader {
     /**
      * Class map cache file
      * @var string

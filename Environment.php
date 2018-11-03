@@ -3,10 +3,15 @@ namespace Kansas;
 
 use Exception;
 use System\ArgumentOutOfRangeException;
+use System\Collections\KeyNotFoundException;
 use System\IO\File;
 use System\IO\IOException;
 use System\Version;
 use Kansas\Config;
+use Kansas\PluginLoader;
+use Kansas\Controller\ControllerInterface;
+use Kansas\Loader\NotCastException;
+use Kansas\Plugin\PluginInterface;
 use function microtime;
 use function ini_get;
 use function getenv;
@@ -30,24 +35,31 @@ class Environment {
     protected static $instance;
     private $fileClass = 'System\IO\File\FileSystem';
     private $specialFolders;
+    private $loaders = [
+        'controller' => ['Kansas\\Controller\\' => 'Kansas/Controller/'],
+        'plugin'     => ['Kansas\\Plugin\\'	    => 'Kansas/Plugin/'],
+        'provider'	 => ['Kansas\\Provider\\'   => 'Kansas/Provider/']
+    ];
     
+    // Posibles valores de Status
     const ENV_CONSTRUCTION	= 'construction';
     const ENV_DEVELOPMENT 	= 'development';
     const ENV_PRODUCTION	= 'production';
     const ENV_TEST			= 'test';
 
+    // Posibles valores para SpecialFolder
     const SF_PUBLIC 	= 0x0001;
     const SF_HOME		= 0x0002;
     const SF_LIBS		= 0x0004;
     const SF_LAYOUT 	= 0x0008;
     const SF_THEMES 	= 0x0108;
-    const SF_TEMP       = 0x000F;
-    const SF_CACHE	    = 0x010F;
-    const SF_COMPILE	= 0x020F;
-    const SF_SESSIONS	= 0x030F;
-    const SF_TRACK 	    = 0x040F;
-    const SF_ERRORS 	= 0x050F;
-    const SF_FILES	    = 0x0010;
+    const SF_TEMP       = 0x0010;
+    const SF_CACHE	    = 0x0110;
+    const SF_COMPILE	= 0x0210;
+    const SF_SESSIONS	= 0x0310;
+    const SF_TRACK 	    = 0x0410;
+    const SF_ERRORS 	= 0x0510;
+    const SF_FILES	    = 0x0020;
 
     protected function __construct($status, array $specialFolders) {
         $this->t_inicio = microtime(true);
@@ -56,41 +68,41 @@ class Environment {
         $this->version = new Version('0.4');
     }
   
-  public static function getInstance($status = null, array $specialFolders = []) {
-    if(self::$instance == null) {
-      global $environment;
-      if(empty($status))
-        $status = getenv('APPLICATION_ENV');
-      if(empty($status) && defined('APP_ENVIRONMENT'))
-        $status = APP_ENVIRONMENT;
-      if(empty($status))
-        $status = self::ENV_PRODUCTION;
-      $environment = self::$instance = new self($status, $specialFolders);
-    }
-    return self::$instance;
-  }
-  
-  public function getStatus() {
-    return $this->status;
-  }
-  
-  public function getRequestTime() {
-    if(!isset($this->requestTime)) {
-        $serverParams = $this->getRequest()->getServerParams();
-        if(isset($serverParams['REQUEST_TIME_FLOAT'])) {
-            $this->requestTime = $serverParams['REQUEST_TIME_FLOAT'];
-        } else if(isset($serverParams['REQUEST_TIME'])) {
-            $this->requestTime = $serverParams['REQUEST_TIME'];
-        } else {
-            $this->requestTime = $this->t_inicio;
+    public static function getInstance($status = null, array $specialFolders = []) {
+        if(self::$instance == null) {
+            global $environment;
+            if(empty($status))
+                $status = getenv('APPLICATION_ENV');
+            if(empty($status) && defined('APP_ENVIRONMENT'))
+                $status = APP_ENVIRONMENT;
+            if(empty($status))
+                $status = self::ENV_PRODUCTION;
+            $environment = self::$instance = new self($status, $specialFolders);
         }
+        return self::$instance;
     }
-    return $this->requestTime;
-  }
+  
+    public function getStatus() {
+        return $this->status;
+    }
+  
+    public function getRequestTime() {
+        if(!isset($this->requestTime)) {
+            $serverParams = $this->getRequest()->getServerParams();
+            if(isset($serverParams['REQUEST_TIME_FLOAT'])) {
+                $this->requestTime = $serverParams['REQUEST_TIME_FLOAT'];
+            } else if(isset($serverParams['REQUEST_TIME'])) {
+                $this->requestTime = $serverParams['REQUEST_TIME'];
+            } else {
+                $this->requestTime = $this->t_inicio;
+            }
+        }
+        return $this->requestTime;
+    }
 
-  public function getExecutionTime() {
-    return microtime(true) - $this->getRequestTime();
-  }
+    public function getExecutionTime() {
+        return microtime(true) - $this->getRequestTime();
+    }
   
     public function getRequest(array $server = null, array $query = null, array $body = null, array $cookies = null, array $files = null) {
         if(!isset($this->request)) {
@@ -132,32 +144,32 @@ class Environment {
         }
     }
   
-  public static function log($level, $message) {
-    $time = self::$instance->getExecutionTime();
-    
-    if($message instanceof Exception) {
-      $message = $message->getMessage();
-      $fileError = $message->getFile();
-      $lineError = $message->getLine();
-    } elseif(is_array($message)) {
-      $fileError = $message['file'];
-      $lineError = $message['line'];
-      $message = $message['message'];
-    }
-            
-    if(self::$instance->status != self::ENV_DEVELOPMENT && $level != E_USER_WARNING)  
-      return;
-      
-    $level = ($level == E_USER_ERROR)    ? 'ERROR'
+    public static function log($level, $message) {
+        $time = self::$instance->getExecutionTime();
+        
+        if($message instanceof Exception) {
+            $message = $message->getMessage();
+            $fileError = $message->getFile();
+            $lineError = $message->getLine();
+        } elseif(is_array($message)) {
+            $fileError = $message['file'];
+            $lineError = $message['line'];
+            $message = $message['message'];
+        }
+                
+        if(self::$instance->status != self::ENV_DEVELOPMENT && $level != E_USER_WARNING)  
+            return;
+        
+        $level = ($level == E_USER_ERROR)    ? 'ERROR'
                : (($level == E_USER_WARNING) ? 'WARNING'
                : (($level == E_USER_NOTICE)  ? 'NOTICE'
-                                             : $level));
-    
-    echo "<!-- log [" . $level . "]\n" . $time . ' - ' . $message . "\n";
-    if(isset($lineError))
-      echo $lineError . ' -> ' . $fileError . "\n";
-    echo " -->\n";
-  }
+                                                : $level));
+        
+        echo "<!-- log [" . $level . "]\n" . $time . ' - ' . $message . "\n";
+        if(isset($lineError))
+        echo $lineError . ' -> ' . $fileError . "\n";
+        echo " -->\n";
+    }
   
     public function getSpecialFolder($specialFolder) {
         if(!is_int($specialFolder)) {
@@ -252,5 +264,60 @@ class Environment {
             $this->phpVersion = new Version(PHP_VERSION);
         return $this->phpVersion;
     }
+
+    protected function getLoader($loaderName) {
+        if(!isset($this->loaders[$loaderName])) {
+            require_once 'System/Collections/KeyNotFoundException.php';
+            throw new KeyNotFoundException();
+        }
+        if(is_array($this->loaders[$loaderName])) {
+            require_once 'Kansas/PluginLoader.php';
+            $this->loaders[$loaderName] = new PluginLoader($this->loaders[$loaderName]);
+        }
+        return $this->loaders[$loaderName];
+    }
+
+    public function createController($controllerName) {
+        $controllerClass = $this->getLoader('controller')->load($controllerName);
+        $class           = new $controllerClass();
+        require_once 'Kansas/Controller/ControllerInterface.php';
+        if(!$class instanceof ControllerInterface) {
+            require_once 'Kansas/Loader/NotCastException.php';
+            throw new NotCastException($controllerName, 'ControllerInterface');
+        }
+        return $class;
+    }
+
+    public function createPlugin($pluginName, array $options) {
+        $pluginClass = $this->getLoader('plugin')->load($pluginName);
+        $class       = new $pluginClass($options);
+        require_once 'Kansas/Plugin/PluginInterface.php';
+        if(!$class instanceof PluginInterface) {
+            require_once 'Kansas/Loader/NotCastException.php';
+            throw new NotCastException($pluginName, 'PluginInterface');
+        }
+        return $class;
+    }
+
+    public function createProvider($providerName) { 
+        $providerClass = $this->getLoader('provider')->load($providerName);
+        $provider = new $providerClass();
+    }
+
+
+    public function addLoaderPaths($loaderName, $options) {
+        if(!isset($this->loaders[$loaderName])) {
+            var_dump($loaderName, $options);
+            require_once 'System/Collections/KeyNotFoundException.php';
+            throw new KeyNotFoundException();
+        }
+        require_once 'Kansas/PluginLoader.php';
+        if($this->loaders[$loaderName] instanceof PluginLoader) {
+            foreach($options as $prefix => $path)
+                $this->loaders->addPrefixPath($prefix, realpath($path));
+        } else
+            $this->loaders[$loaderName] = array_merge($this->loaders[$loaderName], $options);
+    }
   
+
 }

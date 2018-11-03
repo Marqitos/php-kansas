@@ -8,6 +8,7 @@ use System\ArgumentOutOfRangeException;
 use System\Configurable;
 use System\NotSupportedException;
 use System\Net\WebException;
+use Kansas\Environment;
 use Kansas\Loader\PluginInterface;
 use Kansas\PluginLoader;
 use Kansas\Router\RouterInterface;
@@ -24,12 +25,6 @@ class Application extends Configurable {
     private $_providers = [];
     private $_db;
 
-    private $_loaders = [
-        'controller' => ['Kansas\\Controller\\' => 'Kansas/Controller/'],
-        'module'     => ['Kansas\\Module\\'	=> 'Kansas/Module/'],
-        'provider'	 => ['Kansas\\Db\\' => 'Kansas/Db/']
-    ];
-
     private $_modules	    = [];
     private $_modulesLoaded = false;
 
@@ -37,9 +32,6 @@ class Application extends Configurable {
     
     private $_view;
     private $_title;
-    
-    private $_logCallback = ['Kansas\\Environment', 'log'];
-    private $_errorCallback;
     
     // Eventos
     private $_callbacks = [
@@ -56,7 +48,6 @@ class Application extends Configurable {
     public function __construct($options) {
         set_error_handler([$this, 'errorHandler']);
         set_exception_handler([$this, 'exceptionHandler']);
-        $this->_errorCallback = [$this, 'errorManager'];
         $this->_routers = new SplPriorityQueue();
         $this->registerOptionChanged([$this, 'onOptionChanged']);
         parent::__construct($options);
@@ -71,16 +62,19 @@ class Application extends Configurable {
             return [
             'db' => false,
             'default_domain' => '',
-            'view' => [],
+            'error' => [$this, 'errorManager'],
             'loader' => [
                 'controller' => [],
-                'helper'     => [],
-                'module'     => [],
+                'plugin'     => [],
                 'provider'	 => []
             ],
-            'title' => '',
-            'module' => [],
-            'theme' => ['shared']
+            'log' => ['Kansas\\Environment', 'log'],
+            'plugin' => [],
+            'theme' => ['shared'],
+            'title' => [
+                'class'      => 'Kansas\\TitleBuilder\\DefaultTitleBuilder'
+            ],
+            'view' => [],
             ];
         default:
             require_once 'System/NotSupportedException.php';
@@ -89,45 +83,27 @@ class Application extends Configurable {
     }
 
     public function onOptionChanged($optionName) {
+        global $environment;
+
         switch ($optionName) {
-        case 'loader':
-            if(!is_array($this->options['loader'])){
-                require_once 'System/ArgumentOutOfRangeException.php';
-                throw new ArgumentOutOfRangeException();
-            }
-            foreach($this->options['loader'] as $loaderName => $options) {
-                if(!isset($this->_loaders[$loaderName]))
-                    continue;
-                if($this->_loaders[$loaderName] instanceof Kansas\Loader\PluginInterface)
-                    foreach($options as $prefix => $path)
-                    $loader->addPrefixPath($prefix, $path);
-                elseif(is_array($this->_loaders[$loaderName]))
-                    $this->_loaders[$loaderName] = array_merge($this->_loaders[$loaderName], $options);
-                else{
+            case 'loader':
+                if(!is_array($this->options['loader'])){
                     require_once 'System/ArgumentOutOfRangeException.php';
                     throw new ArgumentOutOfRangeException();
                 }
-            }
-            break;
-        case 'theme':
-            global $environment;
-            $environment->setTheme($this->options['theme']);
-            break;
-            
+                foreach($this->options['loader'] as $loaderName => $options) {
+                    $environment->addLoaderPaths($loaderName, $options);
+                }
+                break;
+            case 'theme':
+                $environment->setTheme($this->options['theme']);
+                break;
         }
-    }
-
-    public function getLoader($loaderName) {
-        if(!isset($this->_loaders[$loaderName]))
-            return false;
-        if(is_array($this->_loaders[$loaderName]))
-            $this->_loaders[$loaderName] = new PluginLoader($this->_loaders[$loaderName]);
-        return $this->_loaders[$loaderName];
     }
 
     public function getModules() {
         $result = [];
-        foreach($this->options['module'] as $moduleName => $options) {
+        foreach($this->options['plugin'] as $moduleName => $options) {
             if($module = $this->getModule($moduleName)) {
                 $result[$moduleName] = [
                     'options'	=> $module->getOptions(),
@@ -140,6 +116,7 @@ class Application extends Configurable {
     }
 
     public function getModule($moduleName) { // Obtiene el modulo seleccionado, lo carga si es necesario
+        global $environment;
         if(!is_string($moduleName)) {
             require_once 'System/ArgumentOutOfRangeException.php';
             throw new ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
@@ -147,51 +124,55 @@ class Application extends Configurable {
         $moduleName = ucfirst($moduleName);
         if(isset($this->_modules[$moduleName]))
             return $this->_modules[$moduleName];
-        $options = (isset($this->options['module'][$moduleName]) && is_array($this->options['module'][$moduleName]))
-            ? $this->options['module'][$moduleName]
+        $options = (isset($this->options['plugin'][$moduleName]) && is_array($this->options['plugin'][$moduleName]))
+            ? $this->options['plugin'][$moduleName]
             : [];
         try {
-            $moduleClass = $this->getLoader('module')->load($moduleName);
-            $module = new $moduleClass($options);
+            $module = $environment->createPlugin($moduleName, $options);
         } catch(Exception $e) {
-            $this->log(E_USER_NOTICE, $e);        
+            $this->log(E_USER_NOTICE, $e);
             $module = false;
         }
         $this->_modules[$moduleName] = $module;
         return $module;
     }
-    public function setModule($moduleName, $options) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
+    public function setModule($moduleName, array $options = []) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
         if(!is_string($moduleName)) {
             require_once 'System/ArgumentOutOfRangeException.php';
             throw new ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
         }
         $moduleName = ucfirst($moduleName);
-        if(isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof Kansas_Module_Interface)) {
+        require_once 'Kansas/Plugin/PluginInterface.php';
+        if(isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof PluginInterface)) {
             if(!is_array($options)) $options = [];
-                $this->_modules[$moduleName]->setOptions($options);
+            $this->_modules[$moduleName]->setOptions($options);
         } else
             $this->_modules[$moduleName] = $options;
         if($this->_modulesLoaded)
             $this->getModule($moduleName);
     }
+
     public function hasModule($moduleName) { // Obtiene el modulo seleccionado si está cargado o false en caso contrario
         if(!is_string($moduleName)) {
             require_once 'System/ArgumentOutOfRangeException.php';
             throw new ArgumentOutOfRangeException('moduleName', 'Se esperaba una cadena', $moduleName);
         }
         $moduleName = ucfirst($moduleName);
-        return isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof Kansas_Module_Interface)
+        require_once 'Kansas/Plugin/PluginInterface.php';
+        return isset($this->_modules[$moduleName]) && ($this->_modules[$moduleName] instanceof PluginInterface)
             ? $this->_modules[$moduleName]
             : false;
     }
     
     public function getProvider($providerName) {
-        if(!is_string($providerName))
-            throw new ArgumentOutOfRangeException('providerName', $providerName, 'Se esperaba una cadena');
+        global $environment;
+        if(!is_string($providerName)) {
+            require_once 'System/ArgumentOutOfRangeException.php';
+            throw new ArgumentOutOfRangeException('providerName', 'Se esperaba una cadena', $providerName);
+        }
         $providerName = ucfirst($providerName);
         if(!isset($this->_providers[$providerName])) {
-            $providerClass = $this->getLoader('provider')->load($providerName);
-            $provider = new $providerClass();
+            $provider = $environment->createProvider($providerName);
             $this->_providers[$providerName] = $provider;
             $this->raiseCreateProvider($provider, $providerName);
         }
@@ -199,20 +180,19 @@ class Application extends Configurable {
     }
     
     public function dispatch($params) {
-        $params     = $this->raiseDispatch($params);
-        $controller = isset($params['controller'])
-                    ? ucfirst($params['controller'])
-                    : 'Index';
-        $action     = isset($params['action'])
-                    ? $params['action']
-                    : 'Index';
-        $controllerClass = $this->getLoader('controller')->load($controller);
-        $class      = new $controllerClass();
-        $action     = $params['action'];
+        global $environment;
+        $params         = $this->raiseDispatch($params);
+        $controllerName = isset($params['controller'])
+                        ? ucfirst($params['controller'])
+                        : 'Index';
         unset($params['controller']);
+        $action         = isset($params['action'])
+                        ? $params['action']
+                        : 'Index';
         unset($params['action']);
-        $class->init($params);
-        return $class->callAction($action, $params);
+        $controller     = $environment->createController($controllerName);
+        $controller->init($params);
+        return $controller->callAction($action, $params);
     }
     
     public function run() {
@@ -312,58 +292,6 @@ class Application extends Configurable {
         return $application;
     }
     
-    public function set($key, $value = null) {
-        if(is_array($key)) {
-            foreach($key as $item => $value)
-                $this->set($item, $value);
-            $this->_config = $key;
-        }
-        elseif(is_string($key)) {
-            switch($key) {
-                case 'db':
-                    $this->setDb($value);
-                    break;
-                case 'loader':
-                    foreach($value as $loaderName => $options) {
-                        if($loader = $this->getLoader($loaderName)) {
-                        foreach($options as $prefix => $path)
-                            $loader->addPrefixPath($prefix, realpath($path));
-                        } else
-                        throw new System_ArgumentOutOfRangeException();
-                    }
-                    break;
-                case 'module':
-                    foreach($value as $module => $options)
-                        $this->setModule($module, $options);
-                    break;
-                case 'view':
-                    if(isset($value['class']))
-                        $this->_viewClass = $value['class'];
-                    unset($value['class']);
-                    $this->_viewOptions = $value;
-                    break;
-                case 'title':
-                    if(isset($value['class']))
-                        $this->_titleClass = $value['class'];
-                    unset($value['class']);
-                    $this->_titleOptions = $value;
-                    break;
-                case 'log':
-                    if(is_callable($value))
-                        $this->_logCallback = $value;
-                    break;
-                case 'error':
-                    if(is_callable($value))
-                        $this->_errorCallback = $value;
-                    break;
-                case 'theme':
-                    global $environment;
-                    $environment->setTheme($value);
-                    break;
-            }
-        }
-    }
-    
     public function getView() {
         global $environment;
         require_once 'Kansas/View/Smarty.php';
@@ -399,34 +327,34 @@ class Application extends Configurable {
         array_shift($trace);
         
         $errData = [
-        'exception'   => null,
-        'errorLevel'	=> $errno,
-        'code'				=> 500,
-        'message'			=> $errstr,
-        'trace'				=> $trace,
-        'line'				=> $errline,
-        'file'				=> $errfile,
-        'context'			=> $errcontext
+            'exception'   => null,
+            'errorLevel'	=> $errno,
+            'code'				=> 500,
+            'message'			=> $errstr,
+            'trace'				=> $trace,
+            'line'				=> $errline,
+            'file'				=> $errfile,
+            'context'			=> $errcontext
         ];
         if(error_reporting() != 0)
-        call_user_func($this->_logCallback, $errno, $errData);
+            @call_user_func($this->options['log'], $errno, $errData);
         if($errno == E_USER_ERROR) 
-        @call_user_func($this->_errorCallback, $errData);
+            @call_user_func($this->options['error'], $errData);
         return true; // No ejecutar el gestor de errores interno de PHP
     }
     
     public function exceptionHandler(Exception $ex) {
         $errData = self::getErrorData($ex);
         if(error_reporting() != 0)
-        call_user_func($this->_logCallback, E_USER_ERROR, $errData);
-        @call_user_func($this->_errorCallback, $errData);
+        @call_user_func($this->options['log'], E_USER_ERROR, $errData);
+        @call_user_func($this->options['error'], $errData);
         exit(1);
     }
     
     public function log($level, $message) {
         if($message instanceof Exception)
-        $message = self::getErrorData($message);
-        call_user_func($this->_logCallback, $level, $message);
+            $message = self::getErrorData($message);
+        call_user_func($this->options['log'], $level, $message);
     }
     
     public function errorManager($params) {
@@ -438,6 +366,7 @@ class Application extends Configurable {
     }
     
     public static function getErrorData(Exception $ex) {
+        require_once 'System/Net/WebException.php';
         return [
             'exception'     => get_class($ex),
             'errorLevel'	=> E_USER_ERROR,
