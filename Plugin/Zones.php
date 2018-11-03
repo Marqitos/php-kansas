@@ -1,18 +1,18 @@
 <?php
 
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\PluginInterface;
 use System\NotSuportedException;
 use System\String;
-use Kansas\Module\Zone\ZoneInterface;
+use Kansas\Plugin\Zone\ZoneInterface;
 
-require_once 'Kansas/Module/Zone/ZoneInterface.php';
+require_once 'Kansas/Plugin/Zone/ZoneInterface.php';
 require_once 'System/Configurable.php';
-require_once 'Kansas/Module/ModuleInterface.php';
+require_once 'Kansas/Plugin/PluginInterface.php';
 
-class Zones extends Configurable implements ModuleInterface {
+class Zones extends Configurable implements PluginInterface {
   
   /// Campos
   private $_zones = [];

@@ -1,14 +1,14 @@
 <?php
 
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
-use Kansas\Module\AbstractZone;
-use Kansas\Module\Zone\ZoneInterface;
+use Kansas\Plugin\AbstractZone;
+use Kansas\Plugin\Zone\ZoneInterface;
 use Kansas\Router\RouterInterface;
 use System\NotSuportedException;
 use System\String;
 
-require_once 'Kansas/Module/AbstractZone.php';
+require_once 'Kansas/Plugin/AbstractZone.php';
 require_once 'Kansas/Router/RouterInterface.php';
 
 class Admin extends AbstractZone implements RouterInterface {

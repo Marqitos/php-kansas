@@ -1,20 +1,27 @@
 <?php
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
 use System\NotSuportedException;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\PluginInterface;
 use Kansas\View\Result\Redirect;
 
 require_once 'System/Configurable.php';
-require_once 'Kansas/Module/ModuleInterface.php';
+require_once 'Kansas/Plugin/PluginInterface.php';
 
-class RedirectionError extends Configurable implements ModuleInterface {
+class RedirectionError extends Configurable implements PluginInterface {
+
+  private $next;
 
 	public function __construct(array $options) {
     parent::__construct($options);
-		global $application;
-		$application->set('error', [$this, 'errorManager']);
+    global $application;
+    try {
+      $this->next = $application->getOptions()['error'];
+    } catch(Exception $ex) {
+      $this->next = [$application, 'errorManager'];
+    }
+		$application->setOption('error', [$this, 'errorManager']);
 	}
   
   /// Miembros de Kansas_Module_Interface
@@ -24,7 +31,7 @@ class RedirectionError extends Configurable implements ModuleInterface {
       case 'development':
       case 'test':
         return [
-          'basePath' => false,
+          'basePath' => '',
           'append'   => true
         ];
       default:
@@ -48,7 +55,7 @@ class RedirectionError extends Configurable implements ModuleInterface {
       $result = Redirect::gotoUrl($path);
       $result->executeResult();
     } else {
-      $application->errorManager($params);
+      call_user_func($this->next, $params);
     }
   }
   

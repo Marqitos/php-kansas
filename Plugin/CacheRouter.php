@@ -1,13 +1,13 @@
 <?php
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\PluginInterface;
 use Kansas\Router\Cache as RouterCache;
 use System\NotSupportedException;
 use Exception;
 
-class CacheRouter extends Configurable implements ModuleInterface {
+class CacheRouter extends Configurable implements PluginInterface {
   
     /// Campos
     private $router;
@@ -38,7 +38,7 @@ class CacheRouter extends Configurable implements ModuleInterface {
         }
     }
   
-    /// Miembros de ModuleInterface
+    /// Miembros de PluginInterface
     public function getVersion() {
 		global $environment;
 		return $environment->getVersion();

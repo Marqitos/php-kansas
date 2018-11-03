@@ -1,19 +1,19 @@
 <?php
 
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\PluginInterface;
 use System\ArgumentOutOfRangeException;
 use System\NotSuportedException;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 
 require_once 'System/Configurable.php';
-require_once 'Kansas/Module/ModuleInterface.php';
+require_once 'Kansas/Plugin/PluginInterface.php';
 
 
-class Token extends Configurable implements ModuleInterface {
+class Token extends Configurable implements PluginInterface {
 
     /// Constructor
     public function __construct(array $options) {

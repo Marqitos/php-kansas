@@ -1,11 +1,11 @@
 <?php
 
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 use System\Configurable\ConfigurableInterface;
 
 require_once 'System/Configurable/ConfigurableInterface.php';
 
-interface ModuleInterface extends ConfigurableInterface {
+interface PluginInterface extends ConfigurableInterface {
 	// Obtiene la versión del modulo cargado
 	public function getVersion();
 }

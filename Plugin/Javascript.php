@@ -1,18 +1,18 @@
 <?php
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
 use Kansas\Controller\ControllerInterface;
 use Kansas\Controller\Index;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\PluginInterface;
 use System\NotSuportedException;
 use Kansas\View\Result\Javascript as ViewResultJavascript;
 use JShrink\Minifier;
 
 require_once 'System/Configurable.php';
-require_once 'Kansas/Module/ModuleInterface.php';
+require_once 'Kansas/Plugin/PluginInterface.php';
 
-class Javascript extends Configurable implements ModuleInterface {
+class Javascript extends Configurable implements PluginInterface {
   
   private $_packager;
   

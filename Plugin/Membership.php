@@ -1,18 +1,18 @@
 <?php
 
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\PluginInterface;
 use Kansas\Auth\ServiceInterface;
 use System\NotSuportedException;
 use Kansas\Auth\Exception as AuthException;
 
 require_once 'System/Configurable.php';
-require_once 'Kansas/Module/ModuleInterface.php';
+require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Kansas/Auth/ServiceInterface.php';
 
-class Membership extends Configurable implements ModuleInterface, ServiceInterface {
+class Membership extends Configurable implements PluginInterface, ServiceInterface {
 
   /// Constructor
   public function __construct(array $options) {

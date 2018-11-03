@@ -1,20 +1,20 @@
 <?php
 
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
 use System\NotSupportedException;
 use Kansas\Controller\ControllerInterface;
 use Kansas\Controller\Index;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\PluginInterface;
 use Kansas\View\Result\Scss as ScssViewResult;
 use Leafo\ScssPhp\Compiler;
 
 require_once 'System/Configurable.php';
-require_once 'Kansas/Module/ModuleInterface.php';
+require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Kansas/Controller/Index.php';
 
-class Scss extends Configurable	implements ModuleInterface {
+class Scss extends Configurable	implements PluginInterface {
 		
 	private $_parser;
 	private $_router;

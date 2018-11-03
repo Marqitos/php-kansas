@@ -1,6 +1,6 @@
 <?php
 
-require_once 'Kansas/Module/Abstract.php';
+require_once 'Kansas/Plugin/Abstract.php';
 require_once 'Kansas/Controller/Index.php';
 
 class Kansas_Module_Sass

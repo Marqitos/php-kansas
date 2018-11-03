@@ -1,6 +1,6 @@
 <?php
 require_once 'System/Configurable/Abstract.php';
-require_once 'Kansas/Module/Interface.php';
+require_once 'Kansas/Plugin/Interface.php';
 require_once 'Kansas/Auth/Service/Interface.php';
 
 //CREATE TABLE  `Digest` (

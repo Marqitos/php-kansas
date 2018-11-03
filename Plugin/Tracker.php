@@ -1,11 +1,11 @@
 <?php
 
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
 use System\NotSuportedException;
 use Kansas\Environment;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\PluginInterface;
 use Kansas\Router\TrailResources;
 use Psr\Http\Message\RequestInterface;
 
@@ -15,7 +15,7 @@ use function Kansas\Request\getRemoteAddressData;
 use function error_get_last;
 
 // Tracker basado en bbclone
-class Tracker extends Configurable implements ModuleInterface {
+class Tracker extends Configurable implements PluginInterface {
 
   private $trail;
   private $router;

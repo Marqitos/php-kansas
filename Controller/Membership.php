@@ -2,9 +2,11 @@
 
 namespace Kansas\Controller;
 
+use Kansas\Auth\Exception as AuthException;
 use Kansas\Controller\Auth;
 use Kansas\View\Result\Redirect;
-use Kansas\Module\Membership as MembershipModule;
+use Kansas\Plugin\Membership as MembershipPlugin;
+use Psr\Http\Message\RequestMethodInterface;
 use System\Guid;
 
 require_once 'Kansas/Controller/Auth.php';
@@ -30,7 +32,8 @@ class Membership extends Auth {
         $remember = false;
         $errors = 0;
 
-        $request = $environment->getResquest();
+        $request = $environment->getRequest();
+        require_once 'Psr/Http/Message/RequestMethodInterface.php';
         if($request->getMethod() == RequestMethodInterface::METHOD_POST) {
             require_once 'Kansas/Auth/Exception.php';
             $application->getView()->setCaching(false);
@@ -52,12 +55,13 @@ class Membership extends Auth {
             }
 
             if($error = 0) {
-                require_once 'Kansas/Module/Membership.php';
+                require_once 'Kansas/Plugin/Membership.php';
+                require_once 'Kansas/Auth/Exception.php';
                 try {
-                    $user = MembershipModule::authenticate($email, $password, $remember);
+                    $user = MembershipPlugin::authenticate($email, $password, $remember);
                     require_once 'Kansas/View/Result/Redirect.php';
                     return Redirect::gotoUrl($ru);
-                } catch(Kansas_Auth_Exception $ex) {
+                } catch(AuthException $ex) {
                     $error = $ex->getErrorCode();
                 }
             }

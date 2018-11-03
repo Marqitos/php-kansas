@@ -1,6 +1,6 @@
 <?php
 
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use Exception;
 use System\Guid;
@@ -8,15 +8,16 @@ use System\Configurable;
 use System\NotSuportedException;
 use Kansas\Loader;
 use Kansas\Auth\ServiceInterface as AuthService;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\Admin as AdminZone;
+use Kansas\Plugin\PluginInterface;
 use Kansas\Router\Auth as AuthRouter;
 use Psr\Http\Message\RequestInterface;
 
-
 require_once 'System/Configurable.php';
-require_once 'Kansas/Module/ModuleInterface.php';
+require_once 'Kansas/Plugin/PluginInterface.php';
+require_once 'Psr/Http/Message/RequestInterface.php';
 
-class Auth extends Configurable implements ModuleInterface {
+class Auth extends Configurable implements PluginInterface {
 
   /// Constantes
   // Roles predeterminadas
@@ -91,8 +92,9 @@ class Auth extends Configurable implements ModuleInterface {
     global $application;
     $this->getSession()->initialize();
     $this->_user = $this->_session->getIdentity();
+    require_once 'Kansas/Plugin/Admin.php';
     $zones = $application->hasModule('zones');
-    if($zones && $zones->getZone() instanceof Kansas_Module_Admin) {
+    if($zones && $zones->getZone() instanceof AdminZone) {
       $admin = $zones->getZone();
       $admin->registerMenuCallbacks([$this, "adminMenu"]);
     } else    
@@ -238,7 +240,7 @@ class Auth extends Configurable implements ModuleInterface {
     if($default) {
       $default  = array_combine(array_map([self, 'rolKey'], $default), $default);
       $result   = array_combine(array_map([self, 'rolKey'], $result), $result);
-      return array_merge($default, $result);    
+      return array_merge($default, $result);
     }
    return $result;
   }

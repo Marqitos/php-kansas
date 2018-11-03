@@ -1,14 +1,14 @@
 <?php
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
 use Kansas\Cache;
 use Kansas\Cache\CacheInterface;
-use Kansas\Module\ModuleInterface;
+use Kansas\Plugin\PluginInterface;
 use System\NotSupportedException;
 use Exception;
 
-class BackendCache extends Configurable implements ModuleInterface {
+class BackendCache extends Configurable implements PluginInterface {
   
   /// Campos
   private $caches = [];
@@ -48,7 +48,7 @@ class BackendCache extends Configurable implements ModuleInterface {
     }
   }
   
-    /// Miembros de ModuleInterface
+    /// Miembros de PluginInterface
     public function getVersion() {
         global $environment;
         return $environment->getVersion();

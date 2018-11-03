@@ -1,11 +1,11 @@
 <?php
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
 use System\Configurable;
-use Kansas\Module\Zone\ZoneInterface;
+use Kansas\Plugin\Zone\ZoneInterface;
 
 require_once 'System/Configurable.php';
-require_once 'Kansas/Module/Zone/ZoneInterface.php';
+require_once 'Kansas/Plugin/Zone/ZoneInterface.php';
 
 abstract class AbstractZone extends Configurable implements ZoneInterface {
   

@@ -1,12 +1,12 @@
 <?php
 
-namespace Kansas\Module;
+namespace Kansas\Plugin;
 
-use Kansas\Module\AbstractZone;
+use Kansas\Plugin\AbstractZone;
 use System\NotSupportedException;
 use Kansas\Router\API as RouterAPI;
 
-require_once 'Kansas/Module/AbstractZone.php';
+require_once 'Kansas/Plugin/AbstractZone.php';
 
 class API extends AbstractZone {
 	
@@ -42,7 +42,7 @@ class API extends AbstractZone {
   
 	public function appPreInit() { // añadir router
 		global $application;
-    if($this->zones->getZone() instanceof Kansas\Module\API) {
+    if($this->zones->getZone() instanceof Kansas\Plugin\API) {
       $application->addRouter($this->getRouter());
     }
 	}
