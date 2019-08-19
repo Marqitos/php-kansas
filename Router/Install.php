@@ -3,11 +3,6 @@
 class Kansas_Router_Install
 	extends Kansas_Router_Abstract {
 
-	public function __construct(array $options = []) {
-    parent::__construct();
-    $this->setOptions($options);
-	}
-  		
 	public function match() {
     global $environment;
 		$params = false;

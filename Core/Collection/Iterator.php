@@ -49,9 +49,5 @@ class Kansas_Core_Iterator
   public function rewind() {
     $this->_position = 0;
   }
-
-  
-  
-    
     
 }

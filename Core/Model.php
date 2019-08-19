@@ -1,5 +1,5 @@
 <?php
-//require_once 'Kansas/Core/Object.php';
+require_once 'Kansas/Core/Object.php';
 
 abstract class Kansas_Core_Model
 	extends Kansas_Core_Object
@@ -7,8 +7,8 @@ abstract class Kansas_Core_Model
 	
 	const VALIDATION_EMPTY		= 0x88888888;
 	const VALIDATION_SUCCESS 	= 0x0;
-	const KEY_MODEL						= 'm';
-	const KEY_RETURN_URL			= 'ru';
+	const KEY_MODEL				= 'm';
+	const KEY_RETURN_URL		= 'ru';
 	
 	protected $row;
 	
@@ -50,9 +50,9 @@ abstract class Kansas_Core_Model
 		Kansas_Response::Redirect($ru);
 	}
 	
-	/** 
-		* 	Rellena los datos del objeto, con los datos enviados en la peticion web
-		*/
+  /** 
+	* 	Rellena los datos del objeto, con los datos enviados en la peticion web
+	*/
 	public function fill(Kansas_Controller_Interface $controller, array $map = []) {
 		foreach($this->row as $key => $value) {
 			if(isset($map[$key])) {

@@ -1,18 +1,23 @@
 <?php
+namespace Kansas\View\Result;
 
-class Kansas_View_Result_Json
-	extends Kansas_View_Result_String_Abstract {
+use Kansas\View\Result\StringAbstract;
+use function json_encode;
+
+require_once('Kansas/View/Result/StringAbstract.php');
+
+class Json extends StringAbstract {
 		
-	private $_data;
+	private $data;
 	
 	public function __construct($data) {
     parent::__construct('application/json; charset: UTF-8');    
-		$this->_data = $data;
+		$this->data = $data;
 	}
 		
 	public function getResult(&$noCache) {
     $noCache = true;
-		return json_encode($this->_data);
+		return json_encode($this->data);
 	}
       
 }

@@ -23,7 +23,7 @@ class Kansas_Router_Shop
 		$params = false;
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
     
-    if(Kansas_String::startWith($this->getBasePath(), $path))
+    if(System_String::startWith($this->getBasePath(), $path))
       $path = substr($this->getBasePath(), strlen($this->getBasePath()));
     else
 			return false;
@@ -142,7 +142,7 @@ class Kansas_Router_Shop
 							'family'			=> $family
 							));
 						break;
-					} elseif(Kansas_String::startWith($path, $family->getSlug())) {
+					} elseif(System_String::startWith($path, $family->getSlug())) {
 						$currentPath = substr($currentPath, strlen($family->getSlug()) + 1);
 						$current = $family;
 						break;

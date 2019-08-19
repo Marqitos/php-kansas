@@ -10,7 +10,7 @@ abstract class Kansas_Core_Collection_Keyed
 	 * @param Traversable $array
 	 */
 	protected function __construct(Traversable $array = null) {
-		$this->offset = array();
+		$this->offset = [];
 		$this->addRange($array);
 	}
 	
@@ -27,7 +27,7 @@ abstract class Kansas_Core_Collection_Keyed
 			return null;
 	}
 	public function offsetSet($offset, $value) {
-		throw new System_NotSupportedException('Metodo no soportado. Utilice el metodo "add" para insertar elementos en la colecci髇.');
+		throw new System_NotSupportedException('Metodo no soportado. Utilice el metodo "add" para insertar elementos en la colecci贸n.');
 	}
 	public function offsetUnset($offset) {
 		$key = $this->parseKey($offset);
@@ -39,18 +39,18 @@ abstract class Kansas_Core_Collection_Keyed
 		return new ArrayIterator($this->offset);
 	}
 	
-	// Miembros p鷅licos
+	// Miembros p煤blicos
 	/**
 	 * Agrega un nuevo elemento.
-	 * @param mixed $item Elemento a a馻dir
+	 * @param mixed $item Elemento a a帽adir
 	 */
 	public function add($item) {
 		$key = $this->getKey($item);
 		$this->offset[$key] = $item;
 	}
 	/**
-	 * Agrega una colecci髇 de elementos.
-	 * @param Traversable $items Elementos a a馻dir
+	 * Agrega una colecci贸n de elementos.
+	 * @param Traversable $items Elementos a a帽adir
 	 */
 	public function addRange(Traversable $items = null) {
 		if($items == null)
@@ -70,15 +70,15 @@ abstract class Kansas_Core_Collection_Keyed
 	
 	// Metodos abstractos
 	/**
-	 * Al implementarlo debe devolver las claves de la colecci髇 a partir del valor
-	 * @param mixed $item Valor almacenado en la colecci髇
+	 * Al implementarlo debe devolver las claves de la colecci贸n a partir del valor
+	 * @param mixed $item Valor almacenado en la colecci贸n
 	 * @return mixed Clave correspondiente al objeto
 	 */
 	protected abstract function getKey($item);		//key
 	/**
-	 * Al implementarlo se asegura que se envia una clave v醠ida para realizar la busqueda
+	 * Al implementarlo se asegura que se envia una clave v谩lida para realizar la busqueda
 	 * @param mixed $offset
-	 * @return mixed Clave v醠ida
+	 * @return mixed Clave v谩lida
 	 */
 	protected abstract function parseKey($offset); 	//key
 	

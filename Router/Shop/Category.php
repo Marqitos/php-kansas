@@ -15,7 +15,7 @@ class Kansas_Router_Shop_Category
 		$params = false;
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
     
-    if(Kansas_String::startWith($this->getBasePath(), $path))
+    if(System_String::startWith($this->getBasePath(), $path))
       $path = substr($this->getBasePath(), strlen($this->getBasePath()));
     else
 			return false;

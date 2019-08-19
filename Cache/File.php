@@ -1,27 +1,32 @@
 <?php
+
+namespace Kansas\Cache;
+
+use System\ArgumentOutOfRangeException;
+use System\IO\DirectoryNotFoundException;
+use System\IO\IOException;
+use System\NotSuportedException;
+use Kansas\Cache;
+use Kansas\Cache\ExtendedCacheInterface;
+use Kansas\Environment;
+
+require_once 'Kansas/Cache.php';
+require_once 'Kansas/Cache/ExtendedCacheInterface.php';
+require_once 'Kansas/Environment.php';
+
 /**
  * Zend Framework
- *
  * @package    Zend_Cache
  * @subpackage Zend_Cache_Backend
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id: File.php 21636 2010-03-24 17:10:23Z mabe $
  */
 
-class Kansas_Cache_File
-  extends Kansas_Cache
-  implements Kansas_Cache_ExtendedInterface {
+class File extends Cache implements ExtendedCacheInterface {
     /**
      * Available options
      *
-     * =====> (string) cache_dir :
+     * =====> (string) cacheDir :
      * - Directory where to put the cache files
-     *
-     * =====> (boolean) file_locking :
-     * - Enable / disable file_locking
-     * - Can avoid cache corruption under bad circumstances but it doesn't work on multithread
-     * webservers and on NFS filesystems for example
      *
      * =====> (boolean) read_control :
      * - Enable / disable read control
@@ -60,17 +65,11 @@ class Kansas_Cache_File
      *
      * @var array available options
      */
-    protected $_options = [
-      'cache_dir' => null,
-      'file_locking' => true,
-      'read_control' => true,
-      'read_control_type' => 'crc32',
-      'hashed_directory_level' => 0,
-      'hashed_directory_umask' => 0700,
-      'file_name_prefix' => 'zend_cache',
-      'cache_file_umask' => 0600,
-      'metadatas_array_max_size' => 100
-    ];
+    protected $_cacheDir;
+    protected $_fileNamePrefix;
+    protected $_metadatasArrayMaxSize;
+    protected $_hashedDirectoryUmask;
+    protected $_cacheFileUmask;
 
     /**
      * Array of metadatas (each item is an associative array)
@@ -79,56 +78,119 @@ class Kansas_Cache_File
      */
     protected $_metadatasArray = [];
 
+    /// Miembros de System_Configurable_Interface
+    public function getDefaultOptions($enviromentStatus) {
+        global $environment;
+        switch ($enviromentStatus) {
+            case 'production':
+            case 'development':
+            case 'test':
+                return $options = [
+                    'cache_dir' => $environment->getSpecialFolder(Environment::SF_CACHE),
+                    'read_control' => true,
+                    'read_control_type' => 'crc32',
+                    'hashed_directory_level' => 0,
+                    'hashed_directory_umask' => 0770,
+                    'file_name_prefix' => 'cache',
+                    'cache_file_umask' => 0600,
+                    'metadatas_array_max_size' => 100
+                ];
+            default:
+                require_once 'System/NotSuportedException.php';
+                throw new NotSuportedException("Entorno no soportado [$enviromentStatus]");
+        }
+    }
 
     /**
-     * Constructor
+     * Obtiene el directorio de cache
      *
-     * @param  array $options associative array of options
-     * @throws Zend_Cache_Exception
-     * @return void
+     * @throws System_IO_DirectoryNotFoundException
+     * @throws System_IO_IOException
+     * @return string
      */
-    public function __construct(array $options = array()) {
-        parent::__construct($options);
-        if ($this->_options['cache_dir'] !== null) // particular case for this option
-            $this->setCacheDir($this->_options['cache_dir']);
-        else
-            $this->setCacheDir(self::getTmpDir());
-
-        if (isset($this->_options['file_name_prefix'])) { // particular case for this option
-            if (!preg_match('~^[a-zA-Z0-9_]+$~D', $this->_options['file_name_prefix'])) {
-                Zend_Cache::throwException('Invalid file_name_prefix : must use only [a-zA-Z0-9_]');
+    protected function getCacheDir() {
+        if($this->_cacheDir == null) {
+            $value = ($this->options['cache_dir'] !== null)
+                ? $this->options['cache_dir']
+                : Environment::getTmpDir();
+            if (!is_dir($value)) {
+                require_once 'System/IO/DirectoryNotFoundException.php';
+                throw new DirectoryNotFoundException();
             }
+            if (!is_writable($value)) {
+                require_once 'System/IO/IOException.php';
+                throw new IOException('No se puede escribir en el directorio cache');
+            }
+            $this->_cacheDir = rtrim(realpath($value), '\\/') . DIRECTORY_SEPARATOR; // add a trailing DIRECTORY_SEPARATOR if necessary
         }
-        if ($this->_options['metadatas_array_max_size'] < 10) {
-            Zend_Cache::throwException('Invalid metadatas_array_max_size, must be > 10');
-        }
-        if (isset($options['hashed_directory_umask']) && is_string($options['hashed_directory_umask'])) {
-            // See #ZF-4422
-            $this->_options['hashed_directory_umask'] = octdec($this->_options['hashed_directory_umask']);
-        }
-        if (isset($options['cache_file_umask']) && is_string($options['cache_file_umask'])) {
-            // See #ZF-4422
-            $this->_options['cache_file_umask'] = octdec($this->_options['cache_file_umask']);
-        }
+        return $this->_cacheDir;
     }
 
     /**
-     * Set the cache_dir (particular case of setOption() method)
+     * Obtiene el prefijo de los archivos de cache
      *
-     * @param  string  $value
-     * @param  boolean $trailingSeparator If true, add a trailing separator is necessary
-     * @throws Zend_Cache_Exception
-     * @return void
+     * @throws System_IO_IOException
+     * @return string
      */
-    public function setCacheDir($value) {
-        if (!is_dir($value))
-          Zend_Cache::throwException('cache_dir must be a directory');
-        if (!is_writable($value))
-          Zend_Cache::throwException('cache_dir is not writable');
-        // add a trailing DIRECTORY_SEPARATOR if necessary
-        $value = rtrim(realpath($value), '\\/') . DIRECTORY_SEPARATOR;
-        $this->_options['cache_dir'] = $value;
+    protected function getFileNamePrefix() {
+        if($this->_fileNamePrefix == null) {
+            if (isset($this->options['file_name_prefix'])) {
+                if (!preg_match('~^[a-zA-Z0-9_]+$~D', $this->options['file_name_prefix'])) {
+                    require_once 'System/IO/IOException.php';
+                    throw new IOException('Prefijo incorrecto: debe usar solo [a-zA-Z0-9_]');
+                }
+                $this->_fileNamePrefix = $this->options['file_name_prefix'];
+            } else
+                $this->_fileNamePrefix = "";
+        }
+        return $this->_fileNamePrefix;
     }
+
+    /**
+     * Obtiene el maximo de metadatos que se pueden almacenar
+     *
+     * @throws System_ArgumentOutOfRangeException
+     * @return string
+     */
+    protected function getMetadatasArrayMaxSize() {
+        if($this->_metadatasArrayMaxSize == null) {
+            if ($this->options['metadatas_array_max_size'] < 10) {
+                require_once 'System/ArgumentOutOfRangeException.php';
+                throw new ArgumentOutOfRangeException('Invalid metadatas_array_max_size, must be > 10');
+            }
+            $this->_metadatasArrayMaxSize = $this->options['metadatas_array_max_size'];
+        }
+        return $this->_metadatasArrayMaxSize;
+    }
+
+    /**
+     * Obtiene Umask for hashed directory structure
+     *
+     * @return string
+     */
+    protected function getHashedDirectoryUmask() {
+        if($this->_hashedDirectoryUmask == null) {
+            $this->_hashedDirectoryUmask = is_string($this->options['hashed_directory_umask']) // See #ZF-4422
+                ? octdec($this->options['hashed_directory_umask'])
+                : $this->options['hashed_directory_umask'];
+        }
+        return $this->_hashedDirectoryUmask;
+    }
+
+    /**
+     * Obtiene Umask for cache files
+     *
+     * @return int
+     */
+    protected function getCacheFileUmask() {
+        if($this->_cacheFileUmask == null) {
+            $this->_cacheFileUmask = is_string($this->options['cache_file_umask']) // See #ZF-4422
+                ? octdec($this->options['cache_file_umask'])
+                : $this->options['cache_file_umask'];
+        }
+        return $this->_cacheFileUmask;
+    }
+
 
     /**
      * Test if a cache is available for the given id and (if yes) return it (false else)
@@ -138,24 +200,21 @@ class Kansas_Cache_File
      * @return string|false cached datas
      */
     public function load($id, $doNotTestCacheValidity = false) {
-      if (!($this->_test($id, $doNotTestCacheValidity))) // The cache is not hit !
-        return false;
-
-      $metadatas = $this->_getMetadatas($id);
-      $file = $this->_file($id);
-      $data = $this->_fileGetContents($file);
-      if ($this->_options['read_control']) {
-        $hashData = $this->_hash($data, $this->_options['read_control_type']);
-        $hashControl = $metadatas['hash'];
-        if ($hashData != $hashControl) {
-          // Problem detected by the read control !
-          global $environment;
-          $environment->log(E_USER_NOTICE, 'Kansas_Cache_File::load() / read_control : stored hash and computed hash do not match');
-          $this->remove($id);
-          return false;
+        if (!($this->_test($id, $doNotTestCacheValidity))) // The cache is not hit !
+            return false;
+        $metadatas = $this->_getMetadatas($id);
+        $file = $this->getFile($id);
+        $data = $file->read();
+        if ($this->options['read_control']) {
+            $hashData = $this->_hash($data);
+            if ($hashData != $metadatas['hash']) { // Problem detected by the read control !
+                global $application;
+                $application->log(E_USER_NOTICE, 'Kansas\Cache\File::load() / read_control : El hash almacenado y el calculado no coinciden: ' . $id);
+                $this->remove($id);
+                return false;
+            }
         }
-      }
-      return $data;
+        return $data;
     }
 
     /**
@@ -183,36 +242,25 @@ class Kansas_Cache_File
      */
     public function save($data, $id, array $tags = [], $specificLifetime = false) {
         clearstatcache();
-        $file = $this->_file($id);
-        $path = $this->_path($id);
-        if ($this->_options['hashed_directory_level'] > 0) {
-            if (!is_writable($path)) {
-                // maybe, we just have to build the directory structure
-                $this->_recursiveMkdirAndChmod($id);
-            }
-            if (!is_writable($path)) {
-                return false;
-            }
-        }
-        if ($this->_options['read_control']) {
-            $hash = $this->_hash($data, $this->_options['read_control_type']);
-        } else {
+        $file = $this->getFile($id);
+        if ($this->options['read_control'])
+            $hash = $this->_hash($data);
+        else
             $hash = '';
-        }
-        $metadatas = array(
+        $metadatas = [
             'hash' => $hash,
             'mtime' => time(),
             'expire' => $this->_expireTime($this->getLifetime($specificLifetime)),
             'tags' => $tags
-        );
+        ];
         $res = $this->_setMetadatas($id, $metadatas);
         if (!$res) {
-            global $environment;
-            $environment->log(E_USER_NOTICE, 'Kansas_Cache_File::save() / error on saving metadata');
+            global $application;
+            $application->log(E_USER_NOTICE, 'Kansas\Cache\File::save() / error guardando metadatos');
             return false;
         }
-        $res = $this->_filePutContents($file, $data);
-        return $res;
+        $result = $file->write($data, 'c', $this->getCacheFileUmask());
+        return ($result !== false);
     }
 
     /**
@@ -222,8 +270,8 @@ class Kansas_Cache_File
      * @return boolean true if no problem
      */
     public function remove($id) {
-        $file = $this->_file($id);
-        $boolRemove   = $this->_remove($file);
+        $fileName = $this->getFileName($id, $path);
+        $boolRemove   = $this->_remove($path . $fileName);
         $boolMetadata = $this->_delMetadatas($id);
         return $boolMetadata && $boolRemove;
     }
@@ -245,10 +293,10 @@ class Kansas_Cache_File
      * @param tags array $tags array of tags
      * @return boolean true if no problem
      */
-    public function clean($mode = Zend_Cache::CLEANING_MODE_ALL, array $tags = array()) {
+    public function clean($mode = Cache::CLEANING_MODE_ALL, array $tags = []) {
         // We use this protected method to hide the recursive stuff
         clearstatcache();
-        return $this->_clean($this->_options['cache_dir'], $mode, $tags);
+        return $this->_clean($this->getCacheDir(), $mode, $tags);
     }
 
     /**
@@ -257,7 +305,7 @@ class Kansas_Cache_File
      * @return array array of stored cache ids (string)
      */
     public function getIds() {
-        return $this->_get($this->_options['cache_dir'], 'ids', array());
+        return $this->_get($this->getCacheDir(), 'ids', array());
     }
 
     /**
@@ -266,7 +314,7 @@ class Kansas_Cache_File
      * @return array array of stored tags (string)
      */
     public function getTags() {
-        return $this->_get($this->_options['cache_dir'], 'tags', array());
+        return $this->_get($this->getCacheDir(), 'tags', array());
     }
 
     /**
@@ -278,7 +326,7 @@ class Kansas_Cache_File
      * @return array array of matching cache ids (string)
      */
     public function getIdsMatchingTags(array $tags = array()) {
-        return $this->_get($this->_options['cache_dir'], 'matching', $tags);
+        return $this->_get($this->getCacheDir(), 'matching', $tags);
     }
 
     /**
@@ -290,7 +338,7 @@ class Kansas_Cache_File
      * @return array array of not matching cache ids (string)
      */
     public function getIdsNotMatchingTags(array $tags = array()) {
-        return $this->_get($this->_options['cache_dir'], 'notMatching', $tags);
+        return $this->_get($this->getCacheDir(), 'notMatching', $tags);
     }
 
     /**
@@ -302,24 +350,24 @@ class Kansas_Cache_File
      * @return array array of any matching cache ids (string)
      */
     public function getIdsMatchingAnyTags(array $tags = array()) {
-        return $this->_get($this->_options['cache_dir'], 'matchingAny', $tags);
+        return $this->_get($this->getCacheDir(), 'matchingAny', $tags);
     }
 
     /**
      * Return the filling percentage of the backend storage
      *
-     * @throws Zend_Cache_Exception
+     * @throws System_IO_IOException
      * @return int integer between 0 and 100
      */
     public function getFillingPercentage() {
-        $free = disk_free_space($this->_options['cache_dir']);
-        $total = disk_total_space($this->_options['cache_dir']);
+        $free = disk_free_space($this->getCacheDir());
+        $total = disk_total_space($this->getCacheDir());
         if ($total == 0) {
-            Zend_Cache::throwException('can\'t get disk_total_space');
+            require_once 'System/IO/IOException.php';
+            throw new IOException('No se obtener el espacio libre en disco');
         } else {
-            if ($free >= $total) {
+            if ($free >= $total)
                 return 100;
-            }
             return ((int) (100. * ($total - $free) / $total));
         }
     }
@@ -337,17 +385,15 @@ class Kansas_Cache_File
      */
     public function getMetadatas($id) {
         $metadatas = $this->_getMetadatas($id);
-        if (!$metadatas) {
+        if (!$metadatas)
             return false;
-        }
-        if (time() > $metadatas['expire']) {
+        if (time() > $metadatas['expire'])
             return false;
-        }
-        return array(
+        return [
             'expire' => $metadatas['expire'],
             'tags' => $metadatas['tags'],
             'mtime' => $metadatas['mtime']
-        );
+        ];
     }
 
     /**
@@ -359,22 +405,15 @@ class Kansas_Cache_File
      */
     public function touch($id, $extraLifetime) {
         $metadatas = $this->_getMetadatas($id);
-        if (!$metadatas) {
+        if (!$metadatas)
             return false;
-        }
-        if (time() > $metadatas['expire']) {
+        if (time() > $metadatas['expire'])
             return false;
-        }
-        $newMetadatas = array(
-            'hash' => $metadatas['hash'],
-            'mtime' => time(),
-            'expire' => $metadatas['expire'] + $extraLifetime,
-            'tags' => $metadatas['tags']
-        );
-        $res = $this->_setMetadatas($id, $newMetadatas);
-        if (!$res) {
+        $metadatas['mtime'] = time();
+        $metadatas['expire'] = $metadatas['expire'] + $extraLifetime;
+        $res = $this->_setMetadatas($id, $metadatas);
+        if (!$res)
             return false;
-        }
         return true;
     }
 
@@ -410,13 +449,12 @@ class Kansas_Cache_File
      * @return array|false Associative array of metadatas
      */
     protected function _getMetadatas($id) {
-        if (isset($this->_metadatasArray[$id])) {
+        if (isset($this->_metadatasArray[$id]))
             return $this->_metadatasArray[$id];
-        } else {
+        else {
             $metadatas = $this->_loadMetadatas($id);
-            if (!$metadatas) {
+            if (!$metadatas)
                 return false;
-            }
             $this->_setMetadatas($id, $metadatas, false);
             return $metadatas;
         }
@@ -431,15 +469,14 @@ class Kansas_Cache_File
      * @return boolean True if no problem
      */
     protected function _setMetadatas($id, $metadatas, $save = true) {
-        if (count($this->_metadatasArray) >= $this->_options['metadatas_array_max_size']) {
-            $n = (int) ($this->_options['metadatas_array_max_size'] / 10);
+        if (count($this->_metadatasArray) >= $this->getMetadatasArrayMaxSize()) {
+            $n = (int) ($this->getMetadatasArrayMaxSize() / 10);
             $this->_metadatasArray = array_slice($this->_metadatasArray, $n);
         }
         if ($save) {
             $result = $this->_saveMetadatas($id, $metadatas);
-            if (!$result) {
+            if (!$result)
                 return false;
-            }
         }
         $this->_metadatasArray[$id] = $metadatas;
         return true;
@@ -452,9 +489,8 @@ class Kansas_Cache_File
      * @return boolean True if no problem
      */
     protected function _delMetadatas($id) {
-        if (isset($this->_metadatasArray[$id])) {
+        if (isset($this->_metadatasArray[$id]))
             unset($this->_metadatasArray[$id]);
-        }
         $file = $this->_metadatasFile($id);
         return $this->_remove($file);
     }
@@ -465,7 +501,7 @@ class Kansas_Cache_File
      * @return void
      */
     protected function _cleanMetadatas() {
-        $this->_metadatasArray = array();
+			$this->_metadatasArray = [];
     }
 
     /**
@@ -475,13 +511,12 @@ class Kansas_Cache_File
      * @return array|false Metadatas associative array
      */
     protected function _loadMetadatas($id) {
-        $file = $this->_metadatasFile($id);
-        $result = $this->_fileGetContents($file);
-        if (!$result) {
-            return false;
-        }
-        $tmp = @unserialize($result);
-        return $tmp;
+        global $environment;
+        $file = $environment->getFile($this->_metadatasFile($id));
+        $result = $file->read();
+        return ($result === false)
+            ? false
+            : @unserialize($result);
     }
 
     /**
@@ -492,13 +527,11 @@ class Kansas_Cache_File
      * @return boolean True if no problem
      */
     protected function _saveMetadatas($id, $metadatas) {
-        $file = $this->_metadatasFile($id);
-        $result = $this->_filePutContents($file, serialize($metadatas));
-        if (!$result) {
-            return false;
-        }
-        return true;
-    }
+        global $environment;
+        $file = $environment->getFile($this->_metadatasFile($id));
+        $result = $file->write(serialize($metadatas), 'c', $this->getCacheFileUmask());
+        return ($result !== false);
+}
 
     /**
      * Make and return a file name (with path) for metadatas
@@ -507,9 +540,9 @@ class Kansas_Cache_File
      * @return string Metadatas file name (with path)
      */
     protected function _metadatasFile($id) {
-        $path = $this->_path($id);
-        $fileName = $this->_idToFileName('internal-metadatas---' . $id);
-        return $path . $fileName;
+        $path;
+        $filename = $this->getFilename($id . '.metadatas', $path);
+		return $path . $filename;
     }
 
     /**
@@ -519,12 +552,11 @@ class Kansas_Cache_File
      * @return boolean True if it's a metadatas one
      */
     protected function _isMetadatasFile($fileName) {
-        $id = $this->_fileNameToId($fileName);
-        if (substr($id, 0, 21) == 'internal-metadatas---') {
-            return true;
-        } else {
-            return false;
-        }
+			$id = $this->_fileNameToId($fileName);
+			if (substr($id, strlen($id) - 10) == '.metadatas')
+				return true;
+			else
+				return false;
     }
 
     /**
@@ -537,77 +569,66 @@ class Kansas_Cache_File
      * @return boolean True if ok
      */
     protected function _remove($file) {
-        if (!is_file($file)) {
-          return false;
-        }
-        if (!@unlink($file)) {
-          # we can't remove the file (because of locks or any problem)
-          global $environment;
-          $environment->log(E_USER_NOTICE, "Kansas_Cache_File::_remove() : we can't remove $file");
-          return false;
-        }
-        return true;
+			if (!is_file($file))
+				return false;
+			if (!@unlink($file)) { // we can't remove the file (because of locks or any problem)
+				global $application;
+				$application->log(E_USER_NOTICE, 'Kansas\Cache\File::_remove() : no podemos eliminar ' .$file);
+				return false;
+			}
+			return true;
     }
 
     /**
      * Clean some cache records (protected method used for recursive stuff)
      *
      * Available modes are :
-     * Zend_Cache::CLEANING_MODE_ALL (default)    => remove all cache entries ($tags is not used)
-     * Zend_Cache::CLEANING_MODE_OLD              => remove too old cache entries ($tags is not used)
-     * Zend_Cache::CLEANING_MODE_MATCHING_TAG     => remove cache entries matching all given tags
+     * Kansas_Cache::CLEANING_MODE_ALL (default)    => remove all cache entries ($tags is not used)
+     * Kansas_Cache::CLEANING_MODE_OLD              => remove too old cache entries ($tags is not used)
+     * Kansas_Cache::CLEANING_MODE_MATCHING_TAG     => remove cache entries matching all given tags
      *                                               ($tags can be an array of strings or a single string)
-     * Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG => remove cache entries not {matching one of the given tags}
+     * Kansas_Cache::CLEANING_MODE_NOT_MATCHING_TAG => remove cache entries not {matching one of the given tags}
      *                                               ($tags can be an array of strings or a single string)
-     * Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG => remove cache entries matching any given tags
+     * Kansas_Cache::CLEANING_MODE_MATCHING_ANY_TAG => remove cache entries matching any given tags
      *                                               ($tags can be an array of strings or a single string)
      *
      * @param  string $dir  Directory to clean
      * @param  string $mode Clean mode
      * @param  array  $tags Array of tags
-     * @throws Zend_Cache_Exception
+     * @throws System_ArgumentOutOfRangeException
      * @return boolean True if no problem
      */
-    protected function _clean($dir, $mode = Zend_Cache::CLEANING_MODE_ALL, $tags = array()) {
-        if (!is_dir($dir)) {
+    protected function _clean($dir, $mode = Cache::CLEANING_MODE_ALL, $tags = array()) {
+        if (!is_dir($dir))
             return false;
-        }
         $result = true;
-        $prefix = $this->_options['file_name_prefix'];
-        $glob = @glob($dir . $prefix . '--*');
-        if ($glob === false) {
-            // On some systems it is impossible to distinguish between empty match and an error.
+        $glob = glob($dir . $this->getFileNamePrefix() . '--*');
+        if ($glob === false) // On some systems it is impossible to distinguish between empty match and an error.
             return true;
-        }
         foreach ($glob as $file)  {
             if (is_file($file)) {
                 $fileName = basename($file);
                 if ($this->_isMetadatasFile($fileName)) {
                     // in CLEANING_MODE_ALL, we drop anything, even remainings old metadatas files
-                    if ($mode != Zend_Cache::CLEANING_MODE_ALL) {
+                    if ($mode != Cache::CLEANING_MODE_ALL)
                         continue;
-                    }
                 }
                 $id = $this->_fileNameToId($fileName);
                 $metadatas = $this->_getMetadatas($id);
-                if ($metadatas === FALSE) {
+                if ($metadatas === FALSE)
                     $metadatas = array('expire' => 1, 'tags' => array());
-                }
                 switch ($mode) {
-                    case Zend_Cache::CLEANING_MODE_ALL:
+                    case Cache::CLEANING_MODE_ALL:
                         $res = $this->remove($id);
-                        if (!$res) {
-                            // in this case only, we accept a problem with the metadatas file drop
+                        if (!$res) // in this case only, we accept a problem with the metadatas file drop
                             $res = $this->_remove($file);
-                        }
                         $result = $result && $res;
                         break;
-                    case Zend_Cache::CLEANING_MODE_OLD:
-                        if (time() > $metadatas['expire']) {
+                    case Cache::CLEANING_MODE_OLD:
+                        if (time() > $metadatas['expire'])
                             $result = $this->remove($id) && $result;
-                        }
                         break;
-                    case Zend_Cache::CLEANING_MODE_MATCHING_TAG:
+                    case Cache::CLEANING_MODE_MATCHING_TAG:
                         $matching = true;
                         foreach ($tags as $tag) {
                             if (!in_array($tag, $metadatas['tags'])) {
@@ -615,11 +636,10 @@ class Kansas_Cache_File
                                 break;
                             }
                         }
-                        if ($matching) {
+                        if ($matching)
                             $result = $this->remove($id) && $result;
-                        }
                         break;
-                    case Zend_Cache::CLEANING_MODE_NOT_MATCHING_TAG:
+                    case Cache::CLEANING_MODE_NOT_MATCHING_TAG:
                         $matching = false;
                         foreach ($tags as $tag) {
                             if (in_array($tag, $metadatas['tags'])) {
@@ -627,11 +647,10 @@ class Kansas_Cache_File
                                 break;
                             }
                         }
-                        if (!$matching) {
+                        if (!$matching)
                             $result = $this->remove($id) && $result;
-                        }
                         break;
-                    case Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG:
+                    case Cache::CLEANING_MODE_MATCHING_ANY_TAG:
                         $matching = false;
                         foreach ($tags as $tag) {
                             if (in_array($tag, $metadatas['tags'])) {
@@ -639,38 +658,32 @@ class Kansas_Cache_File
                                 break;
                             }
                         }
-                        if ($matching) {
+                        if ($matching)
                             $result = $this->remove($id) && $result;
-                        }
                         break;
                     default:
-                        Zend_Cache::throwException('Invalid mode for clean() method');
+                        require_once 'System/ArgumentOutOfRangeException.php';
+                        throw new ArgumentOutOfRangeException('Invalid mode for clean() method');
                         break;
                 }
             }
-            if ((is_dir($file)) and ($this->_options['hashed_directory_level']>0)) {
+            if ((is_dir($file)) and ($this->options['hashed_directory_level']>0)) {
                 // Recursive call
                 $result = $this->_clean($file . DIRECTORY_SEPARATOR, $mode, $tags) && $result;
-                if ($mode=='all') {
-                    // if mode=='all', we try to drop the structure too
+                if ($mode=='all') // if mode=='all', we try to drop the structure too
                     @rmdir($file);
-                }
             }
         }
         return $result;
     }
 
-    protected function _get($dir, $mode, $tags = array()) {
-        if (!is_dir($dir)) {
-            return false;
-        }
-        $result = array();
-        $prefix = $this->_options['file_name_prefix'];
-        $glob = @glob($dir . $prefix . '--*');
-        if ($glob === false) {
-            // On some systems it is impossible to distinguish between empty match and an error.
-            return array();
-        }
+    protected function _get($dir, $mode, $tags = []) {
+        if (!is_dir($dir))
+					return false;
+        $glob = glob($dir . $this->getFileNamePrefix() . '--*');
+        if ($glob === false) // On some systems it is impossible to distinguish between empty match and an error.
+					return [];
+        $result = [];
         foreach ($glob as $file)  {
             if (is_file($file)) {
                 $fileName = basename($file);
@@ -726,16 +739,17 @@ class Kansas_Cache_File
                         }
                         break;
                     default:
-                        Zend_Cache::throwException('Invalid mode for _get() method');
+                    require_once 'System/ArgumentOutOfRangeException.php';
+                        throw new ArgumentOutOfRangeException('Invalid mode for _get() method');
                         break;
                 }
             }
-            if ((is_dir($file)) and ($this->_options['hashed_directory_level']>0)) {
+            if ((is_dir($file)) and ($this->options['hashed_directory_level']>0)) {
                 // Recursive call
                 $recursiveRs =  $this->_get($file . DIRECTORY_SEPARATOR, $mode, $tags);
                 if ($recursiveRs === false) {
-                  global $environment;
-                  $environment->log(E_USER_NOTICE, 'Kansas_Cache_File::_get() / recursive call : can\'t list entries of "'.$file.'"');
+                  global $application;
+                  $application->log(E_USER_NOTICE, 'Kansas\Cache\File::_get() / recursive call : can\'t list entries of "'.$file.'"');
                 } else {
                   $result = array_unique(array_merge($result, $recursiveRs));
                 }
@@ -749,11 +763,9 @@ class Kansas_Cache_File
      *
      * @return int expire time (unix timestamp)
      */
-    protected function _expireTime($lifetime)
-    {
-        if ($lifetime === null) {
+    protected function _expireTime($lifetime) {
+        if ($lifetime === null)
             return 9999999999;
-        }
         return time() + $lifetime;
     }
 
@@ -761,13 +773,11 @@ class Kansas_Cache_File
      * Make a control key with the string containing datas
      *
      * @param  string $data        Data
-     * @param  string $controlType Type of control 'md5', 'crc32' or 'strlen'
-     * @throws Zend_Cache_Exception
+     * @throws System_ArgumentOutOfRangeException
      * @return string Control key
      */
-    protected function _hash($data, $controlType)
-    {
-        switch ($controlType) {
+    protected function _hash($data) {
+        switch ($this->options['read_control_type']) {
         case 'md5':
             return md5($data);
         case 'crc32':
@@ -777,7 +787,8 @@ class Kansas_Cache_File
         case 'adler32':
             return hash('adler32', $data);
         default:
-            Zend_Cache::throwException("Incorrect hash function : $controlType");
+            require_once 'System/ArgumentOutOfRangeException.php';
+            throw new ArgumentOutOfRangeException("Incorrect hash function : " . $this->options['read_control_type']);
         }
     }
 
@@ -787,22 +798,21 @@ class Kansas_Cache_File
      * @param  string $id Cache id
      * @return string File name
      */
-    protected function _idToFileName($id) {
-        $prefix = $this->_options['file_name_prefix'];
-        $result = $prefix . '---' . $id;
-        return $result;
+    protected function getFilename($id, &$path) {
+        $path = $this->getPath($id);
+        return $this->getFileNamePrefix() . '-' . $id;
     }
 
     /**
-     * Make and return a file name (with path)
+     * Devuelve un archivo
      *
      * @param  string $id Cache id
      * @return string File name (with path)
      */
-    protected function _file($id) {
-        $path = $this->_path($id);
-        $fileName = $this->_idToFileName($id);
-        return $path . $fileName;
+    protected function getFile($id) {
+        global $environment;
+        $fileName = $this->getFileName($id, $path);
+        return $environment->getFile($path . $fileName);
     }
 
     /**
@@ -812,39 +822,37 @@ class Kansas_Cache_File
      * @param  boolean $parts if true, returns array of directory parts instead of single string
      * @return string Complete directory path
      */
-    protected function _path($id, $parts = false) {
+    protected function getPath($id, $parts = false) {
         $partsArray = array();
-        $root = $this->_options['cache_dir'];
-        $prefix = $this->_options['file_name_prefix'];
-        if ($this->_options['hashed_directory_level']>0) {
+        $root = $this->getCacheDir();
+        if ($this->options['hashed_directory_level']>0) {
             $hash = hash('adler32', $id);
-            for ($i=0 ; $i < $this->_options['hashed_directory_level'] ; $i++) {
-                $root = $root . $prefix . '--' . substr($hash, 0, $i + 1) . DIRECTORY_SEPARATOR;
+            for ($i=0 ; $i < $this->options['hashed_directory_level'] ; $i++) {
+                $root = $root . $this->getFileNamePrefix() . '--' . substr($hash, 0, $i + 1) . DIRECTORY_SEPARATOR;
                 $partsArray[] = $root;
             }
+            if (!is_writable($path)) // maybe, we just have to build the directory structure
+                $this->_recursiveMkdirAndChmod($partsArray);
+            if (!is_writable($path))
+                return $root;
         }
-        if ($parts) {
+        if ($parts)
             return $partsArray;
-        } else {
+        else
             return $root;
-        }
     }
 
     /**
-     * Make the directory strucuture for the given id
+     * Make the directory structure for the given id
      *
      * @param string $id cache id
      * @return boolean true
      */
-    protected function _recursiveMkdirAndChmod($id) {
-        if ($this->_options['hashed_directory_level'] <=0) {
-            return true;
-        }
-        $partsArray = $this->_path($id, true);
+    protected function _recursiveMkdirAndChmod(array $partsArray) {
         foreach ($partsArray as $part) {
             if (!is_dir($part)) {
-                @mkdir($part, $this->_options['hashed_directory_umask']);
-                @chmod($part, $this->_options['hashed_directory_umask']); // see #ZF-320 (this line is required in some configurations)
+                @mkdir($part, $this->getHashedDirectoryUmask());
+                @chmod($part, $this->getHashedDirectoryUmask()); // see #ZF-320 (this line is required in some configurations)
             }
         }
         return true;
@@ -859,58 +867,11 @@ class Kansas_Cache_File
      */
     protected function _test($id, $doNotTestCacheValidity) {
         $metadatas = $this->_getMetadatas($id);
-        if (!$metadatas) {
+        if (!$metadatas)
             return false;
-        }
-        if ($doNotTestCacheValidity || (time() <= $metadatas['expire'])) {
+        if ($doNotTestCacheValidity || (time() <= $metadatas['expire']))
             return $metadatas['mtime'];
-        }
         return false;
-    }
-
-    /**
-     * Return the file content of the given file
-     *
-     * @param  string $file File complete path
-     * @return string File content (or false if problem)
-     */
-    protected function _fileGetContents($file) {
-        $result = false;
-        if (!is_file($file)) {
-            return false;
-        }
-        $f = @fopen($file, 'rb');
-        if ($f) {
-            if ($this->_options['file_locking']) @flock($f, LOCK_SH);
-            $result = stream_get_contents($f);
-            if ($this->_options['file_locking']) @flock($f, LOCK_UN);
-            @fclose($f);
-        }
-        return $result;
-    }
-
-    /**
-     * Put the given string into the given file
-     *
-     * @param  string $file   File complete path
-     * @param  string $string String to put in file
-     * @return boolean true if no problem
-     */
-    protected function _filePutContents($file, $string) {
-        $result = false;
-        $f = @fopen($file, 'ab+');
-        if ($f) {
-            if ($this->_options['file_locking']) @flock($f, LOCK_EX);
-            fseek($f, 0);
-            ftruncate($f, 0);
-            $tmp = @fwrite($f, $string);
-            if (!($tmp === FALSE)) {
-                $result = true;
-            }
-            @fclose($f);
-        }
-        @chmod($file, $this->_options['cache_file_umask']);
-        return $result;
     }
 
     /**
@@ -920,8 +881,7 @@ class Kansas_Cache_File
      * @return string Cache id
      */
     protected function _fileNameToId($fileName) {
-        $prefix = $this->_options['file_name_prefix'];
-        return preg_replace('~^' . $prefix . '---(.*)$~', '$1', $fileName);
+        return preg_replace('~^' . $this->getFileNamePrefix() . '---(.*)$~', '$1', $fileName);
     }
 
 }

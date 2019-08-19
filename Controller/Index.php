@@ -1,19 +1,63 @@
 <?php
 
-class Kansas_Controller_Index
-	extends Kansas_Controller_Abstract {
+namespace Kansas\Controller;
+use Kansas\Controller\AbstractController;
+use Kansas\View\Result\Redirect;
+use Kansas\View\Result\File;
+use Kansas\View\Result\Json;
+use System\NotImplementedException;
+use System\ArgumentOutOfRangeException;
+use System\ArgumentNullException;
 
-	public function Index(array $vars = []) {
-		return $this->createViewResult('page.default.tpl');
+use function call_user_func;
+use function http_response_code;
+use function is_callable;
+use function get_class;
+use function is_string;
+
+require_once 'Kansas/Controller/AbstractController.php';
+
+class Index	extends AbstractController {
+	
+	private static $actions = [];
+
+	public function callAction ($action, array $vars) {
+		if(is_callable([$this, $action]))
+			return $this->$action($vars);
+		if(isset(self::$actions[$action]))
+			return call_user_func(self::$actions[$action], $this, $vars);
+		require_once 'System/NotImplementedException.php';
+		throw new NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
+	}
+
+	public static function addAction($actionName, callable $callback) {
+		if(!is_string($actionName)) {
+			throw new ArgumentOutOfRangeException('actionName');
+		}
+		self::$actions[$actionName] = $callback;
+	}
+
+	public function template(array $vars = []) {
+		if(!isset($vars['template'])) {
+			throw new ArgumentNullException('vars["template"]');
+		}
+		$template = $vars['template'];
+		unset($vars['template']);
+		return $this->createViewResult($template, $vars);
 	}
 	
-	public function Redirection(array $vars = []) {
-    return Kansas_View_Result_Redirect::gotoUrl($this->getParam('gotoUrl'));
+	public function redirection(array $vars = []) {
+		if(!isset($vars['gotoUrl'])) {
+			throw new ArgumentNullException('vars["gotoUrl"]');
+		}
+		
+		return Redirect::gotoUrl($vars['gotoUrl']);
 	}
 	
-	public function Css() {
+	public function css(array $vars) {
+		require_once 'Kansas/View/Result/Css.php';
 		global $application;
-		$files = $this->getParam('files');
+		$files = $vars['files'];
 		$cssResult = new Kansas_View_Result_Css($files);
 		$backendCache = $application->getModule('BackendCache');
 		if($backendCache) {
@@ -31,32 +75,41 @@ class Kansas_Controller_Index
 			return $cssResult;
 	}
 
-
-	public function Sass(array $vars = []) {
-		return new Kansas_View_Result_Sass($this->getParam('file'));
-	}
 	
-	public function Scss(array $vars = []) {
-		return new Kansas_View_Result_Scss($this->getParam('file'));
-	}
 	
-	public function File(array $vars = []) {
-		return new Kansas_View_Result_File($this->getParam('file'));
+	public function file(array $vars) {
+		require_once 'Kansas/View/Result/File.php';
+		return new File($vars['file']);
 	}
   
-  public function Javascript() {
-    return new Kansas_View_Result_Javascript((array)$this->getParam('component'));
-  }		
-	
-	public function clearCache() {
-    global $application;
-    $application->getView()->getEngine()->clearAllCache();
+	public function clearCache(array $vars) {
+		global $application;
+		$application->getView()->getEngine()->clearAllCache();
 
-    return Kansas_View_Result_Redirect::gotoUrl($this->getParam('ru', '/'));
+		require_once 'Kansas/View/Result/Redirect.php';
+		return Redirect::gotoUrl($this->getParam('ru', '/'));
 	}
 	
-	public function phpInclude() {
-		return new Kansas_View_Result_Include($this->getParam('file'));
+	public function phpInclude(array $vars) {
+		return new Kansas_View_Result_Include($vars['file']);
+	}
+
+	public function API(array $vars) {
+		if(isset($vars['error'])) {
+			if(isset($vars['code'])) {
+				$code = $vars['code'];
+				unset($vars['code']);
+			} else
+				$code = 500;
+			http_response_code($code);
+		}
+		unset($vars['uri']);
+		unset($vars['url']);
+		unset($vars['router']);
+		unset($vars['trail']);
+		unset($vars['requestType']);
+		require_once 'Kansas/View/Result/Json.php';
+		return new Json($vars);
 	}
 	
 }

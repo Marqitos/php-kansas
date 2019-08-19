@@ -80,9 +80,4 @@ class Kansas_Response {
 
 	}
 	
-	public static function notFound() {
-		header('HTTP/1.1 404 Not Found');	
-		exit;
-	}
-	
 }
