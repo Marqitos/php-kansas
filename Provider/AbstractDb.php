@@ -1,6 +1,6 @@
 <?php
 
-namespace Kansas\Db;
+namespace Kansas\Provider;
 
 abstract class AbstractDb {
 	
@@ -10,9 +10,7 @@ abstract class AbstractDb {
 	protected function __construct() {
 		global $application;
 		$this->db = $application->getDb();
-		$this->cache = $application->hasModule('BackendCache')
-			? $application->getModule('BackendCache')
-			: false;
+		$this->cache = $application->hasPlugin('BackendCache');
 	}
 	
 	public function isInstalledDb() {

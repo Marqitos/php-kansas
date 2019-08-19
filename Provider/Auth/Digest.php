@@ -5,7 +5,7 @@ namespace Kansas\Db\Auth;
 use Kansas\Db\AbstractDb;
 use function strtolower;
 
-require_once 'Kansas/AbstractDb.php';
+require_once 'Kansas/Db/AbstractDb.php';
 
 /*
 CREATE TABLE IF NOT EXISTS `Digest` (
@@ -29,14 +29,17 @@ REPLACE INTO Digest
 class Digest extends AbstractDb {
         
     /**
-     * Performs an authentication attempt
+     * Obtiene el valor A1, de una autenticación HttpDigest
      *
-     * @throws Zend_Auth_Adapter_Exception If authentication cannot be performed
-     * @return Zend_Auth_Result
      */
     public function getA1($realm, $username) {
         $sql = 'SELECT HEX(DGS.A1) FROM `Digest` AS DGS INNER JOIN `Users` AS USR ON DGS.Id = USR.Id WHERE DGS.Realm = UNHEX(MD5(?)) AND USR.email = ?;';
-        return strtolower($this->db->fetchOne($sql, [$realm, strtolower($username)]));
+        $value = $this->db->fetchOne(
+            $sql, [
+                $realm, 
+                strtolower($username)
+        ]);
+        return strtolower($value);
     }
 
     

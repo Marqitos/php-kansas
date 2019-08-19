@@ -1,28 +1,33 @@
 <?php
-namespace Kansas\Db;
+namespace Kansas\Provider;
 
+use Kansas\Provider\AbstractDb;
 use System\Guid;
-use Kansas\Db\AbstractDb;
 
-require_once 'Kansas/AbstractDb.php';
+require_once 'Kansas/Provider/AbstractDb.php';
 require_once 'System/Guid.php';
 
 class Users extends AbstractDb {
-	
-  /// Usuarios
+
+	public function __construct() {
+		parent::__construct();
+	}
+
 	// Devuelve un usuario por su email
 	public function getByEmail($email) {
-		$email = trim(strtolower($email));
+		$statement = $this->db->query(
+			'SELECT HEX(`id`) as `id`, `name`, `email`, `isApproved`, `isEnabled`, `comment` FROM `Users` WHERE `email` = ?;');
+		$row = $statement->execute([
+			trim(strtolower($email))
+			])->current();
 
-		$sql = 'SELECT HEX(id) as id, name, email, isApproved, isLockedOut, lastLockOutDate, comment FROM `users` WHERE `Email` = ?;';
-		$row = $this->db->fetchRow($sql, $email);
-    if($row == null)
-      return false;
-      
-    if($this->cache)
-      $this->cache->save(serialize($row), 'user-id-' . $row['id'], ['user']);
-
-		return $row;
+		if($row === false)
+			return false;
+			
+		if($this->cache && $this->cache->test('user-id-' . $row['id']))
+			return unserialize($this->cache->load('user-id-' . $row['id']));
+		
+		return $this->getRoles($row);
 	}
 	
 	// Devuelve un usuario por su Id
@@ -30,18 +35,44 @@ class Users extends AbstractDb {
 		if(Guid::isEmpty($id))
 			return false;
 			
-    if($this->cache && $this->cache->test('user-id-' . $id->getHex()))
-      return unserialize($this->cache->load('user-id-' . $id->getHex()));
-          
-		$sql = 'SELECT HEX(id) as id, name, email, isApproved, isLockedOut, lastLockOutDate, comment FROM `users` WHERE `Id` = UNHEX(?);';
-		$row = $this->db->fetchRow($sql, $id->getHex());
-    if($row == null)
-      return false;
-    
-    if($this->cache)
-      $this->cache->save(serialize($row), 'user-id-' . $id->getHex(), ['user']);
+		if($this->cache && $this->cache->test('user-id-' . $id->getHex()))
+			return unserialize($this->cache->load('user-id-' . $id->getHex()));
+		
+		$statement = $this->db->query(
+			'SELECT HEX(`id`) as `id`, `name`, `email`, `isApproved`, `isEnabled`, `comment` FROM `Users` WHERE `id` = UNHEX(?);');
+		$row = $statement->execute([
+			$id->getHex()
+			])->current();
+		if($row === false)
+			return false;
 
-		return $row;
+		return $this->getRoles($row);
+	}
+
+	protected function getRoles($row) {
+		$user = [
+			'id' 			=> $row['id'],
+			'name' 			=> $row['name'],
+			'email' 		=> $row['email'],
+			'isApproved' 	=> $row['isApproved'],
+			'isEnabled' 	=> $row['isEnabled'],
+			'comment' 		=> $row['comment'],
+			'roles' 		=> []
+		];
+		$statement = $this->db->query(
+			'SELECT HEX(`ROL`.`scope`) as `scope`, HEX(`ROL`.`rol`) as `rol`, `LST`.`value` AS `name` FROM `Roles` AS `ROL` INNER JOIN `Lists` AS `LST` ON `ROL`.`rol` = `LST`.`id` AND `ROL`.`scope` = `LST`.`list` WHERE `user` = UNHEX(?) ORDER BY `ROL`.`scope`, `LST`.`value`;');
+		$rows = $statement->execute([
+			$user['id']
+		]);
+		while($row = $rows->current()){
+			if(!isset($user['roles'][$row['scope']]))
+				$user['roles'][$row['scope']] = [];
+			$user['roles'][$row['scope']][$row['rol']] = $row['name'];
+			$rows->next();
+		}
+		if($this->cache)
+			$this->cache->save(serialize($user), 'user-id-' . $user['id'], ['user']);
+		return $user;
 	}
   
   // Devuelve todos los usuarios
