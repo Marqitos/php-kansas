@@ -1,7 +1,10 @@
 <?php
+use function Kansas\View\Smarty\getTemplateValue;
 
-function smarty_function_signin($params, $template) {
-  global $application;
+require_once 'Smarty/sysplugins/smarty_internal_template.php';
+
+function smarty_function_signin(array $params, Smarty_Internal_Template $template) {
+	global $application;
   $templateVars = $template->getTemplateVars();
   $action = isset($params['action'])
     ? $params['action']
@@ -9,7 +12,7 @@ function smarty_function_signin($params, $template) {
   $ru = isset($params['ru']) 
     ? $params['ru']
     : '/' . $templateVars['url'];
-  return $application->getModule('Auth')->getRouter()->assemble([
+  return $application->getPlugin('Auth')->getRouter()->assemble([
     'action' => $action,
     'ru' => $ru
   ]);
