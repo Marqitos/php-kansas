@@ -101,8 +101,8 @@ class BackendCache extends Configurable implements PluginInterface {
   /// Eventos de la aplicación
   public function appPreInit() {
     global $application;
-    $zones = $application->hasModule('zones');
-    if($zones && $zones->getZone() instanceof Kansas_Module_Admin) {
+    $zones = $application->hasPlugin('zones');
+    if($zones && $zones->getZone() instanceof Kansas\Plugin\Admin) {
       $admin = $zones->getZone();
 		  $admin->registerMenuCallbacks([$this, "adminMenu"]);         
       if($this->options['log'])
@@ -187,20 +187,20 @@ class BackendCache extends Configurable implements PluginInterface {
 		$data = unserialize($this->load('error-' . $id));
 		else $data['log'] = [];
 		foreach ($message['trace'] as $traceLine) {
-		if(isset($traceLine['args'])) {
-			$args = [];
-			foreach ($traceLine['args'] as $arg) {
-			try {
-				$argData = serialize($arg);
-				$args[] = $argId = md5($argData);
-				if(!$this->test($argId))
-				$this->save($argData, 'error-arg-' . $argId, ['error-arg'], null);
-			} catch (Exception $e) {
-				$args[] = 'no-serializable';
+			if(isset($traceLine['args'])) {
+				$args = [];
+				foreach ($traceLine['args'] as $arg) {
+				try {
+					$argData = serialize($arg);
+					$args[] = $argId = md5($argData);
+					if(!$this->test($argId))
+					$this->save($argData, 'error-arg-' . $argId, ['error-arg'], null);
+				} catch (Exception $e) {
+					$args[] = 'no-serializable';
+				}
+				}
+				$traceLine['args'] = $args;
 			}
-			}
-			$traceLine['args'] = $args;
-		}
 		}
 		$log = serialize([
 		'time'          => $time,

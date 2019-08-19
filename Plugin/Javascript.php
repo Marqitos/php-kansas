@@ -8,23 +8,23 @@ use Kansas\Plugin\PluginInterface;
 use System\NotSuportedException;
 use Kansas\View\Result\Javascript as ViewResultJavascript;
 use JShrink\Minifier;
+use Packager;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Javascript extends Configurable implements PluginInterface {
   
-  private $_packager;
+	private $_packager;
   
 	public function __construct(array $options = []) {
-    require_once 'packager/packager.php';
-    require_once 'Kansas/Controller/Index.php';
-    parent::__construct($options);
-    // Añade una acción al controlador principal
-    Index::addAction('javascript', [$this, 'controllerAction']);
+		require_once 'Kansas/Controller/Index.php';
+		parent::__construct($options);
+		// Añade una acción al controlador principal
+		Index::addAction('javascript', [$this, 'controllerAction']);
 	}
   
-  /// Miembros de Kansas_Module_Interface
+  /// Miembros de Kansas\Plugin\Interface
   public function getDefaultOptions($environment) {
     switch ($environment) {
       case 'production':
@@ -52,8 +52,10 @@ class Javascript extends Configurable implements PluginInterface {
 	}
 
   public function getPackager() {
-    if($this->_packager == null)
-      $this->_packager = new \Packager($this->options['packages']);
+    if($this->_packager == null){
+      require_once 'packager/packager.php';
+      $this->_packager = new Packager($this->options['packages']);
+    }
     return $this->_packager;
   }
   
@@ -61,7 +63,7 @@ class Javascript extends Configurable implements PluginInterface {
     global $application;
     $cache = FALSE;
     $test = FALSE;
-    if($cache = $application->hasModule('BackendCache')) {
+    if($cache = $application->hasPlugin('BackendCache')) {
       if($cache->test('js-' . md5(serialize($components)))) {
         $data = $cache->load('js-' . md5(serialize($components)));
         $md5 = md5($data);
@@ -96,19 +98,19 @@ class Javascript extends Configurable implements PluginInterface {
       return $this->javascriptFromComponents($components, $this->options['minifier']);
   }
   
-  public function javascriptFromComponents($components, $minifier = false) {
-    $jsCode = $this->getPackager()->build_from_components($components);
-    if($minifier) {
-      require_once 'JShrink/Minifier.php';
-      return Minifier::minify($jsCode, $minifier); 
-    } else 
-      return $jsCode;
-  }
+	public function javascriptFromComponents($components, $minifier = false) {
+		$jsCode = $this->getPackager()->build_from_components($components);
+		if($minifier) {
+			require_once 'JShrink/Minifier.php';
+			return Minifier::minify($jsCode, $minifier); 
+		} else 
+			return $jsCode;
+	}
 
 	public function controllerAction(ControllerInterface $controller, array $vars) {
-    $components = $vars['component'];
-    require_once 'Kansas/View/Result/Javascript.php';
-    return new ViewResultJavascript($components);
+		$components = $vars['component'];
+		require_once 'Kansas/View/Result/Javascript.php';
+		return new ViewResultJavascript($components);
 	}		
    
 }

@@ -53,8 +53,8 @@ class Auth extends Router {
         return count($data) == 0
           ? $path
           : $path . '?' . http_build_query($data);
-      }	else
-        return false;
+      }
+      return false;
     }
     return parent::assemble();
   }

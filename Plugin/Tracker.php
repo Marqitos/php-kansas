@@ -13,6 +13,11 @@ use function Kansas\Request\getTrailData;
 use function Kansas\Request\getUserAgentData;
 use function Kansas\Request\getRemoteAddressData;
 use function error_get_last;
+use function getallheaders;
+use function ignore_user_abort;
+use function ini_set;
+use function register_shutdown_function;
+use function serialize;
 
 // Tracker basado en bbclone
 class Tracker extends Configurable implements PluginInterface {
@@ -67,11 +72,22 @@ class Tracker extends Configurable implements PluginInterface {
     }
 
     public function appRoute(RequestInterface $request, $params) { // Añadir rastro
+        global $application;
         if(!isset($this->trail))
             $this->initialize();
-        if(isset($params['requestType']))
+        if(isset($params['requestType'])) // Obtenemos el tipo de request
             $this->trail['requestType'] = $params['requestType'];
-        return [
+        if(isset($params['identity']))
+            $identity = $params['identity']; // Obtenemos los datos de usuario y sesión
+        if($authPlugin = $application->hasPlugin('auth')){
+            $session = $authPlugin->getSession();
+            if(!isset($identity))
+                $identity = $session->getIdentity();
+            $this->trail['session'] = $session->getId();
+        }
+        if($identity)
+            $this->trail['user'] = $identity['id'];
+        return [ // Devolvemos los datos de rastreo
             'trail' => $this->trail
         ];
     }
@@ -102,27 +118,58 @@ class Tracker extends Configurable implements PluginInterface {
         $this->saveTrailData();
     }
 
+    /**
+     * Almacena el rastro de navegación, en un fichero
+     *
+     * @return void
+     */
     protected function saveTrailData() {
+        global $environment;
         require_once('Kansas/Environment.php');
-        if($this->trail['environment'] == Environment::ENV_DEVELOPMENT &&
-            $this->trail['responseType'] == 'page') {
-            echo "<!-- \n";
-            var_dump($this->trail);
-            echo " -->";
-        }
-
+        $trackPath = $environment->getSpecialFolder(Environment::SF_TRACK);
+        $trail = $this->trail;
+        $modifyHits = function($read) use ($trail) { // Funcion lambda de modificar archivo de solicitudes
+            $hits = unserialize($read);
+            if(!is_array($hits))
+                $hits = [];
+            if($trail['responseType'] == 'page') {
+                echo "<!-- \n";
+                var_dump($trail);
+                echo " -->";
+            }
+            $hits[] = $trail;
+            return serialize($hits);                
+        };
+        $modifyIndex = function($read) use ($modifyHits, $trackPath) { // Funcion lambda de modificar archivo indice
+            global $environment;
+            $index = unserialize($read);
+            if(!is_array($index))
+                $index = [];
+            $c = 0;
+            do {
+                $c++;
+                if(isset($index['hits-' . $c . '.ser']))
+                    $count = $index['hits-' . $c . '.ser'];
+                else
+                    $count = 0;
+            } while($count > 99);
+            $hitsFile = $environment->getFile($trackPath . 'hits-' . $c . '.ser'); // Guardar cambios de solicitud
+            $hitsFile->modify($modifyHits);
+            $index['hits-' . $c . '.ser'] = $count + 1;
+            return serialize($index);
+        };
+        $indexFile = $environment->getFile($trackPath . 'index.ser');
+        $indexFile->modify($modifyIndex);
     }
 
     public function fillTrailData(array $trail = null) {
-        $useThis = false;
-        if($trail == null) {
-            $trail = $this->trail;
-            $useThis = true;
-        }
-        
         require_once 'Kansas/Request/getUserAgentData.php';
-        $userAgent = getUserAgentData($trail['userAgent']);
         require_once 'Kansas/Request/getRemoteAddressData.php';
+        $useThis = ($trail == null);
+        if($useThis)
+            $trail = $this->trail;
+        
+        $userAgent = getUserAgentData($trail['userAgent']);
         $remote = getRemoteAddressData($trail['remoteAddress'], $this->options['remote_plugin']);
         
         if($useThis) {
@@ -138,13 +185,18 @@ class Tracker extends Configurable implements PluginInterface {
                 $userAgent,
                 $remote
             );
-      }
+    }
 
-      public function getRouter() {
-          if(!isset($this->router)) {
+    /**
+     * Obtiene el router que gestiona el acceso a los recursos para ilustrar las estadisticas de navegación
+     *
+     * @return Kansas\Router\TrailResources
+     */
+    public function getRouter() {
+        if(!isset($this->router)) {
             require_once 'Kansas/Router/TrailResources.php';
             $this->router = new TrailResources([]);
-          }
-          return $this->router;
-      }
+        }
+        return $this->router;
+    }
 }

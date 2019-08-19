@@ -10,6 +10,8 @@ use Kansas\Plugin\PluginInterface;
 use Kansas\View\Result\Scss as ScssViewResult;
 use Leafo\ScssPhp\Compiler;
 
+use function file_get_contents;
+
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Kansas/Controller/Index.php';
@@ -21,11 +23,10 @@ class Scss extends Configurable	implements PluginInterface {
 
 	public function __construct(array $options = []) {
 		parent::__construct($options);
-
     Index::addAction('scss', [$this, 'controllerAction']);
 	}
 
-  /// Miembros de Kansas_Module_Interface
+  /// Miembros de Kansas\Plugin\Interface
   public function getDefaultOptions($environment) {
     switch ($environment) {
       case 'production':
@@ -42,6 +43,7 @@ class Scss extends Configurable	implements PluginInterface {
           'environment' => $environment
 				];
       default:
+        require_once 'System/NotSupportedException.php';
         throw new NotSupportedException("Entorno no soportado [$environment]");
     }
   }
@@ -64,8 +66,7 @@ class Scss extends Configurable	implements PluginInterface {
 	public function getFile($fileName, $first = false) {
     global $environment;
     $ext = strtolower(substr($fileName, strrpos($fileName, '.') + 1));
-    // if the last char isn't *, and it's not (.scss|.css)
-    if( substr($fileName, -1) != '*' &&
+    if( substr($fileName, -1) != '*' && // si la ultima letra no es *, ni (.scss|.css)
         $ext !== 'scss' &&
         $ext !== 'css' &&
 			  $result = $this->getFile($fileName . '.scss', $first))
@@ -87,7 +88,7 @@ class Scss extends Configurable	implements PluginInterface {
 		global $application;
 		$file = $this->getFile($file, null, true);
 		if($this->options['cache'] &&
-			$cache = $application->hasModule('BackendCache')) {
+			$cache = $application->hasPlugin('BackendCache')) {
       $test = false;
       if($cache->test('scss-list-' . md5($file))) {
         $data = $cache->load('scss-list-' . md5($file));

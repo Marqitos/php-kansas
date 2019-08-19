@@ -6,6 +6,11 @@ use System\Configurable;
 use Kansas\Router\RouterInterface;
 use System\String;
 
+use function array_merge;
+use function trim;
+use function substr;
+use function System\String\startWith;
+
 require_once 'System/Configurable.php';
 require_once 'Kansas/Router/RouterInterface.php';
 
@@ -38,10 +43,14 @@ abstract class Router extends Configurable implements RouterInterface {
 
 	public static function getPath(RouterInterface $router) {
 		global $environment;
+		require_once 'System/String/startWith.php';
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
-		return (String::startWith($path, $router->getBasePath()))
-			? substr($path, strlen($router->getBasePath()))
-			: false;
+		$basePath = $router->getBasePath();
+		if(!startWith($path, $basePath))
+			return false;
+		if(substr($path, strlen($basePath)) == false)
+			return '';
+		return substr($path, strlen($basePath));
 	}
 	
 

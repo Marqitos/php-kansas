@@ -6,6 +6,10 @@ use Kansas\View\Result\Template;
 use Kansas\View\Result\Redirect;
 use System\NotImplementedException;
 use function is_callable;
+use function get_class;
+use function array_merge;
+
+require_once 'Kansas/Controller/ControllerInterface.php';
 
 abstract class AbstractController implements ControllerInterface {
 		
@@ -31,7 +35,18 @@ abstract class AbstractController implements ControllerInterface {
 				: $default);
 	}
 
+	public static function getIdentity(array $vars) {
+		global $application;
+		if(isset($vars['identity']))
+			return $vars['identity'];
+		return $application
+			->getPlugin('Auth')
+			->getSession()
+			->getIdentity();
+	}
+
 	protected function createViewResult($defaultTemplate, array $data = [], $mimeType = 'text/html') {
+		require_once 'Kansas/View/Result/Template.php';
 		global $application;
 		$view = $application->getView();
 		$template = $view->createTemplate($this->getParam('template', $defaultTemplate), array_merge($this->_params, $data));
@@ -45,11 +60,12 @@ abstract class AbstractController implements ControllerInterface {
 	
 	protected function isAuthenticated(&$result, $ru = null) {
 		global $application, $environment;
-		$auth = $application->getModule('auth');
+		$auth = $application->getPlugin('auth');
 		if($auth->hasIdentity()) {
 			$result = $auth->getIdentity();
 			return true;
 		} else {
+			require_once 'Kansas/View/Result/Redirect.php';
 			if($ru === null)
 				$ru = $environment->getRequest()->getRequestUri();
 			$result = Redirect::gotoUrl(

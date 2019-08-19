@@ -1,4 +1,5 @@
 <?php
+
 namespace Kansas\Router;
 
 use Kansas\Router;
@@ -13,7 +14,7 @@ class TrailResources extends Router {
         parent::__construct($options);
     }
     
-      /// Miembros de System_Configurable_Interface
+    /// Miembros de Kansas\Configurable
     public function getDefaultOptions($environmentStatus) {
         global $environment;
         switch ($environmentStatus) {
@@ -34,7 +35,7 @@ class TrailResources extends Router {
                 require_once 'System/NotSuportedException.php';
                 throw new NotSuportedException("Entorno no soportado [$environmentStatus]");
         }
-  }
+    }
 
 		
 	public function match() {

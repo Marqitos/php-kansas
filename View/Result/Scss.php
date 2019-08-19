@@ -4,9 +4,11 @@ namespace Kansas\View\Result;
 
 use Kansas\View\Result\StringAbstract;
 
-require_once('Kansas/View/Result/StringAbstract.php');
+require_once 'Kansas/View/Result/StringAbstract.php';
 
-/// Representa una respuesta a una solicitud css a partir de un archivo scss
+/**
+ * Representa una respuesta a una solicitud css a partir de un archivo scss
+ */
 class Scss extends StringAbstract {
     
     private $file;
@@ -19,7 +21,7 @@ class Scss extends StringAbstract {
     public function getResult(&$noCache) {
         global $application;
         $noCache = true;
-        return $application->getModule('Scss')->toCss($this->file, $noCache);
+        return $application->getPlugin('Scss')->toCss($this->file, $noCache);
     }  
 
 }

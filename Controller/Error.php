@@ -12,25 +12,35 @@ class Error	extends AbstractController {
 		global $environment;
 		$application->getView()->setCaching(false);
 		
-    switch($vars['code']) {
-			case 403:
-				header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden', true, 403);
-        $vars['pageTitle'] = 'No tiene acceso a la acción solicitada';
-				break;
-			case 404:
-				header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found', true, 404);
-        $vars['pageTitle'] = 'El documento no ha sido encontrado';
-				break;
-			default:
-        header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error', true, 500);
-        $vars['pageTitle'] = 'Error interno de la aplicación';
+		switch($vars['code']) {
+				case 403:
+					header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden', true, 403);
+					$vars['pageTitle'] = 'No tiene acceso a la acción solicitada';
+					break;
+				case 404:
+					header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found', true, 404);
+					$vars['pageTitle'] = 'El documento no ha sido encontrado';
+					break;
+				default:
+					header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error', true, 500);
+					$vars['pageTitle'] = 'Error interno de la aplicación';
+		}
+		
+		foreach ($vars['trace'] as $index => $traceLine) {
+			$args = [];
+			foreach ($traceLine['args'] as $arg) {
+				if(is_array($args))
+					$args[] = 'Array (' . count($args) . ')';
+				else
+					$args[] = (string) $arg;
+			}
+			$vars['trace'][$index]['args'] = $args;
 		}
 
 		return $this->createViewResult('page.error.tpl', array_merge($vars, [
-      'title'       => ['Error'],
-      'env'         => $environment->getStatus(),
-      'sugestions'  => []
-    ]));
+			'title'       => ['Error'],
+			'env'         => $environment->getStatus(),
+			'sugestions'  => []]));
 	}
 	
   // Visor de errores
@@ -43,7 +53,9 @@ class Error	extends AbstractController {
       foreach($ids as $id) {
         $errors[$id] = unserialize($cache->load($id));
         $errors[$id]['log'] = count($errors[$id]['log']);
-        $errors[$id]['basename'] = $errors[$id]['httpCode'] == 404 ? $errors[$id]['file'] : '[' . $errors[$id]['line'] . '] ' . basename($errors[$id]['file']);
+        $errors[$id]['basename'] = ($errors[$id]['httpCode'] == 404)
+          ? $errors[$id]['file']
+          : '[' . $errors[$id]['line'] . '] ' . basename($errors[$id]['file']);
       }
       $clearResult = $this->getParam('clearResult');
       return $this->createViewResult('part.error-admin.tpl', [

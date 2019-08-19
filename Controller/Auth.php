@@ -2,9 +2,12 @@
 
 namespace Kansas\Controller;
 
-use System\Guid;
 use Kansas\Controller\AbstractController;
+use Kansas\Plugin\Contacts;
 use Kansas\View\Result\Redirect;
+use System\Guid;
+
+use function array_merge;
 
 require_once 'Kansas/Controller/AbstractController.php';
 
@@ -12,8 +15,8 @@ class Auth extends AbstractController {
 		
 	static function getRedirection($action = 'signin', $ru = '/') {
     global $application;
-    $router = $application->getModule('Auth')->getRouter();
     require_once 'Kansas/View/Result/Redirect.php';
+    $router = $application->getPlugin('Auth')->getRouter();
 		return Redirect::gotoUrl($router->assemble([
 			'action' => $action,
 			'ru'     => $ru
@@ -22,35 +25,71 @@ class Auth extends AbstractController {
 	
 	public function index(array $vars) {
     global $application;
-    $identity = $application->getModule('Auth')->getIdentity();
+
+    
+    $identity = $application->getPlugin('Auth')->getIdentity();
 		if($identity == FALSE) {
-      $router = $application->getModule('Auth')->getRouter();
+      $router = $application->getPlugin('Auth')->getRouter();
       $vars['ru'] = $router->assemble([
         'action' => 'sessionInfo'
       ]);
       return $this->sessionInfo($vars);
     }
-		else
-			return $this->createViewResult('page.account.tpl', [
-        'title' => 'Perfil de usuario'
-      ]);
+    $vars['title'] = 'Perfil de usuario';
+    $vars['ru']	= $this->getParam('ru');
+    $contact = $application->getProvider('Contacts')->getUser($vars['identity']['id']);
+    $user = $application->getProvider('Auth\Membership')->getUserByEmail($vars['identity']['email']);
+    foreach ([$contact, $user] as $value) {
+      if(!is_array($value))
+        $value = [];
+    }
+    $vars['user'] = array_merge(
+      $contact,
+      $user,
+      $vars['identity']);
+    if(isset($contact['contact'])) {
+      require_once 'Kansas/Plugin/Contacts.php';
+      $vars['FN'] = Contacts::getFormatedName($contact);
+    }
+    $vars['content_file'] = 'part.auth-account.tpl';
+    $vars['breadcrumbs'] = ['Cuenta de usuario'];
+    echo '<!-- ';
+    var_dump($vars);
+    echo '-->';
+    return $this->createViewResult('page.default.tpl', $vars);
   }
   
   public function sessionInfo(array $vars) {
     global $application;
-    $identity = $application->getModule('Auth')->getIdentity();
+    $identity = $application->getPlugin('Auth')->getIdentity();
 		if($identity) {
+      require_once 'System/Guid.php';
       $vars['title'] = 'Permisos en dispositivos y datos de navegación';
+      $userId = new Guid($identity['id']);
+      $tokenProvider = $application->getProvider('token');
+      $sessions = $tokenProvider->getSessions($userId);
+      echo '<!-- ';
+      var_dump($sessions);
+      echo ' -->';
       // sessiones abiertas
+      $vars['sessions'] = [];
+
+      // session actual
+      $vars['selected_session'] = [
+        'current' => true,
+        ];
     } else {
       $vars['title'] = 'Información sobre datos de navegación';  
     }
     if(isset($vars['trail'])) { // session actual
-      $trackModule = $application->getModule('Tracker');
-      $vars['trail'] = $trackModule->fillTrailData();
+      $trackPlugin = $application->getPlugin('Tracker');
+      $vars['trail'] = $trackPlugin->fillTrailData();
     }
     $vars['content_file'] = 'part.auth-sessions.tpl';
     $vars['noindex'] = true;
+    $vars['breadcrumbs'] = [
+      '/cuenta' =>'Cuenta', // TODO: Obtener a traves del router
+      'Sesiones'];
     return $this->createViewResult('page.default.tpl', $vars);
 }
 	
@@ -58,22 +97,22 @@ class Auth extends AbstractController {
 		global $application;
 		$externalSignin = [];
 		$params = array_merge($_REQUEST, $params);
-		foreach($application->getModule('Auth')->getAuthServices('external') as $name => $externalService)
+		foreach($application->getPlugin('Auth')->getAuthServices('external') as $name => $externalService)
 			$externalSignin[] = array_merge($externalService->getLoginUrl($params), ['name' => $name]);
 		return $externalSignin;		
 	}
 	
 	public function signOut() {
 		global $application;
-		$ru	= $this->getParam('ru', '/');
-		$application->getModule('Auth')->clearIdentity();
     require_once 'Kansas/View/Result/Redirect.php';
+		$application->getPlugin('Auth')->clearIdentity();
+		$ru	= $this->getParam('ru', '/');
 		return Redirect::gotoUrl($ru);
 	}
 	
 	public function fbSignIn() {
 		global $application;
-		$facebook = $application->getModule()->getAuthService('facebook')->getCore();
+		$facebook = $application->getPlugin()->getAuthService('facebook')->getCore();
 		$ru				= $this->getParam('ru', '/');
     require_once 'Kansas/View/Result/Redirect.php';
 		if(intval($facebook->getClass()->getUser()) == 0) {
@@ -81,7 +120,7 @@ class Auth extends AbstractController {
         'ru'  => $ru
       ]));
     } elseif($facebook->isRegistered()) {
-			$authResult				= $application->getModule('Auth')->authenticate($facebook);
+			$authResult				= $application->getPlugin('Auth')->authenticate($facebook);
 			if($authResult->isValid())
 				return Redirect::gotoUrl($ru);
 			else
@@ -101,7 +140,7 @@ class Auth extends AbstractController {
 		$facebook = $application->createAuthMembership('facebook');
 		if(isset($_REQUEST['signed_request'])) {
 			$facebook->register();
-			$result	= $application->getModule('Auth')->authenticate($facebook);
+			$result	= $application->getPlugin('Auth')->authenticate($facebook);
 			$redirect = new Redirect();
 			if($result->isValid())
 				$redirect->setGotoUrl($ru);
@@ -122,7 +161,7 @@ class Auth extends AbstractController {
   public function admin(array $vars = []) {
     global $application;
     if($vars['requestType'] == 'smarty') {
-      $auth = $application->getModule('auth');
+      $auth = $application->getPlugin('auth');
       $provider = $application->getProvider('users');
       $defaultScope = $auth->getDefaultScope();
       $data = [];
@@ -136,7 +175,7 @@ class Auth extends AbstractController {
             $data['newUser'] = $_GET['userId'];
         } elseif(intval($_GET['createResult']) < 0) { // Error de validación de nuevo usuario
           $data['newUserError'] = abs(intval($_GET['createResult']));
-          $cache = $application->getModule('BackendCache');
+          $cache = $application->getPlugin('BackendCache');
           if(isset($_GET['userId']) && $cache && $cache->test('model-user-'. $_GET['userId'])) { // datos almacenados en cache
             $data['newUserData'] = unserialize($cache->load('model-user-'. $_GET['userId']));
             $data['newUserData']['id'] = $_GET['userId'];

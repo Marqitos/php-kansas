@@ -22,6 +22,10 @@ use function Kansas\Http\currentServerRequest;
 
 require_once 'System/Version.php';
 
+/**
+ * Objeto singleton con valores de entorno.
+ * Carpetas especiales, temas, información sobre la solicitud actual, ...
+ */
 class Environment {
   
     private $status;
@@ -301,7 +305,7 @@ class Environment {
 
     public function createProvider($providerName) { 
         $providerClass = $this->getLoader('provider')->load($providerName);
-        $provider = new $providerClass();
+        return new $providerClass();
     }
 
 

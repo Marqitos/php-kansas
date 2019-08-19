@@ -4,9 +4,16 @@ namespace Kansas\Controller;
 use Kansas\Controller\AbstractController;
 use Kansas\View\Result\Redirect;
 use Kansas\View\Result\File;
+use Kansas\View\Result\Json;
 use System\NotImplementedException;
 use System\ArgumentOutOfRangeException;
 use System\ArgumentNullException;
+
+use function call_user_func;
+use function http_response_code;
+use function is_callable;
+use function get_class;
+use function is_string;
 
 require_once 'Kansas/Controller/AbstractController.php';
 
@@ -19,6 +26,7 @@ class Index	extends AbstractController {
 			return $this->$action($vars);
 		if(isset(self::$actions[$action]))
 			return call_user_func(self::$actions[$action], $this, $vars);
+		require_once 'System/NotImplementedException.php';
 		throw new NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
 	}
 
@@ -78,11 +86,30 @@ class Index	extends AbstractController {
 		global $application;
 		$application->getView()->getEngine()->clearAllCache();
 
+		require_once 'Kansas/View/Result/Redirect.php';
 		return Redirect::gotoUrl($this->getParam('ru', '/'));
 	}
 	
 	public function phpInclude(array $vars) {
 		return new Kansas_View_Result_Include($vars['file']);
+	}
+
+	public function API(array $vars) {
+		if(isset($vars['error'])) {
+			if(isset($vars['code'])) {
+				$code = $vars['code'];
+				unset($vars['code']);
+			} else
+				$code = 500;
+			http_response_code($code);
+		}
+		unset($vars['uri']);
+		unset($vars['url']);
+		unset($vars['router']);
+		unset($vars['trail']);
+		unset($vars['requestType']);
+		require_once 'Kansas/View/Result/Json.php';
+		return new Json($vars);
 	}
 	
 }

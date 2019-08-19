@@ -2,24 +2,27 @@
 
 namespace Kansas\Plugin;
 
+use Exception;
 use System\Configurable;
 use Kansas\Plugin\PluginInterface;
-use Kansas\Auth\ServiceInterface;
+use Kansas\Auth\ServiceInterface as AuthService;
 use System\NotSuportedException;
-use Kansas\Auth\Exception as AuthException;
+use Kansas\Auth\AuthException;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Kansas/Auth/ServiceInterface.php';
 
-class Membership extends Configurable implements PluginInterface, ServiceInterface {
+class Membership extends Configurable implements PluginInterface, AuthService {
+
+  private $authPlugin;
 
   /// Constructor
   public function __construct(array $options) {
     parent::__construct($options);
     global $application;
-    $authModule = $application->getModule('Auth');
-    $authModule->addAuthService($this);
+    $this->authPlugin = $application->getPlugin('Auth');
+    $this->authPlugin->addAuthService($this);
   }
   
   /// Miembros de Kansas_Module_Interface
@@ -43,7 +46,7 @@ class Membership extends Configurable implements PluginInterface, ServiceInterfa
               'controller' => 'Membership',
               'action' => 'resetPassword'],
             'change-password' => [
-              'path' => 'cambiar-password',
+              'path' => 'cambiar-contrasena',
               'controller' => 'Membership',
               'action' => 'changePassword'],
             'set-password' => [
@@ -76,23 +79,28 @@ class Membership extends Configurable implements PluginInterface, ServiceInterfa
   }
 
   
-  /// Miembros estaticos
-  public static function authenticate($email, $password, $remember) {
-    require_once 'Kansas/Auth/Exception.php';
+  public function authenticate($email, $password, $remember, $remoteAddress, $userAgent) {
+    require_once 'Kansas/Auth/AuthException.php';
     global $application;
     $provider = $application->getProvider('Auth_Membership');
-    $authModule = $application->getModule('Auth');
     // comprobar bloqueo de inicio de sessión
-    try {
-      $user = $provider->validate($email, $password);
-      $authModule->setIdentity($user, $remember);
-      return $user;
-    } catch(AuthException $ex) {
-      if($ex->getErrorCode() != AuthException::FAILURE_UNCATEGORIZED) {
-        // Registar evento de intento de inicio de sesión
-        // Comprobar si hay q bloquear el usuario, y realizar el bloqueo
+    if($this->canLogin($remoteAddress, $email)) {
+      try {
+        $user = $provider->validate($email, $password);
+        $this->authPlugin->setIdentity($user, $remember, $remoteAddress, $userAgent);
+        return $user;
+      } catch(AuthException $ex) {
+        if($ex->getErrorCode() != AuthException::FAILURE_UNCATEGORIZED) {
+          // Registar evento de intento de inicio de sesión
+          $this->authPlugin->registerFailLogin($remoteAddress, $email, $ex->getErrorCode());
+        }
+        throw $ex;
+      } catch(Exception $ex) {
+        $application->log($ex);
+        throw new AuthException(AuthException::FAILURE_UNCATEGORIZED);
       }
-      throw $ex;
+    } else {
+      
     }
 
   }

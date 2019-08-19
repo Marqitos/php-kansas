@@ -5,45 +5,58 @@ namespace Kansas\Auth;
 use Exception;
 
 class AuthException extends Exception {
+
+    // Errores en el nombre de usuario (1+)
     /**
-     * Usuario no encontrado
+     * Cuenta de usuario no especificada
      */
-    const FAILURE_IDENTITY_NOT_FOUND    = 1;
+    const REQUIRE_USERNAME              = 1;
+    /**
+     * Cuenta de usuario no valida (+8)
+     */
+    const FAILURE_USERNAME              = 9;
+    /**
+     * Usuario no encontrado (+16)
+     */
+    const FAILURE_USERNAME_NOT_FOUND    = 17;
+
+    // Errores en la contraseña (2+)
+    /**
+     * Contraseña no especificada
+     */
+    const REQUIRE_PASSWORD              = 2;
 
     /**
-     * Credenciales no válidos
+     * Contraseña no valida (+32)
      */
-    const FAILURE_CREDENTIAL_INVALID    = 2;
+    const FAILURE_PASSWORD              = 34;
 
+    /**
+     * Credenciales no válidos (+64)
+     */
+    const FAILURE_CREDENTIAL_INVALID    = 66;
+
+    // Errores con la identidad (4+)
     /**
      * Cuenta de usuario no verificada
      */
     const FAILURE_IDENTITY_NOT_APPROVED = 4;
 
     /**
-     * Cuenta de usuario bloqueada
+     * Cuenta de usuario bloqueada (+128)
      */
-    const FAILURE_IDENTITY_NOT_ENABLED  = 8;
+    const FAILURE_IDENTITY_NOT_ENABLED  = 136;
 
+    // Otros errores
     /**
-     * Cuenta de usuario bloqueada temporalmente
+     * Inicio de sesión bloqueado temporalmente
      */
-    const FAILURE_IDENTITY_LOCKEDOUT    = 16;
+    const FAILURE_LOCKEDOUT             = 256;
 
     /**
      * Otro tipo de error
      */
-    const FAILURE_UNCATEGORIZED         = 32;
-
-    /**
-     * Cuenta de usuario no valida
-     */
-    const FAILURE_USERNAME              = 33;
-
-    /**
-     * Contraseña no valida
-     */
-    const FAILURE_PASSWORD              = 34;
+    const FAILURE_UNCATEGORIZED         = 512;
 
     private $errorCode;
 

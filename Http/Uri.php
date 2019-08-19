@@ -31,7 +31,7 @@ use function strtolower;
 use function substr;
 
 /**
- * Implementation of Psr\Http\UriInterface.
+ * Implementación de Psr\Http\UriInterface.
  *
  * Provides a value object representing a URI for HTTP requests.
  *

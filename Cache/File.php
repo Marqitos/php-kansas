@@ -4,7 +4,6 @@ namespace Kansas\Cache;
 
 use System\ArgumentOutOfRangeException;
 use System\IO\DirectoryNotFoundException;
-use System\IO\File as IOFile;
 use System\IO\IOException;
 use System\NotSuportedException;
 use Kansas\Cache;
@@ -83,22 +82,22 @@ class File extends Cache implements ExtendedCacheInterface {
     public function getDefaultOptions($enviromentStatus) {
         global $environment;
         switch ($enviromentStatus) {
-        case 'production':
-        case 'development':
-        case 'test':
-            return $options = [
-                'cache_dir' => $environment->getSpecialFolder(Environment::SF_CACHE),
-                'read_control' => true,
-                'read_control_type' => 'crc32',
-                'hashed_directory_level' => 0,
-                'hashed_directory_umask' => 0770,
-                'file_name_prefix' => 'cache',
-                'cache_file_umask' => 0600,
-                'metadatas_array_max_size' => 100
-            ];
-        default:
-            require_once 'System/NotSuportedException.php';
-            throw new NotSuportedException("Entorno no soportado [$enviromentStatus]");
+            case 'production':
+            case 'development':
+            case 'test':
+                return $options = [
+                    'cache_dir' => $environment->getSpecialFolder(Environment::SF_CACHE),
+                    'read_control' => true,
+                    'read_control_type' => 'crc32',
+                    'hashed_directory_level' => 0,
+                    'hashed_directory_umask' => 0770,
+                    'file_name_prefix' => 'cache',
+                    'cache_file_umask' => 0600,
+                    'metadatas_array_max_size' => 100
+                ];
+            default:
+                require_once 'System/NotSuportedException.php';
+                throw new NotSuportedException("Entorno no soportado [$enviromentStatus]");
         }
     }
 
@@ -205,13 +204,12 @@ class File extends Cache implements ExtendedCacheInterface {
             return false;
         $metadatas = $this->_getMetadatas($id);
         $file = $this->getFile($id);
-        $data = $file->Read();
+        $data = $file->read();
         if ($this->options['read_control']) {
             $hashData = $this->_hash($data);
-            $hashControl = $metadatas['hash'];
-            if ($hashData != $hashControl) { // Problem detected by the read control !
+            if ($hashData != $metadatas['hash']) { // Problem detected by the read control !
                 global $application;
-                $application->log(E_USER_NOTICE, 'Kansas_Cache_File::load() / read_control : stored hash and computed hash do not match: $id');
+                $application->log(E_USER_NOTICE, 'Kansas\Cache\File::load() / read_control : El hash almacenado y el calculado no coinciden: ' . $id);
                 $this->remove($id);
                 return false;
             }
@@ -258,10 +256,10 @@ class File extends Cache implements ExtendedCacheInterface {
         $res = $this->_setMetadatas($id, $metadatas);
         if (!$res) {
             global $application;
-            $application->log(E_USER_NOTICE, 'Kansas_Cache_File::save() / error on saving metadata');
+            $application->log(E_USER_NOTICE, 'Kansas\Cache\File::save() / error guardando metadatos');
             return false;
         }
-        $file->Write($file, $data, $this->getCacheFileUmask());
+        $result = $file->write($data, 'c', $this->getCacheFileUmask());
         return ($result !== false);
     }
 
@@ -272,8 +270,8 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return boolean true if no problem
      */
     public function remove($id) {
-        $file = $this->_file($id);
-        $boolRemove   = $this->_remove($file);
+        $fileName = $this->getFileName($id, $path);
+        $boolRemove   = $this->_remove($path . $fileName);
         $boolMetadata = $this->_delMetadatas($id);
         return $boolMetadata && $boolRemove;
     }
@@ -295,7 +293,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @param tags array $tags array of tags
      * @return boolean true if no problem
      */
-    public function clean($mode = Kansas_Cache::CLEANING_MODE_ALL, array $tags = []) {
+    public function clean($mode = Cache::CLEANING_MODE_ALL, array $tags = []) {
         // We use this protected method to hide the recursive stuff
         clearstatcache();
         return $this->_clean($this->getCacheDir(), $mode, $tags);
@@ -366,7 +364,7 @@ class File extends Cache implements ExtendedCacheInterface {
         $total = disk_total_space($this->getCacheDir());
         if ($total == 0) {
             require_once 'System/IO/IOException.php';
-            throw new System_IO_IOException('No se obtener el espacio libre en disco');
+            throw new IOException('No se obtener el espacio libre en disco');
         } else {
             if ($free >= $total)
                 return 100;
@@ -513,9 +511,9 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return array|false Metadatas associative array
      */
     protected function _loadMetadatas($id) {
-        $file = $this->_metadatasFile($id);
-        require_once 'System/IO/File.php';
-        $result = System_IO_File::Read($file);
+        global $environment;
+        $file = $environment->getFile($this->_metadatasFile($id));
+        $result = $file->read();
         return ($result === false)
             ? false
             : @unserialize($result);
@@ -529,9 +527,9 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return boolean True if no problem
      */
     protected function _saveMetadatas($id, $metadatas) {
-        $file = $this->_metadatasFile($id);
-        require_once 'System/IO/File.php';
-        $result = System_IO_File::Write($file, serialize($metadatas), $this->getCacheFileUmask());
+        global $environment;
+        $file = $environment->getFile($this->_metadatasFile($id));
+        $result = $file->write(serialize($metadatas), 'c', $this->getCacheFileUmask());
         return ($result !== false);
 }
 
@@ -544,7 +542,7 @@ class File extends Cache implements ExtendedCacheInterface {
     protected function _metadatasFile($id) {
         $path;
         $filename = $this->getFilename($id . '.metadatas', $path);
-		return $path . $fileName;
+		return $path . $filename;
     }
 
     /**
@@ -573,10 +571,9 @@ class File extends Cache implements ExtendedCacheInterface {
     protected function _remove($file) {
 			if (!is_file($file))
 				return false;
-			if (!@unlink($file)) {
-				# we can't remove the file (because of locks or any problem)
+			if (!@unlink($file)) { // we can't remove the file (because of locks or any problem)
 				global $application;
-				$application->log(E_USER_NOTICE, "Kansas_Cache_File::_remove() : we can't remove $file");
+				$application->log(E_USER_NOTICE, 'Kansas\Cache\File::_remove() : no podemos eliminar ' .$file);
 				return false;
 			}
 			return true;
@@ -601,7 +598,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @throws System_ArgumentOutOfRangeException
      * @return boolean True if no problem
      */
-    protected function _clean($dir, $mode = Kansas_Cache::CLEANING_MODE_ALL, $tags = array()) {
+    protected function _clean($dir, $mode = Cache::CLEANING_MODE_ALL, $tags = array()) {
         if (!is_dir($dir))
             return false;
         $result = true;
@@ -752,7 +749,7 @@ class File extends Cache implements ExtendedCacheInterface {
                 $recursiveRs =  $this->_get($file . DIRECTORY_SEPARATOR, $mode, $tags);
                 if ($recursiveRs === false) {
                   global $application;
-                  $application->log(E_USER_NOTICE, 'Kansas_Cache_File::_get() / recursive call : can\'t list entries of "'.$file.'"');
+                  $application->log(E_USER_NOTICE, 'Kansas\Cache\File::_get() / recursive call : can\'t list entries of "'.$file.'"');
                 } else {
                   $result = array_unique(array_merge($result, $recursiveRs));
                 }
@@ -814,9 +811,8 @@ class File extends Cache implements ExtendedCacheInterface {
      */
     protected function getFile($id) {
         global $environment;
-        $path;
         $fileName = $this->getFileName($id, $path);
-        $file = $environment->getFile($path . $fileName);
+        return $environment->getFile($path . $fileName);
     }
 
     /**
