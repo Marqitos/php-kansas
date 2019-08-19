@@ -6,8 +6,14 @@ use Kansas\Plugin\PluginInterface;
 
 require_once 'Kansas/Plugin/PluginInterface.php';
 
-// Representa una zona
+/**
+ * Representa un plugin de zona
+ */
 interface ZoneInterface extends PluginInterface {
-    // Obtiene la ruta inicial de la zona
+    /**
+     * Obtiene la ruta inicial de la zona
+     *
+     * @return string con la ruta inicial
+     */
     public function getBasePath();
 }

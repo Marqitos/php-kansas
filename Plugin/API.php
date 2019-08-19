@@ -6,17 +6,19 @@ use Kansas\Plugin\AbstractZone;
 use System\NotSupportedException;
 use Kansas\Router\API as RouterAPI;
 
+use function Kansas\API\APICore;
+
 require_once 'Kansas/Plugin/AbstractZone.php';
 
 class API extends AbstractZone {
 	
-	private $router;
+  private $router;
+  private $callbacks = [];
 
   /// Constructor
 	public function __construct(array $options) {
     parent::__construct($options);
 		global $application;
-    $application->registerCallback('preinit', [$this, 'appPreInit']);
 	}
  
   /// Miembros de System_Configurable_Interface
@@ -39,13 +41,20 @@ class API extends AbstractZone {
 		global $environment;
 		return $environment->getVersion();
 	}
-  
-	public function appPreInit() { // añadir router
-		global $application;
-    if($this->zones->getZone() instanceof Kansas\Plugin\API) {
-      $application->addRouter($this->getRouter());
+
+	public function onAppPreInit($zone) { // añadir router
+    global $application;
+    if($zone instanceof API) {
+      $router = $this->getRouter();
+      $application->addRouter($router);
+      require_once 'Kansas/API/Core.php';
+      $router->registerCallback('Kansas\API\APICore');
     }
-	}
+  }
+  
+  public function registerAPICallback(callback $callback) {
+    $this->getRouter()->registerCallback($callback);
+  }
 
 	public function getRouter() {
 		if($this->router == null) {

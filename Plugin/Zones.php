@@ -5,8 +5,9 @@ namespace Kansas\Plugin;
 use System\Configurable;
 use Kansas\Plugin\PluginInterface;
 use System\NotSuportedException;
-use System\String;
 use Kansas\Plugin\Zone\ZoneInterface;
+
+use function System\String\startWith;
 
 require_once 'Kansas/Plugin/Zone/ZoneInterface.php';
 require_once 'System/Configurable.php';
@@ -14,54 +15,60 @@ require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Zones extends Configurable implements PluginInterface {
   
-  /// Campos
-  private $_zones = [];
-  private $_zone;
+	// Campos
+	private $zones = [];
+	private $zone;
 
-  /// Constructor
-  public function __construct(array $options) {
-    parent::__construct($options);
-  }
-  
-  /// Miembros de Kansas_Module_Interface
-  public function getDefaultOptions($environment) {
-    switch ($environment) {
-      case 'production':
-      case 'development':
-      case 'test':
-        return [];
-      default:
-        require_once 'System/NotSuportedException.php';
-        throw new NotSuportedException("Entorno no soportado [$environment]");
-    }
-  }
+	/// Miembros de Kansas\PluginInterface
+	public function getDefaultOptions($environment) {
+		switch ($environment) {
+		case 'production':
+		case 'development':
+		case 'test':
+			return [];
+		default:
+			require_once 'System/NotSuportedException.php';
+			throw new NotSuportedException("Entorno no soportado [$environment]");
+		}
+	}
 
-  public function getVersion() {
+	public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
 	}
-  
-  /// Metodos publicos
-  // Obtiene la zona actual
-  public function getZone() {
-    if($this->_zone === NULL) {
-      global $environment;
-      $path = trim($environment->getRequest()->getUri()->getPath(), '/');
-      $this->_zone = false;
-      foreach($this->_zones as $zone) {
-        if(String::startWith($path, $zone->getBasePath())) {
-          $this->_zone = $zone;
-          break;
-        }
-      }
-    }
-    return $this->_zone;
-  }
-  
-  // Agrega una nueva zona
-  public function addZone(ZoneInterface $zone) {
-    $this->_zones[$zone->getBasePath()] = $zone;
-    if($this->_zone === FALSE) unset($this->_zone);
-  }
+	
+	/// Metodos publicos
+	/**
+	 * Obtiene la zona actual
+	 *
+	 * @return mixed Kansas\Plugin\Zone\ZoneInterface o false
+	 */
+	public function getZone() {
+		if($this->zone === null) {
+			global $environment;
+			$path = trim($environment->getRequest()->getUri()->getPath(), '/');
+			$this->zone = false;
+			require_once 'System/String/startWith.php';
+			foreach($this->zones as $basePath => $zone) {
+				if(startWith($path, $basePath)) {
+				$this->zone = $zone;
+				break;
+				}
+			}
+		}
+		return $this->zone;
+	}
+	
+	/**
+	 * Agrega una nueva zona
+	 *
+	 * @param ZoneInterface $zone Zona a agregar
+	 * @return void
+	 */
+	public function addZone(ZoneInterface $zone) {
+		$this->zones[$zone->getBasePath()] = $zone;
+		if($this->zone === false) // resetea la zona actual
+			unset($this->zone);
+	}
 
 }

@@ -24,7 +24,6 @@ class Admin extends AbstractZone implements RouterInterface {
 	public function __construct(array $options) {
     parent::__construct($options);
 		global $application;
-		$application->registerCallback('preinit', [$this, "appPreInit"]);
 	}
   
   /// Miembros de Kansas_Module_Interface
@@ -141,24 +140,21 @@ class Admin extends AbstractZone implements RouterInterface {
   }
   
   /// Eventos de la aplicación
-	public function appPreInit() { // añadir router
+	public function onAppPreInit($zone) { // añadir router
 		global $application;
-    if($this->zones->getZone() instanceof Kansas_Module_Admin) {
+    if($zone instanceof Admin) {
       $application->addRouter($this);
     }
 	}
   
   /// Registro de eventos
-  public function registerAlertsCallbacks($callback) {
-		if(is_callable($callback))
+  public function registerAlertsCallbacks(callable $callback) {
 			$this->_callbacks['alerts'][] = $callback;
 	}
-  public function registerMenuCallbacks($callback) {
-		if(is_callable($callback))
+  public function registerMenuCallbacks(callable $callback) {
 			$this->_callbacks['menu'][] = $callback;
 	}
-  public function registerTaskCallbacks($callback) {
-		if(is_callable($callback))
+  public function registerTaskCallbacks(callable $callback) {
 			$this->_callbacks['tasks'][] = $callback;
 	}
   

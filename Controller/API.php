@@ -20,22 +20,6 @@ class Kansas_Controller_API
 			$authAdapter->requireLogin($result);
 		}
 	}
-		
-	public function index() { // Devuelve los datos basicos de la aplicación y usuario
-		global $application;
-		$auth = $application->getModule('Auth');
-		return new Kansas_View_Result_Json([
-			'host'			=> $this->getRequest()->getHttpHost(),
-			'name'			=> $application->createTitle()->__toString(),
-			'username'		=> $auth->getIdentity()->getName(),
-			'environment'	=> $application->getEnvironment()
-		]);
-	}
-	
-	public function modules() { // Devuelve los modulos cargados
-		global $application;
-		return new Kansas_View_Result_Json($application->getModules());
-	}
 	
 	public function config() { // Devuelve la configuración sin los datos de modulos
 		global $application;
@@ -126,21 +110,21 @@ class Kansas_Controller_API
 	public static function removeDots($path) {
 		if(DIRECTORY_SEPARATOR != '/')
 			$path = str_replace('/', DIRECTORY_SEPARATOR, $path);
-    $root = ($path[0] === DIRECTORY_SEPARATOR) ? DIRECTORY_SEPARATOR : '';
+		$root = ($path[0] === DIRECTORY_SEPARATOR) ? DIRECTORY_SEPARATOR : '';
 
-    $segments = explode(DIRECTORY_SEPARATOR, trim($path, DIRECTORY_SEPARATOR));
-    $ret = array();
-    foreach($segments as $segment){
-        if (($segment == '.') || empty($segment)) {
-            continue;
-        }
-        if ($segment == '..') {
-            array_pop($ret);
-        } else {
-            array_push($ret, $segment);
-        }
-    }
-    return $root . implode(DIRECTORY_SEPARATOR, $ret);
+		$segments = explode(DIRECTORY_SEPARATOR, trim($path, DIRECTORY_SEPARATOR));
+		$ret = array();
+		foreach($segments as $segment){
+			if (($segment == '.') || empty($segment)) {
+				continue;
+			}
+			if ($segment == '..') {
+				array_pop($ret);
+			} else {
+				array_push($ret, $segment);
+			}
+		}
+		return $root . implode(DIRECTORY_SEPARATOR, $ret);
 	}
 	
 }
