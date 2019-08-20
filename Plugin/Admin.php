@@ -6,7 +6,8 @@ use Kansas\Plugin\AbstractZone;
 use Kansas\Plugin\Zone\ZoneInterface;
 use Kansas\Router\RouterInterface;
 use System\NotSuportedException;
-use System\String;
+
+use function System\String\startWith;
 
 require_once 'Kansas/Plugin/AbstractZone.php';
 require_once 'Kansas/Router/RouterInterface.php';
@@ -49,12 +50,14 @@ class Admin extends AbstractZone implements RouterInterface {
   
   /// Miembros de Kansas_Router_Interface
 	public function match() {
-    require_once 'System/String.php';
+    echo 'test';
+    exit;
+    require_once 'System/String/startWith.php';
 		global $application;
     global $environment;
 		$params = false;
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
-    if(String::startWith($path, $this->getBasePath()))
+    if(startWith($path, $this->getBasePath()))
       $path = substr($path, strlen($this->getBasePath()));
     else
 			return false;
