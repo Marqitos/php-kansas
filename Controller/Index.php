@@ -74,8 +74,6 @@ class Index	extends AbstractController {
 		} else
 			return $cssResult;
 	}
-
-	
 	
 	public function file(array $vars) {
 		require_once 'Kansas/View/Result/File.php';

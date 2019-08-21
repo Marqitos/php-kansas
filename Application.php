@@ -4,6 +4,7 @@ namespace Kansas;
 
 use Exception;
 use SplPriorityQueue;
+use Throwable;
 use System\ArgumentOutOfRangeException;
 use System\Configurable;
 use System\NotSupportedException;
@@ -180,13 +181,13 @@ class Application extends Configurable {
     protected function loadPlugin($pluginName, array $options) {
 		global $environment;
         try {
-            $plugin = $environment->createPlugin($pluginName, $options);
-        } catch(Exception $e) {
+			$plugin = $environment->createPlugin($pluginName, $options);
+        } catch(Throwable $e) {
             $this->log(E_USER_NOTICE, $e);
             $plugin = false;
         }
         $this->plugins[$pluginName] = $plugin;
-        return $plugin;
+		return $plugin;
     }
 
 	public function getProvider($providerName) {
@@ -265,8 +266,8 @@ class Application extends Configurable {
 	}
 	
 	/* Eventos */
-	public function registerCallback($hook, $callback) {
-		if(is_callable($callback) && isset($this->_callbacks[$hook]))
+	public function registerCallback($hook, callable $callback) {
+		if(isset($this->_callbacks[$hook]))
 			$this->_callbacks[$hook][] = $callback;
 	}
 
@@ -371,7 +372,7 @@ class Application extends Configurable {
 		return true; // No ejecutar el gestor de errores interno de PHP
 	}
 	
-	public function exceptionHandler(Exception $ex) {
+	public function exceptionHandler(Throwable $ex) {
 		$errData = self::getErrorData($ex);
 		if(error_reporting() != 0)
 			@call_user_func($this->options['log'], E_USER_ERROR, $errData);
@@ -380,7 +381,7 @@ class Application extends Configurable {
 	}
 	
 	public function log($level, $message) {
-		if($message instanceof Exception)
+		if($message instanceof Throwable)
 			$message = self::getErrorData($message);
 		call_user_func($this->options['log'], $level, $message);
 	}
@@ -393,7 +394,7 @@ class Application extends Configurable {
 		$result->executeResult();
 	}
 	
-	public static function getErrorData(Exception $ex) {
+	public static function getErrorData(Throwable $ex) {
 		require_once 'System/Net/WebException.php';
 		return [
 			'exception'     => get_class($ex),
