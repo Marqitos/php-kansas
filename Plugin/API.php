@@ -52,7 +52,7 @@ class API extends AbstractZone {
     }
   }
   
-  public function registerAPICallback(callback $callback) {
+  public function registerAPICallback(callable $callback) {
     $this->getRouter()->registerCallback($callback);
   }
 
