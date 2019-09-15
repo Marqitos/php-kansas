@@ -43,7 +43,7 @@ abstract class ViewResultAbstract implements ViewResultInterface {
           header("HTTP/1.1 304 Not Modified");
           return false;
         } else
-          header('Etag: ' . $cache);
+          header('Etag: "' . $cache . '"');
       }
     } else
       header ("cache-control: no-store");
