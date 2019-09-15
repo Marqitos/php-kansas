@@ -20,16 +20,19 @@ class Content extends ViewResultAbstract {
 		$this->_content = $content;
 	}
 
-  protected function sendHeaders($noCache = false) {
+	protected function sendHeaders($noCache = false) {
 		$noCache = md5($this->_content);
-    parent::sendHeaders($noCache);
-		header('Content-Disposition: ' . ($this->download? ('attachment' . (is_string($this->download)? '; filename="' . basename($this->download) . '"': '')): 'inline'));
-		header('Content-Length: ' . strlen($this->_content));
+    	if(parent::sendHeaders($noCache)) {
+			header('Content-Disposition: ' . ($this->download? ('attachment' . (is_string($this->download)? '; filename="' . basename($this->download) . '"': '')): 'inline'));
+			header('Content-Length: ' . strlen($this->_content));
+			return true;
+		}
+		return false;
 	}
 
 	public function executeResult() {
-  	parent::sendHeaders(true);
-		echo($this->_content);
+		if($this->sendHeaders())
+			echo($this->_content);
 		return true;
 	}
 

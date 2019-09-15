@@ -16,8 +16,9 @@ class Json extends StringAbstract {
 	}
 		
 	public function getResult(&$noCache) {
-    $noCache = true;
-		return json_encode($this->data);
+		$result = json_encode($this->data);
+    	$noCache = md5($result);
+		return $result;
 	}
       
 }
