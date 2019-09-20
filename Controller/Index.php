@@ -14,6 +14,7 @@ use function http_response_code;
 use function is_callable;
 use function get_class;
 use function is_string;
+use function header;
 
 require_once 'Kansas/Controller/AbstractController.php';
 
@@ -97,10 +98,21 @@ class Index	extends AbstractController {
 			if(isset($vars['code'])) {
 				$code = $vars['code'];
 				unset($vars['code']);
+				switch ($code) {
+					case 401: // Unauthorized
+					if(isset($vars['scheme'])) {
+						header('WWW-Authenticate: ' . $vars['scheme']);
+						unset($vars['scheme']);
+					}
+					break;
+				}
 			} else
 				$code = 500;
-			http_response_code($code);
+		} elseif(isset($vars['code'])) {
+			$code = $vars['code'];
+			unset($vars['code']);
 		}
+		http_response_code($code);
 		unset($vars['uri']);
 		unset($vars['url']);
 		unset($vars['router']);
