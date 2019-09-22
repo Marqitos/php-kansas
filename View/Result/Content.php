@@ -12,7 +12,7 @@ require_once 'Kansas/View/Result/ViewResultAbstract.php';
 
 class Content extends ViewResultAbstract {
 		
-  protected $download = false;
+	protected $download = false;
 	private $_content;
 
 	public function __construct($content, $mimeType) {

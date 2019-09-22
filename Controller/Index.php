@@ -111,7 +111,8 @@ class Index	extends AbstractController {
 		} elseif(isset($vars['code'])) {
 			$code = $vars['code'];
 			unset($vars['code']);
-		}
+		} else 
+			$code = 200;
 		http_response_code($code);
 		unset($vars['uri']);
 		unset($vars['url']);

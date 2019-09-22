@@ -133,14 +133,16 @@ class Application extends Configurable {
         if(!is_array($options)) $options = [];
 
         if(is_array($this->plugins)) {
-            if(isset($this->plugins[$moduleName]))
-                $this->plugins[$moduleName]->setOptions($options);
-            else {
+            if(isset($this->plugins[$pluginName])) {
+				$this->plugins[$pluginName]->setOptions($options);
+				return $this->plugins[$pluginName];
+			} else {
                 $this->options['plugin'][$pluginName] = $options;
-                $this->loadPlugin($pluginName, $options);
+                return $this->loadPlugin($pluginName, $options);
             }
         } else
 			$this->options['plugin'][$pluginName] = $options;
+		return false;
     }
 
     public function hasPlugin($pluginName) { // Obtiene el modulo seleccionado si está cargado o false en caso contrario
