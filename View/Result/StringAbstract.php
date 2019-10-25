@@ -11,10 +11,10 @@ abstract class StringAbstract extends ViewResultAbstract implements StringInterf
    * @see Kansas_View_Result_Interface::executeResult()
 	 */
 	public function executeResult() {
-    $cache = false;
-    $result = $this->getResult($cache);
-    if(parent::sendHeaders($cache))
-      echo $result;
+		$cache = false;
+		$result = $this->getResult($cache);
+		if(parent::sendHeaders($cache))
+			echo $result;
 		return true;
 	}
 	

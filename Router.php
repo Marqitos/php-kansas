@@ -4,7 +4,6 @@ namespace Kansas;
 
 use System\Configurable;
 use Kansas\Router\RouterInterface;
-use System\String;
 
 use function array_merge;
 use function trim;

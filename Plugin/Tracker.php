@@ -166,8 +166,11 @@ class Tracker extends Configurable implements PluginInterface {
         require_once 'Kansas/Request/getUserAgentData.php';
         require_once 'Kansas/Request/getRemoteAddressData.php';
         $useThis = ($trail == null);
-        if($useThis)
+        if($useThis) {
+            if(!isset($this->trail))
+                $this->initialize();
             $trail = $this->trail;
+        }
         
         $userAgent = getUserAgentData($trail['userAgent']);
         $remote = getRemoteAddressData($trail['remoteAddress'], $this->options['remote_plugin']);

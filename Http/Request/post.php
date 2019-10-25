@@ -21,7 +21,7 @@ use function stream_context_create;
  * @return string resultado de la petición
  */
 function post($uri, array $post) {
-    $data = []
+    $data = [];
     foreach ($post as $key => $value) { // Codifica los valores
         $post[$key] = urlencode($value);
     }
