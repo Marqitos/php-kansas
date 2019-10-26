@@ -26,6 +26,12 @@ abstract class ViewResultAbstract implements ViewResultInterface {
 		$this->_mimeType = $value;
 	}
   
+  /**
+   * Envía las cabecera http
+   *
+   * @param mixed $cache false: No se usará cache. int: cache basado en tiempo, string: cache basado en Etag
+   * @return bool true: hay que mandar el contenido, false: el cliente tiene el contenido en cache
+   */
 	protected function sendHeaders($cache = false) {
  		header('Content-Type: ' . $this->getMimeType());
     if($cache) {
@@ -37,7 +43,7 @@ abstract class ViewResultAbstract implements ViewResultInterface {
           header("HTTP/1.1 304 Not Modified");
           return false;
         } else
-          header('Etag: ' . $cache);
+          header('Etag: "' . $cache . '"');
       }
     } else
       header ("cache-control: no-store");

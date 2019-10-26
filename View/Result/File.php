@@ -20,7 +20,11 @@ class File extends FileAbstract {
   public function __construct($filename, array $options = []) {
     $this->_filename	= realpath($filename);
     $this->_retbytes	= isset($options['retbytes']) ? $options['retbytes'] : true;
+<<<<<<< HEAD
     $this->download     = isset($options['download']) ? $options['download'] : false;
+=======
+    $this->download   = isset($options['download']) ? $options['download'] : false;
+>>>>>>> origin/master
     $this->_chunksize	= 1*(1024*1024);
   }
   
