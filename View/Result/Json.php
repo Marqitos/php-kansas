@@ -1,35 +1,19 @@
 <?php
 namespace Kansas\View\Result;
 
-<<<<<<< HEAD
-use Kansas\View\Result\StringAbstract;
-use function json_encode;
-
-require_once('Kansas/View/Result/StringAbstract.php');
-=======
 use Kansas\Environment;
 use Kansas\View\Result\StringAbstract;
 use function json_encode;
 use function md5;
 
 require_once 'Kansas/View/Result/StringAbstract.php';
->>>>>>> origin/master
 
 class Json extends StringAbstract {
 		
 	private $data;
 	
 	public function __construct($data) {
-<<<<<<< HEAD
-    parent::__construct('application/json; charset: UTF-8');    
-		$this->data = $data;
-	}
-		
-	public function getResult(&$noCache) {
-    $noCache = true;
-		return json_encode($this->data);
-=======
-    parent::__construct('application/json');    
+		parent::__construct('application/json');    
 		$this->data = $data;
 	}
 		
@@ -41,7 +25,6 @@ class Json extends StringAbstract {
 			: json_encode($this->data);
     	$cache = md5($result);
 		return $result;
->>>>>>> origin/master
 	}
       
 }

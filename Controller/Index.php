@@ -14,10 +14,7 @@ use function http_response_code;
 use function is_callable;
 use function get_class;
 use function is_string;
-<<<<<<< HEAD
-=======
 use function header;
->>>>>>> origin/master
 
 require_once 'Kansas/Controller/AbstractController.php';
 
@@ -78,11 +75,6 @@ class Index	extends AbstractController {
 		} else
 			return $cssResult;
 	}
-<<<<<<< HEAD
-
-	
-=======
->>>>>>> origin/master
 	
 	public function file(array $vars) {
 		require_once 'Kansas/View/Result/File.php';
@@ -106,12 +98,6 @@ class Index	extends AbstractController {
 			if(isset($vars['code'])) {
 				$code = $vars['code'];
 				unset($vars['code']);
-<<<<<<< HEAD
-			} else
-				$code = 500;
-			http_response_code($code);
-		}
-=======
 				switch ($code) {
 					case 401: // Unauthorized
 					if(isset($vars['scheme'])) {
@@ -128,7 +114,6 @@ class Index	extends AbstractController {
 		} else 
 			$code = 200;
 		http_response_code($code);
->>>>>>> origin/master
 		unset($vars['uri']);
 		unset($vars['url']);
 		unset($vars['router']);

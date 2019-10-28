@@ -3,12 +3,8 @@ namespace Kansas\Auth\Session;
 
 use Kansas\Auth\Session\SessionInterface;
 use System\Guid;
-
-<<<<<<< HEAD
-=======
 use function System\String\startWith;
 
->>>>>>> origin/master
 require_once 'Kansas/Auth/Session/SessionInterface.php';
 
 class Token implements SessionInterface {
@@ -71,20 +67,6 @@ class Token implements SessionInterface {
     public function initialize($cookie = false, $lifetime = 0, $domain = null) {
         if($this->initialized)
             return;
-<<<<<<< HEAD
-        global $application;
-        // Obtener sessión de headers
-
-        
-
-        if (isset($_COOKIE['token'])) { // Obtener sessión de cookies
-            global $application;
-            $tokenPlugin = $application->getPlugin('token');
-            $this->token = $tokenPlugin->parse($_COOKIE['token']);
-            if($this->token && $this->token->hasClaim('sub')) { // Obtener usuario
-                require_once 'System/Guid.php';
-                $userId = new Guid($this->token->getClaim('sub'));
-=======
         global $application, $environment;
         $request = $environment->getRequest();
         if($request->hasHeader('Authorization')) { // Obtener sessión de headers
@@ -105,7 +87,6 @@ class Token implements SessionInterface {
                 $userId;
                 if(!Guid::tryParse($this->token->getClaim('sub'), $userGuid))
                     $userId = $this->token->getClaim('sub');
->>>>>>> origin/master
                 $usersProvider = $application->getProvider('users');
                 $user = $usersProvider->getById($userId);
                 if($user && $user['isEnabled'])
@@ -115,12 +96,7 @@ class Token implements SessionInterface {
                 $this->token->hasClaim('iat') && 
                 $this->token->hasClaim('exp')) { // Renovar cookie si es necesario
                 
-<<<<<<< HEAD
-                var_dump($this->token, time());
-=======
                 //var_dump($this->token, time());
->>>>>>> origin/master
-
             }
             $this->initialized = true;
        }

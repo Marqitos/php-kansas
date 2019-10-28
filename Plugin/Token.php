@@ -158,14 +158,11 @@ class Token extends Configurable implements PluginInterface {
         global $application, $environment;
         require_once 'System/Guid.php';
         require_once 'Lcobucci/JWT/Builder.php';
-<<<<<<< HEAD
-=======
         $data = array_merge([
             'iss'   => $_SERVER['SERVER_NAME'],
             'iat'   => time(),
             'exp'   => time() + $this->options['exp']
         ], $data);
->>>>>>> origin/master
         $builder = new Builder();
         foreach($data as $claim => $value)
             $builder->set($claim, $value);

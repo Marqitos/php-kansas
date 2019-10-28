@@ -4,11 +4,6 @@ namespace Kansas;
 
 use System\Configurable;
 use Kansas\Router\RouterInterface;
-<<<<<<< HEAD
-use System\String;
-=======
->>>>>>> origin/master
-
 use function array_merge;
 use function trim;
 use function substr;
