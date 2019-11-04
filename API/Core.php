@@ -46,6 +46,5 @@ function APICore($path, $method) {
         if(strlen($path) > 5)
             $params['path'] = trim(substr($path, 6), './ ');
     }
-    var_dump($path);
     return false;
 }

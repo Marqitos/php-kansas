@@ -33,7 +33,6 @@ class Membership extends AbstractDb {
 	 * @return Array Datos del usuario
 	 */
 	public function validate($email, $password) {
-
 		require_once 'Kansas/Auth/AuthException.php';
 		$statement = $this->db->query(
 			'SELECT HEX(USR.Id) as id, MBS.password, USR.name, USR.email, USR.isApproved, USR.isEnabled, USR.comment, MBS.isLockedOut FROM `users` AS USR INNER JOIN `membership` AS MBS ON USR.Id = MBS.Id WHERE USR.Email = ?;'
@@ -41,7 +40,6 @@ class Membership extends AbstractDb {
 		try {
 			$rows = $statement->execute([strtolower($email)]);
 			$row = $rows->current();
-//			$row = $this->db->fetchRow($sql, [strtolower($email)]);
 			if($row == null) { // No existe ningun usuario con ese email
 				throw new AuthException(AuthException::FAILURE_CREDENTIAL_INVALID);
 			} else {

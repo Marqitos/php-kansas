@@ -27,7 +27,7 @@ class Admin extends AbstractZone implements RouterInterface {
 		global $application;
 	}
   
-  /// Miembros de Kansas_Module_Interface
+  /// Miembros de PluginInterface
   public function getDefaultOptions($environment) {
     switch ($environment) {
       case 'production':

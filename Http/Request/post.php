@@ -21,31 +21,28 @@ use function stream_context_create;
  * @return string resultado de la petición
  */
 function post($uri, array $post) {
-    $data = [];
-    foreach ($post as $key => $value) { // Codifica los valores
-        $post[$key] = urlencode($value);
-    }
-    $legth = count($data);
-    $postData = http_build_query($data); // Crea la cadena de valores
+    $postData = http_build_query($post); // Crea la cadena de valores
     if(function_exists('curl_init')) { // realiza la peticion mediante curl
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_URL => $uri,
-            CURLOPT_POST => $legth,
+            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $postData
         ]);
         $result = curl_exec($curl);
         curl_close($curl);
-    } else { // realiza la petición mediante un contexto http/post
-        $opts = [
-            'http'=> [
-                'method'  => 'POST',
-                'header'  => 'Content-type: application/x-www-form-urlencoded',
-                'content' => $postData
-        ]];
-        $context = stream_context_create($opts);
-        $result = file_get_contents($uri, false, $context);
+        if($result !== false)
+            return $result;
     }
-    return $result;
+    // realiza la petición mediante un contexto http/post
+    $opts = [
+        'http'=> [
+            'method'  => 'POST',
+            'header'  => "Content-Type: application/x-www-form-urlencoded\r\n" .
+                         "Content-Length: " . strlen($postData) . "\r\n",
+            'content' => $postData
+    ]];
+    $context = stream_context_create($opts);
+    return file_get_contents($uri, false, $context);
 }
