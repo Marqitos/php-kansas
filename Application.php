@@ -15,7 +15,7 @@ use Kansas\PluginLoader;
 use Kansas\Router\RouterInterface;
 use Kansas\View\Smarty;
 use Kansas\View\Result\ViewResultInterface;
-use Zend\Db\Adapter\Adapter as DbAdapter;
+use Kansas\Db\Adapter as DbAdapter;
 
 use function array_merge;
 use function is_string;
@@ -60,8 +60,8 @@ class Application extends Configurable {
 		parent::__construct($options);
 	}
 
-	/// Miembros de System_Configurable_Interface
-	public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+	public function getDefaultOptions($environment) : array {
 		switch ($environment) {
 		case 'production':
 		case 'development':
@@ -304,7 +304,8 @@ class Application extends Configurable {
 	}
 
 	public function getDb() {
-		require_once 'Zend/Db/Adapter/Adapter.php';
+		require_once 'Kansas/Db/Adapter.php';
+//		require_once 'Zend/Db/Adapter/Adapter.php';
 		if($this->db == NULL) {
 			if($this->options['db'] instanceof DbAdapter)
 				$this->db = $this->options['db'];
@@ -324,12 +325,17 @@ class Application extends Configurable {
 	
 	public function getView() {
 		global $environment;
-		require_once 'Kansas/View/Smarty.php';
+
+
 		if($this->_view == null) {
-		$this->_view = new Smarty($this->options['view']);
-		if($this->_view->getCaching())
-			$this->_view->setCacheId($environment->getRequest()->getUri());
-		$this->raiseCreateView($this->_view);
+			//require_once 'Kansas/View/Smarty.php';
+			//$this->_view = new Smarty($this->options['view']);
+			$viewClass = $this->options['view']['class'];
+			unset($this->options['view']['class']);
+			$this->_view = new $viewClass($this->options['view']);
+			if($this->_view->getCaching())
+				$this->_view->setCacheId($environment->getRequest()->getUri());
+			$this->raiseCreateView($this->_view);
 		}
 		return $this->_view;
 	}
