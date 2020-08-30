@@ -44,8 +44,8 @@ class Autoloader extends Configurable implements SplInterface {
         parent::__construct($options);
     }
 
-    /// Miembros de System\Configurable
-    public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions($environment) : array {
         return [
             self::LOAD_NS         => [],
             self::LOAD_PREFIX     => [],
@@ -62,7 +62,7 @@ class Autoloader extends Configurable implements SplInterface {
      * @throws Exception\InvalidArgumentException
      * @return StandardAutoloader
      */
-    public function setOption($key, $value) {
+    public function setOption($key, $value) : void {
         switch ($key) {
             case self::LOAD_NS:
                 if (is_array($value) || $pairs instanceof \Traversable) {
@@ -75,10 +75,9 @@ class Autoloader extends Configurable implements SplInterface {
                 }
                 break;
             default:
-            parent::setOption($key, $value);
-            break;
+                parent::setOption($key, $value);
+                break;
         }
-        return $this;
     }
 
     /**

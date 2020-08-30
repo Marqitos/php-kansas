@@ -23,8 +23,8 @@ class Token extends Router {
         $this->plugin = $plugin;
     }
 
-    /// Miembros de Kansas\Configurable
-    public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions($environment) : array {
         switch ($environment) {
             case 'production':
             case 'development':

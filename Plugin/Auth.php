@@ -49,8 +49,8 @@ class Auth extends Configurable implements PluginInterface {
 		$application->registerCallback('route',   [$this, "appRoute"]);
 	}
   
-  /// Miembros de Kansas_Module_Interface
-  public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+  public function getDefaultOptions($environment) : array {
     switch ($environment) {
     case 'production':
     case 'development':
@@ -183,7 +183,7 @@ class Auth extends Configurable implements PluginInterface {
           'action'        => 'adminCreateUser'
         ];
     }
-    if(substr($path, 0, 11) == 'delete-user') {
+    if(strpos($path, 'delete-user') == 0) {
       return [
         'controller'    => 'account',
         'action'        => 'adminDeleteUser',

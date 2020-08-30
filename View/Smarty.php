@@ -19,9 +19,10 @@ class Smarty extends Configurable implements ViewInterface {
 	private $_configDir;
 	private $_cacheDir;
   
-	private $_cacheId = null;
-  /// Miembros de ConfigurableInterface
-  public function getDefaultOptions($environmentStatus) {
+  private $_cacheId = null;
+  
+	// Miembros de System\Configurable\ConfigurableInterface
+  public function getDefaultOptions($environmentStatus) : array {
     global $environment;
     switch ($environmentStatus) {
       case 'production':

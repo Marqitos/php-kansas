@@ -14,11 +14,12 @@ require_once 'Kansas/Router/RouterInterface.php';
 
 abstract class Router extends Configurable implements RouterInterface {
 	
-	protected function getParams(array $params) {
+	protected function getParams(array $params) : array {
 		return array_merge($this->options['params'], $params);
 	}
-  
-	public function getDefaultOptions($environment) {
+	
+	// Miembros de System\Configurable\ConfigurableInterface
+	public function getDefaultOptions($environment) : array {
 		return [
 			'base_path'	=> '',
   			'params'	=> []

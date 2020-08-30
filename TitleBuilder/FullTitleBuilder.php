@@ -16,8 +16,8 @@ class FullTitleBuilder extends DefaultTitleBuilder {
 			: $this->options['full_title'];
 	}
 	
-	/// Miembros de System_Configurable_Interface
-	public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+	public function getDefaultOptions($environment) : array {
 		return array_merge(parent::getDefaultOptions($environment), ['full_title' => '']);
 	}
 	

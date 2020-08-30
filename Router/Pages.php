@@ -7,8 +7,8 @@ require_once 'Kansas/Router.php';
 
 class Pages extends Router {
 
-	/// Miembros de System_Configurable_Interface
-    public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions($environment) : array {
         return [
             'pages' => [],
             'params' => [],

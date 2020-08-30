@@ -19,8 +19,8 @@ class Zones extends Configurable implements PluginInterface {
 	private $zones = [];
 	private $zone;
 
-	/// Miembros de Kansas\PluginInterface
-	public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+	public function getDefaultOptions($environment) : array {
 		switch ($environment) {
 		case 'production':
 		case 'development':

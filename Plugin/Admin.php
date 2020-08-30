@@ -27,8 +27,8 @@ class Admin extends AbstractZone implements RouterInterface {
 		global $application;
 	}
   
-  /// Miembros de PluginInterface
-  public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+  public function getDefaultOptions($environment) : array {
     switch ($environment) {
       case 'production':
       case 'development':
