@@ -29,8 +29,8 @@ class Token extends Configurable implements PluginInterface {
         $application->registerCallback('preinit', [$this, 'appPreInit']);
     }
 
-    /// Miembros de Kansas\Configurable
-    public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions($environment) : array {
         switch ($environment) {
             case 'production':
             case 'development':
@@ -106,6 +106,8 @@ class Token extends Configurable implements PluginInterface {
             unset($data['user']);
         }
         $data = array_merge($tokenData, $data);
+        if(isset($data['exp']) && $data['exp'] = false)
+            unset($data['exp']);
         $token = $this->createToken($data);
         $id = new Guid($token->getClaim('jti'));
 
