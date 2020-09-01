@@ -14,14 +14,18 @@ use function Kansas\Http\normalizeUploadedFiles;
 use function Kansas\Http\parseCookieHeader;
 
 function currentServerRequest(array $server = null, array $query = null, array $body = null, array $cookies = null, array $files = null, $apacheRequestHeaders = null) {
+    require_once 'Kansas/Http/marshalHeadersFromSapi.php';
+    require_once 'Kansas/Http/marshalMethodFromSapi.php';
+    require_once 'Kansas/Http/marshalProtocolVersionFromSapi.php';
+    require_once 'Kansas/Http/marshalUriFromSapi.php';
     require_once 'Kansas/Http/normalizeServer.php';
+    require_once 'Kansas/Http/normalizeUploadedFiles.php';
+
     $server = normalizeServer(
       $server ?: $_SERVER,
       is_callable($apacheRequestHeaders) ? $apacheRequestHeaders : null
     );
-    require_once 'Kansas/Http/normalizeUploadedFiles.php';
     $files   = normalizeUploadedFiles($files ?: $_FILES);
-    require_once 'Kansas/Http/marshalHeadersFromSapi.php';
     $headers = marshalHeadersFromSapi($server);
 
     if (null === $cookies && array_key_exists('cookie', $headers)) {
@@ -29,9 +33,6 @@ function currentServerRequest(array $server = null, array $query = null, array $
       $cookies = parseCookieHeader($headers['cookie']);
     }
 
-    require_once 'Kansas/Http/marshalUriFromSapi.php';
-    require_once 'Kansas/Http/marshalMethodFromSapi.php';
-    require_once 'Kansas/Http/marshalProtocolVersionFromSapi.php';
 
     return new ServerRequest(
         $server,
