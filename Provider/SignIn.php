@@ -16,6 +16,7 @@ class SignIn extends AbstractDb {
 	}
 	
 	public function registerSignIn(array $user, $remoteAddress, $userAgent, $session) {
+		//var_dump($user, $remoteAddress, $userAgent, $session);
 		$statement = $this->db->query( // Guarda una copia en la base de datos
 			'INSERT INTO `SignInAttempts` '
 			. '(`remoteAddress`, `userAgent`, `time`, `status`, `user`, `session`) '

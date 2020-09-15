@@ -5,6 +5,8 @@ namespace Kansas\Plugin;
 use Exception;
 use System\Configurable;
 use System\NotSuportedException;
+use Kansas\Environment;
+use Kansas\View\Template;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 
@@ -40,7 +42,9 @@ class Phpmail extends Configurable implements PluginInterface {
                 'port'      => 587,
                 'auth'      => true,
                 'username'  => 'reprogalicia@reprogalicia.com',
-                'password'  => 'g2R7&y4v'
+                'password'  => 'g2R7&y4v',
+                'fromEmail' => 'reprogalicia@reprogalicia.com',
+                'fromName'  => 'Reprogalicia'
             ]
         ];
         default:
@@ -64,7 +68,29 @@ class Phpmail extends Configurable implements PluginInterface {
         $mail->SMTPAuth     = $this->options['smtp']['auth'];
         $mail->Username     = $this->options['smtp']['username'];
         $mail->Password     = $this->options['smtp']['password'];
+        $mail->setFrom(
+            $this->options['smtp']['fromEmail'],
+            $this->options['smtp']['fromName']);
         return $mail;
     }
+
+    public function serverSend($to, $subject, $htmlTemplate, $textTemplate, array $templateData) {
+        require_once 'Kansas/View/Template.php';
+        global $environment;
+        $template = new Template($environment->getSpecialFolder(Environment::SF_LAYOUT) . $htmlTemplate, $templateData);
+        $htmlMessage = $template->fetch();
+        $template = new Template($environment->getSpecialFolder(Environment::SF_LAYOUT) . $textTemplate, $templateData);
+        $txtMessage = $template->fetch();
+
+        $mail = $this->getSMTP();
+        //$mail->addAddress('informatica@reprogalicia.com', 'Marcos Porto');
+        $mail->addAddress($to);
+        $mail->Subject = $subject;
+        $mail->msgHTML($htmlMessage);
+        $mail->AltBody = $txtMessage;
+
+        //send the message, check for errors
+        return $mail->send();
+    }    
   
 }

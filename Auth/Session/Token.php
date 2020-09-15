@@ -3,11 +3,13 @@ namespace Kansas\Auth\Session;
 
 use Kansas\Auth\Session\SessionInterface;
 use System\Guid;
+
 use function System\String\startWith;
+use function intval;
 
 require_once 'Kansas/Auth/Session/SessionInterface.php';
 
-class Token implements SessionInterface {
+abstract class Token implements SessionInterface {
 
     private $initialized = false;
     private $token = false;
@@ -25,7 +27,6 @@ class Token implements SessionInterface {
     }
 
     public function setIdentity(array $user, $lifetime = 0, $domain = null) {
-        require_once 'System/Guid.php';
         global $application, $environment;
         $this->user = $user;
         $tokenPlugin = $application->getPlugin('token'); // crear token
@@ -83,10 +84,8 @@ class Token implements SessionInterface {
             $tokenPlugin = $application->getPlugin('token');
             $this->token = $tokenPlugin->parse($tokenString);
             if($this->token && $this->token->hasClaim('sub')) { // Obtener usuario
-                require_once 'System/Guid.php';
                 $userId;
-                if(!Guid::tryParse($this->token->getClaim('sub'), $userGuid))
-                    $userId = $this->token->getClaim('sub');
+                $this->tryParseUser($this->token->getClaim('sub'), $userId);
                 $usersProvider = $application->getProvider('users');
                 $user = $usersProvider->getById($userId);
                 if($user && $user['isEnabled'])
@@ -100,6 +99,26 @@ class Token implements SessionInterface {
             }
             $this->initialized = true;
        }
+    }
+
+    protected abstract function tryParseUser($value, &$userId);
+
+    public static function tryParseGuidUser($value, &$userId) {
+        require_once 'System/Guid.php';
+        if(!Guid::tryParse($value, $userId)) {
+            $userId = $value;
+            return false;
+        }
+        return true;
+    }
+
+    public static function tryParseIntUser($value, &$userId) {
+        $userId = intval($value);
+        if($userId == 0) {
+            $userId = $value;
+            return false;
+        }
+        return true;
     }
 
     public function getId() {

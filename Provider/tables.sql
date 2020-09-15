@@ -49,7 +49,7 @@ CREATE TABLE `Tokens` (
   `header` blob NOT NULL,
   `payload` blob NOT NULL,
   `signature` blob NULL,
-  `exp` INT(11),
+  `exp` INT(11) NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Javascript web tokens';
 
