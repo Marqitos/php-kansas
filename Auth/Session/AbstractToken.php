@@ -1,19 +1,43 @@
 <?php
 namespace Kansas\Auth\Session;
 
-use Kansas\Auth\Session\SessionInterface;
+use System\Configurable;
 use System\Guid;
+use Kansas\Auth\Session\SessionInterface;
 
-use function System\String\startWith;
 use function intval;
+use function System\String\startWith;
 
+require_once 'System/Configurable.php';
 require_once 'Kansas/Auth/Session/SessionInterface.php';
 
-abstract class Token implements SessionInterface {
+abstract class AbstractToken extends Configurable implements SessionInterface {
 
     private $initialized = false;
     private $token = false;
     private $user = false;
+
+    // Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions($environment) : array {
+        switch ($environment) {
+            case 'production':
+            case 'development':
+            case 'test':
+                return [
+                    'lifetime'  => 0,
+                    'domain'    => ''
+                ];
+            default:
+                require_once 'System/NotSuportedException.php';
+                throw new NotSuportedException("Entorno no soportado [$environment]");
+        }
+    }
+
+    public function getVersion() {
+        global $environment;
+        return $environment->getVersion();
+    }	
+    
 
     /// Miembros de SessionInterface
     /**
@@ -26,9 +50,15 @@ abstract class Token implements SessionInterface {
         return $this->user;
     }
 
-    public function setIdentity(array $user, $lifetime = 0, $domain = null) {
+    public function setIdentity(array $user, $lifetime = null, $domain = null) {
         global $application, $environment;
         $this->user = $user;
+        if($lifetime == null) {
+            $lifetime = $this->options['lifetime'];
+        }
+        if($domain == null) {
+            $domain = $this->options['domain'];
+        }
         $tokenPlugin = $application->getPlugin('token'); // crear token
         $data = [
             'iss'   => $_SERVER['SERVER_NAME'],
@@ -65,7 +95,7 @@ abstract class Token implements SessionInterface {
         return $this->token;
     }
     
-    public function initialize($cookie = false, $lifetime = 0, $domain = null) {
+    public function initialize($cookie = false, $lifetime = null, $domain = null) {
         if($this->initialized)
             return;
         global $application, $environment;
@@ -81,10 +111,16 @@ abstract class Token implements SessionInterface {
             $tokenString = $_COOKIE['token'];
         }
         if(isset($tokenString)) {
+            if($lifetime == null) {
+                $lifetime = $this->options['lifetime'];
+            }
+            if($domain == null) {
+                $domain = $this->options['domain'];
+            }
             $tokenPlugin = $application->getPlugin('token');
             $this->token = $tokenPlugin->parse($tokenString);
             if($this->token && $this->token->hasClaim('sub')) { // Obtener usuario
-                $userId;
+                $userId = false;
                 $this->tryParseUser($this->token->getClaim('sub'), $userId);
                 $usersProvider = $application->getProvider('users');
                 $user = $usersProvider->getById($userId);
@@ -92,10 +128,21 @@ abstract class Token implements SessionInterface {
                     $this->user = $user;
             }
             if( $this->token && 
-                $this->token->hasClaim('iat') && 
-                $this->token->hasClaim('exp')) { // Renovar cookie si es necesario
-                
-                //var_dump($this->token, time());
+                $this->token->hasClaim('exp') &&
+                $lifetime > 0) { // Renovar cookie si es necesario
+                $updateTime = intval($this->token->getClaim('exp')) - ($lifetime / 2);
+                if($updateTime > time()) {
+                    $lifetime += time();
+                    $this->token->setClaim('exp', $lifetime);
+                    $tokenPlugin = $application->getPlugin('token'); // crear token
+                    $this->token = $tokenPlugin->updateToken($this->token);
+                    setcookie( // Establecer cookie
+                        'token',
+                        (string) $this->token,
+                        $lifetime,
+                        '/',
+                        $domain);
+                }
             }
             $this->initialized = true;
        }
