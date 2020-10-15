@@ -46,7 +46,7 @@ class Kansas_Router_Messages
 				break;
 			default:
 				global $application;
-				if($application->hasModule('users') && $user = $application->getModule('users')->getIdentity() && $id = System_Guid::tryParse($path)) {
+				if($application->hasPlugin('users') && $user = $application->getPlugin('users')->getIdentity() && $id = System_Guid::tryParse($path)) {
 					$thread = $application->getProvider('messages')->getThreadById($id, $user->getId());
 					if($thread != null) {
 						$params = [

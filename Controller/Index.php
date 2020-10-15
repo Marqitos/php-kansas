@@ -60,7 +60,7 @@ class Index	extends AbstractController {
 		global $application;
 		$files = $vars['files'];
 		$cssResult = new Kansas_View_Result_Css($files);
-		$backendCache = $application->getModule('BackendCache');
+		$backendCache = $application->hasPlugin('BackendCache');
 		if($backendCache) {
 			$cacheId = $cssResult->getCacheId();
 			if($backendCache->test($cacheId)) {
@@ -114,6 +114,10 @@ class Index	extends AbstractController {
 		} else 
 			$code = 200;
 		http_response_code($code);
+		if(isset($vars['identity']) && isset($vars['identity']['id'])) {
+			$identityId = $vars['identity']['id'];
+			$vars['identity'] = $identityId;
+		}
 		unset($vars['uri']);
 		unset($vars['url']);
 		unset($vars['router']);

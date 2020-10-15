@@ -11,8 +11,8 @@ class API extends Router {
 
 	private $callbacks = [];
 
-	/// Miembros de System_Configurable_Interface
-	public function getDefaultOptions($environment) {
+	// Miembros de System\Configurable\ConfigurableInterface
+	public function getDefaultOptions($environment) : array {
 		switch ($environment) {
 			case 'production':
 			case 'development':

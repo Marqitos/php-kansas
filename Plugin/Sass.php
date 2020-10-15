@@ -61,8 +61,8 @@ class Kansas_Module_Sass
 	
 	public function toCss($file) {
 		global $application;
-		if($application->hasModule('BackendCache') && $this->getOptions('cache')) {
-			$cache = $application->getModule('BackendCache');
+		if($application->hasPlugin('BackendCache') && $this->getOptions('cache')) {
+			$cache = $application->getPlugin('BackendCache');
 			$parser = $this->getParser();
 			$file = SassFile::get_file($file, $parser);
 			$md5 = md5_file($file[0]);

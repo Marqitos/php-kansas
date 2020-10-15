@@ -220,7 +220,7 @@ class Auth extends AbstractController {
   public function adminRoles(array $vars = []) {
     global $application;
     if($vars['requestType'] == 'smarty') {
-      $auth = $application->getModule('auth');
+      $auth = $application->getPlugin('auth');
       $data = [];
       $data['roles'] = $auth->getRolesByScope();
 
@@ -284,7 +284,7 @@ class Auth extends AbstractController {
           'createResult'  => $createResult,
           'userId'        => $user['id']
         ]));
-      } elseif($cache = $application->getModule('BackendCache')) { // Guardar datos en cache y volver a editar
+      } elseif($cache = $application->hasPlugin('BackendCache')) { // Guardar datos en cache y volver a editar
         $id;
         if(count($user['roles']) == 0)
           unset($user['roles']);

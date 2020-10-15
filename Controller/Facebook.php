@@ -19,7 +19,7 @@ class Kansas_Controller_Facebook
 					$router->assemble(['action' => 'signin']) . http_build_query([
 						'fb-error' => $this->getParam('error'),
 						'ru' => $ru]));
-			$auth = $application->getModule('Auth');
+			$auth = $application->getPlugin('Auth');
 			$authAdapter	= $auth->createAuthMembership('facebook', [$fbSession]);
 			$result = $auth->authenticate($authAdapter);
 			if($result->isValid())

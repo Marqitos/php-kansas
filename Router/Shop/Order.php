@@ -67,7 +67,7 @@ class Kansas_Router_Shop_Order
 	public function getOrders() {
 		if($this->_orders == null) {
 			global $application;
-			$auth = $application->getModule('Auth');
+			$auth = $application->getPlugin('Auth');
 			$this->_orders = $auth->hasIdentity()?
 				$application->getProvider('shop')->getOrdersByUser($auth->getIdentity()):
 				new Kansas_Core_GuidItem_Collection();

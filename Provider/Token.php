@@ -175,7 +175,6 @@ class Token	extends AbstractDb {
 		$sql = 'SELECT HEX(USR.id) as id, USR.name, USR.email, USR.isApproved, USR.isLockedOut, USR.lastLockOutDate, USR.comment, TKS.id, TKS.device as device AS `Token` FROM `Users` AS USR INNER JOIN `DeviceTokens` AS TKS ON USR.Id = TKS.Id WHERE TKS.Id = ?;';
 		$params = [$token];
 		$result = $this->db->fetchOne($sql, $params);
-		var_dump($result);
 		exit;
 		if($row == null)
 			return false;

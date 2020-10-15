@@ -10,7 +10,7 @@ class Kansas_Track_Session
 		global $application;
 		$this->_device = new Kansas_Track_Device();
 		$this->row['sessionId'] = Zend_Session::getId();
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		if($auth->hasIdentity())
 			$this->_user = $auth->getIdentity();
 	}
@@ -20,10 +20,11 @@ class Kansas_Track_Session
 	}
 	
 	public function save() {
+		global $application;
 		$this->createId();
 		$this->_device->createId();
 		$this->__sleep();
-		Kansas_Application::getInstance()->getProvider('session')->saveSession($this->row);
+		$application->getProvider('session')->saveSession($this->row);
 		$this->_device->save();
 	}
 	

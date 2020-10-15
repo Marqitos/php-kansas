@@ -47,7 +47,7 @@ class CacheRouter extends Configurable implements PluginInterface {
     public function getCache() {
         if(!isset($this->cache)) {
             global $application;
-            $cacheModule = $application->getModule('BackendCache');
+            $cacheModule = $application->getPlugin('BackendCache');
             $this->cache = $cacheModule->getCache(
                 $this->options['cache_category'], 
                 $this->options['cache_type'], 
@@ -72,7 +72,7 @@ class CacheRouter extends Configurable implements PluginInterface {
       
     public static function getCacheId(Kansas_Request $request) {
         global $application;
-        $roles = $application->getModule('auth')->getCurrentRoles();
+        $roles = $application->getPlugin('Auth')->getCurrentRoles();
         $permsId = md5(serialize($roles));
         var_dump($permsId);
         return urlencode($permsId . '|' . $request->getUriString());

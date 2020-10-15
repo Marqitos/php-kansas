@@ -1,23 +1,29 @@
 <?php
 
-class Kansas_Controller_API
-	extends Kansas_Controller_Abstract {
+namespace Kansas\Controller;
+
+use Kansas\Controller\AbstractController;
+use System\Net\WebException;
+
+require_once 'Kansas/Controller/AbstractController.php';
+
+class API extends AbstractController {
 	
 	public function init(array $params) {
 		parent::init($params);
 		// Cargar autenticación
 		global $application;
-		$application->setModule('Digest', []);
-		$auth			= $application->getModule('Auth');
-		$authAdapter 	= $auth->createAuthMembership('digest', ['API']);
-		$authResult		= $auth->authenticate($authAdapter);
+		$digestPlugin 	= $application->getPlugin('Digest');
+		$authResult		= $digestPlugin->authenticate('API');
+
 		if(!$authResult->isValid()) {
 			try {
-				$result = $application->createErrorResult(new System_Net_WebException(403));
+				require_once 'System/Net/WebException.php';
+				$result = $application->createErrorResult(new WebException(403));
 			} catch(Exception $e) {
 				$result = new Kansas_View_Result_String('Acceso no autorizado');
 			}
-			$authAdapter->requireLogin($result);
+			$digestPlugin->requireLogin($result);
 		}
 	}
 	
@@ -31,8 +37,9 @@ class Kansas_Controller_API
 	
 	public function files() { // Devuelve los archivos
 		$path = realpath(BASE_PATH) . DIRECTORY_SEPARATOR . $this->getParam('path', '');
-		$result = file_exists($path)	? $this->getDir($path)
-																	: null;
+		$result = file_exists($path)
+			? $this->getDir($path)
+			: null;
 		return new Kansas_View_Result_Json($result);
 	}
 	

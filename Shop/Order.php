@@ -85,7 +85,7 @@ class Kansas_Shop_Order
 	public function getShippingAddress() {
 		if($this->_shippingAddress == null) {
 			global $application;
-			$this->_shippingAddress = $application->getModule('Shop')->getShop()->getShippingAddress($this->getShippingAddressId(), $this->getUserId());
+			$this->_shippingAddress = $application->getPlugin('Shop')->getShop()->getShippingAddress($this->getShippingAddressId(), $this->getUserId());
 		}
 		return $this->_shippingAddress;
 	}
@@ -114,7 +114,7 @@ class Kansas_Shop_Order
 	public function getShippingMethod() {
 		global $application;
 		if($this->_shippingMethod == null)
-			$this->_shippingMethod = $application->getModule('Shop')->getShop()->getShippingMethod($this->getShippingMethodId());
+			$this->_shippingMethod = $application->getPlugin('Shop')->getShop()->getShippingMethod($this->getShippingMethodId());
 
 		return $this->_shippingMethod;
 	}
@@ -142,7 +142,7 @@ class Kansas_Shop_Order
 	
 	public function getPayment() {
 		if($this->_payment == null && !System_Guid::isEmpty($this->getPaymentId()))
-			$this->_payment = Kansas_Application::getInstance()->getModule('Shop')->getShop()->getPaymentById($this->getPaymentId());
+			$this->_payment = Kansas_Application::getInstance()->getPlugin('Shop')->getShop()->getPaymentById($this->getPaymentId());
 		return $this->_payment;
 	}
 	public function getPaymentId() {
@@ -193,7 +193,7 @@ class Kansas_Shop_Order
 	public function updateShippingMethod() {
 		if(System_Guid::isEmpty($this->getShippingMethodId()))
 			return;
-		$shop = Kansas_Application::getInstance()->getModule('Shop')->getShop();
+		$shop = Kansas_Application::getInstance()->getPlugin('Shop')->getShop();
 		$compatibleMethods = $shop->getShipMethodsByAddress($this->getShippingAddress());
 		if(!isset($compatibleMethods[$this->getShippingMethodId()]))
 			$this->setShippingMethod(null);
@@ -219,7 +219,7 @@ class Kansas_Shop_Order
 	
 	public static function create() {
 		global $application;
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		if($auth->hasIdentity()) {
 			$user = $auth->getIdentity();
 			$order = Kansas_Application::getInstance()->getProvider('Shop')->createOrder($user->getId());
@@ -265,7 +265,7 @@ class Kansas_Shop_Order
 	
 	public function save() {
 		global $application;
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		if($auth->hasIdentity()) {
 			if($this->getUserId() == System_Guid::getEmpty())
 				$this->row['User'] = $auth->getIdentity()->getId();
@@ -294,7 +294,7 @@ class Kansas_Shop_Order
 	 */
 	public static function getCurrent(&$count, $force = false) {
 		global $application;
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		$order = null;
 		// Obtener de Models
 		if(Zend_Session::namespaceIsset('Shop')) {
@@ -351,7 +351,7 @@ class Kansas_Shop_Order
 				'payment-void')) === false)
 			throw new System_NotSupportedException('El pago ya ha sido realizado');		
 			
-		$shop = $application->getModule('Shop')->getShop();
+		$shop = $application->getPlugin('Shop')->getShop();
 		$payment = $this->getPayment();
 		if ($payment != null && 
 				array_search($payment->getStatus(), array(

@@ -47,7 +47,7 @@ class Error	extends AbstractController {
   public function adminError(array $vars = []) {
     global $application;
     if($vars['requestType'] == 'smarty') {
-      $cache = $application->hasModule('BackendCache');
+      $cache = $application->hasPlugin('BackendCache');
       $ids = $cache->getIdsMatchingTags(['error']);
       $errors = [];
       foreach($ids as $id) {
@@ -75,7 +75,7 @@ class Error	extends AbstractController {
   public function adminErrorDetail(array $vars = []) {
     global $application;
     if($vars['requestType'] == 'smarty') {
-      $cache = $application->hasModule('BackendCache');
+      $cache = $application->hasPlugin('BackendCache');
       $error = $this->getParam('error');
       $selected = $this->getParam('selected');
       $error['basename'] = $error['httpCode'] == 404 ? $error['file'] : '[' . $error['line'] . '] ' . basename($error['file']);
@@ -124,7 +124,7 @@ class Error	extends AbstractController {
   // Eliminar registros de errores
   public function adminErrorClear(array $vars = []) {
     global $application;
-    $cache = $application->hasModule('BackendCache');
+    $cache = $application->hasPlugin('BackendCache');
     $result = $cache->clean(Kansas_Cache::CLEANING_MODE_MATCHING_ANY_TAG, ['error']);
     return Kansas_View_Result_Redirect::gotoUrl('/admin/alerts/errores?clearResult=' .  $result);
   }  

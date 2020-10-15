@@ -5,7 +5,7 @@ class Kansas_Controller_Image
 
 	public function gallery() {
 		global $application;
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		$view = $this->createView();
 		$gallery = $this->getParam('gallery');
 		$view->setCacheId('galery-' . $gallery->getName());
@@ -39,7 +39,7 @@ class Kansas_Controller_Image
 	public function album() {
 		require_once('Kansas/Core/Collection/Interface.php');
 		global $application;
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		$template = $this->getParam('template',	'page.image-album.tpl');
 		$view = $this->createView();
 		$router = $this->getParam('router');
@@ -82,7 +82,7 @@ class Kansas_Controller_Image
 	
 	public function image() {
 		global $application;
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		$template = $this->getParam('template',	'page.image-image.tpl');
 		$view = $this->createView();
 		$image = $this->getParam('image');
@@ -120,7 +120,7 @@ class Kansas_Controller_Image
 
 	public function createImage() {
 		global $application;
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		if($auth->hasIdentity()) {
 			global $application;
 			$router 			= $this->getParam('router');

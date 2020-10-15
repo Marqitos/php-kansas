@@ -127,9 +127,9 @@ class Kansas_Controller_Shop
 			$result->setGotoUrl('/tienda/order/checkout/review');
 			return $result;
 		}
-		$shop = $application->getModule('Shop')->getShop();
+		$shop = $application->getPlugin('Shop')->getShop();
 		$view = $this->createView();
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		$user = $auth->hasIdentity() ?
 			$auth->getIdentity():
 			null;
@@ -219,7 +219,7 @@ class Kansas_Controller_Shop
 	public function checkout() {
 		global $application;
 		$count = null;
-		$auth = $application->getModule('Auth');
+		$auth = $application->getPlugin('Auth');
 		$cart = Kansas_Shop_Order::getCurrent($count, true);
 		$result = new Kansas_View_Result_Redirect();
 		if(!$auth->hasIdentity()) {
@@ -250,8 +250,8 @@ class Kansas_Controller_Shop
 	public function shipAddress() {
 		global $application;
 		$count = null;
-		$auth			= $application->getModule('Auth');
-		$shop			= $application->getModule('Shop')->getShop();
+		$auth			= $application->getPlugin('Auth');
+		$shop			= $application->getPlugin('Shop')->getShop();
 		$cart			= Kansas_Shop_Order::getCurrent($count, true);
 		$generic	= $this->getParam('generic', true);
 		$url			= $this->getParam('url', '/tienda/order/ship-address');
@@ -308,7 +308,7 @@ class Kansas_Controller_Shop
 	public function expressCheckout() {
 		global $application;
 		$count		= null;
-		$auth			= $application->getModule('Auth');
+		$auth			= $application->getPlugin('Auth');
 		$cart			= Kansas_Shop_Order::getCurrent($count, true);
 		$result		= new Kansas_View_Result_Redirect();
 		if(count($cart->getItems()) == 0)	{ // NO hay compra
@@ -330,7 +330,7 @@ class Kansas_Controller_Shop
 		if($this->isAuthenticated($result)) {
 			$result		= new Kansas_View_Result_Redirect();
 			// Grabar pago como autorizado
-			$shop		= $application->getModule('Shop')->getShop();
+			$shop		= $application->getPlugin('Shop')->getShop();
 			$token	= $this->getParam('token');
 			
 			$payment = $shop->getPaymentByToken($token);
@@ -371,7 +371,7 @@ class Kansas_Controller_Shop
 			global $application;
 			$result		= new Kansas_View_Result_Redirect();
 			// Grabar pago como cancelado
-			$shop	= $application->getModule('Shop')->getShop();
+			$shop	= $application->getPlugin('Shop')->getShop();
 			$params = $this->getRequest()->getParams();
 			
 			if(isset($params['token'])) {
@@ -438,7 +438,7 @@ class Kansas_Controller_Shop
 		if($this->isAuthenticated($result)) {
 			global $application;
 			$router = $this->getParam('router');
-			$auth			= $application->getModule('Auth');
+			$auth			= $application->getPlugin('Auth');
 			$user 		= $auth->getIdentity();
 			$shopProvider = $application->getProvider('shop');
 //			$orders		= new Kansas_Core_GuidItem_Collection();
