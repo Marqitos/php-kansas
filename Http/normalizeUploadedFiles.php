@@ -11,6 +11,9 @@ use InvalidArgumentException;
 use Psr\Http\Message\UploadedFileInterface;
 
 use function is_array;
+use function Kansas\Http\createUploadedFile;
+
+require_once 'Kansas/Http/createUploadedFile.php';
 
 /**
  * Normalize uploaded files
