@@ -3,6 +3,9 @@
 namespace Kansas\API;
 
 use Psr\Http\Message\RequestMethodInterface;
+use function strlen;
+use function substr;
+use function trim;
 use function System\String\startWith;
 
 function APICore($path, $method) {
@@ -31,7 +34,7 @@ function APICore($path, $method) {
         case 'ping':
             return [ 'ping' => 'pong'];
         case 'config':
-            $params = $this->getParams([
+            return $application->dispatch([
                 'controller'	=> 'API',
                 'action'		=> 'config'
             ]);
@@ -39,12 +42,13 @@ function APICore($path, $method) {
     }
     require_once 'System/String/startWith.php';
     if(startWith($path, 'files')) {
-        $params = $this->getParams([
+        $params = [
             'controller'	=> 'API',
             'action'		=> 'files'
-        ]);
+        ];
         if(strlen($path) > 5)
             $params['path'] = trim(substr($path, 6), './ ');
+        $application->dispatch($params);
     }
     return false;
 }
