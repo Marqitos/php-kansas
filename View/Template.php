@@ -25,8 +25,18 @@ class Template {
         }
     }
 
-    public static function getDatacontext() {
-        return self::$datacontext;
+    public static function getDatacontext($index = null) {
+        if($index == null) {
+            return self::$datacontext;
+        } else if(isset(self::$datacontext[$index])) {
+            return self::$datacontext[$index];
+        } else {
+            return false;
+        }
+    }
+
+    public static function setDatacontext($index, $value) {
+        self::$datacontext[$index] = $value;
     }
 
     public static function getTitle() {
