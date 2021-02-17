@@ -11,6 +11,9 @@ use function System\String\startWith;
 require_once 'System/Configurable.php';
 require_once 'Kansas/Auth/Session/SessionInterface.php';
 
+/**
+ * Autenticación mediante javascript web token
+ */
 abstract class AbstractToken extends Configurable implements SessionInterface {
 
     private $initialized = false;
@@ -33,6 +36,9 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
         }
     }
 
+    /**
+     *  @see System\Configurable\getVersion()
+     */
     public function getVersion() {
         global $environment;
         return $environment->getVersion();
