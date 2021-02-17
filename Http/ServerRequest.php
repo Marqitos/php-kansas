@@ -166,8 +166,9 @@ class ServerRequest implements ServerRequestInterface {
     /**
      * {@inheritdoc}
      */
-    public function getUploadedFiles()
-    {
+    public function getUploadedFiles() {
+        if(isset($this->uploadedFiles['files']))
+            return $this->uploadedFiles['files'];
         return $this->uploadedFiles;
     }
 

@@ -56,14 +56,14 @@ class Environment {
     const SF_HOME		= 0x0002;
     const SF_LIBS		= 0x0004;
     const SF_LAYOUT 	= 0x0008;
-    const SF_THEMES 	= 0x0108;
     const SF_TEMP       = 0x0010;
+    const SF_FILES	    = 0x0020;
+    const SF_THEMES 	= 0x0108;
     const SF_CACHE	    = 0x0110;
     const SF_COMPILE	= 0x0210;
     const SF_SESSIONS	= 0x0310;
     const SF_TRACK 	    = 0x0410;
     const SF_ERRORS 	= 0x0510;
-    const SF_FILES	    = 0x0020;
 
     protected function __construct($status, array $specialFolders) {
         $this->t_inicio = microtime(true);

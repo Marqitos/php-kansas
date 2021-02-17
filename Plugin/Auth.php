@@ -9,8 +9,8 @@ use Kansas\Plugin\Admin as AdminZone;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Router\Auth as AuthRouter;
 use Psr\Http\Message\RequestInterface;
-use System\Guid;
 use System\Configurable;
+use System\Guid;
 use System\NotSuportedException;
 
 use function Kansas\Request\getTrailData;
@@ -23,11 +23,11 @@ class Auth extends Configurable implements PluginInterface {
 
 	/// Constantes
 	// Roles predeterminadas
-	const ROLE_ADMIN			= 'admin'; // Usuario con todos los permisos
-	const ROLE_GUEST			= 'guest'; // Usuario no autenticado
+	const ROLE_ADMIN        = 'admin'; // Usuario con todos los permisos
+	const ROLE_GUEST        = 'guest'; // Usuario no autenticado
 
-	const TYPE_FORM       = 'form';
-	const TYPE_FEDERATED  = 'federated';
+	const TYPE_FORM         = 'form';
+	const TYPE_FEDERATED    = 'federated';
 	
 	/// Campos
 	private $_router;
@@ -50,55 +50,54 @@ class Auth extends Configurable implements PluginInterface {
 	}
   
 	// Miembros de System\Configurable\ConfigurableInterface
-  public function getDefaultOptions($environment) : array {
-    switch ($environment) {
-    case 'production':
-    case 'development':
-    case 'test':
-      return [
-      'router' =>  [
-        'base_path' => 'cuenta'
-      ],
-      'actions' => [
-        'account' => [
-          'path'        => '',
-          'controller'	=> 'Auth',
-          'action'	    => 'index'],
-        'sessionInfo' => [
-          'path'        => 'sesiones',
-          'controller'  => 'Auth',
-          'action'      => 'sessionInfo'],
-        'signout' => [
-          'path' 			  => '/cerrar-session',
-          'controller'	=> 'Auth',
-          'action'		  => 'signOut']
-      ],
-      'session'	  => 'Kansas\Auth\Session\SessionDefault',
-      'lifetime'  => 60*60*24*15, // 15 días
-      'device'    => true
-      ];
-    default:
-      require_once 'System/NotSuportedException.php';
-      throw new NotSuportedException("Entorno no soportado [$environment]");
+    public function getDefaultOptions($environment) : array {
+        switch ($environment) {
+            case 'production':
+            case 'development':
+            case 'test':
+                return [
+                    'router' =>  [
+                        'base_path' => 'cuenta'],
+                    'actions' => [
+                        'account' => [
+                            'path'          => '',
+                            'controller'	=> 'Auth',
+                            'action'	    => 'index'],
+                        'sessionInfo' => [
+                            'path'          => 'sesiones',
+                            'controller'    => 'Auth',
+                            'action'        => 'sessionInfo'],
+                        'signOut' => [
+                            'path'          => '/cerrar-session',
+                            'controller'    => 'Auth',
+                            'action'        => 'signOut']],
+                    'session'	=> 'Kansas\Auth\Session\SessionDefault',
+                    'lifetime'  => 60*60*24*15, // 15 días
+                    'domain'    => '',
+                    'device'    => true
+                ];
+            default:
+                require_once 'System/NotSuportedException.php';
+                throw new NotSuportedException("Entorno no soportado [$environment]");
+        }
     }
-  }
 
-  public function getVersion() {
-    global $environment;
-    return $environment->getVersion();
-  }	
+    public function getVersion() {
+        global $environment;
+        return $environment->getVersion();
+    }	
   
-  /// Eventos de la aplicación
-  public function appPreInit() { // añadir router
-    global $application;
-    require_once 'Kansas/Plugin/Admin.php';
-    $zones = $application->hasPlugin('zones');
-    if($zones && $zones->getZone() instanceof AdminZone) {
-      $admin = $zones->getZone();
-      $admin->registerMenuCallbacks([$this, "adminMenu"]);
-    } else    
-      $application->addRouter($this->getRouter());
-  }
+    /// Eventos de la aplicación
+    public function appPreInit() { // añadir router
+        global $application;
+        require_once 'Kansas/Plugin/Admin.php';
+        $zones = $application->hasPlugin('zones');
+        if($zones && $zones->getZone() instanceof AdminZone) {
+            $admin = $zones->getZone();
+            $admin->registerMenuCallbacks([$this, "adminMenu"]);
+        } else    
+            $application->addRouter($this->getRouter());
+    }
 
 	public function appRoute(RequestInterface $request, $params) { // Añadir datos de usuario
 		$result = [];
@@ -111,12 +110,15 @@ class Auth extends Configurable implements PluginInterface {
 		return $result;
 	}
 
-
 	public function getSession() {
 		if(!isset($this->_session)) {
-				require_once 'Kansas/Loader.php';
-				Loader::loadClass($this->options['session']);
-				$this->_session = new $this->options['session']();
+            require_once 'Kansas/Loader.php';
+            Loader::loadClass($this->options['session']);
+            $sessionOptions = [
+                'lifetime'  => $this->options['lifetime'],
+                'domain'    => '' // TODO: Ver por que no existe: $this->options['domain']
+            ];
+            $this->_session = new $this->options['session']($sessionOptions);
 		}
 		return $this->_session;
 	}
@@ -139,7 +141,10 @@ class Auth extends Configurable implements PluginInterface {
 			: 0;
 		$device = $this->options['device']
 			? $userAgent
-			: false;
+            : false;
+        if($domain == null) {
+            $domain = ''; // TODO: Ver por que no existe: $this->options['domain']
+        }
 		$session = $this->getSession()->setIdentity($user, $lifetime, $domain, $device);
 		// Registrar eventos de inicio de sesión
 		$signInProvider = $application->getProvider('signIn');
@@ -155,42 +160,42 @@ class Auth extends Configurable implements PluginInterface {
 			$this->_callbacks['onChangedPassword'][] = $callback;
 	}
 
-  /// Eventos de zona Admin
-  public function adminMenu() {
+    /// Eventos de zona Admin
+    public function adminMenu() {
     // TODO: Comprobar permisos
     return [
-      'account'          => [
-        'title'           => 'Usuarios',
-        'icon'            => 'fa-user',
-        'dispatch'        => [
-          'controller'    => 'account',
-          'action'        => 'admin'],
-        'match'           => [$this, 'adminMatch'],
-        'menuItems'       => [
-          'roles'   => [
-            'title'       => 'Roles',
-            'dispatch'    => [
-              'controller'=> 'account',
-              'action'    => 'adminRoles']]]]];
-  }
+        'account'          => [
+            'title'           => 'Usuarios',
+            'icon'            => 'fa-user',
+            'dispatch'        => [
+                'controller'    => 'account',
+                'action'        => 'admin'],
+            'match'           => [$this, 'adminMatch'],
+            'menuItems'       => [
+                'roles'   => [
+                    'title'       => 'Roles',
+                    'dispatch'    => [
+                    'controller'=> 'account',
+                    'action'    => 'adminRoles']]]]];
+    }
   
-  public function adminMatch($path) {
-    $path = substr($path, 8);
-    switch($path) {
-      case 'create':
-        return [
-          'controller'    => 'account',
-          'action'        => 'adminCreateUser'
-        ];
+    public function adminMatch($path) {
+        $path = substr($path, 8);
+        switch($path) {
+            case 'create':
+                return [
+                    'controller'    => 'account',
+                    'action'        => 'adminCreateUser'
+                ];
+        }
+        if(strpos($path, 'delete-user') == 0) {
+            return [
+                'controller'    => 'account',
+                'action'        => 'adminDeleteUser',
+                'user'          => substr($path, 12)
+            ];
+        }
     }
-    if(strpos($path, 'delete-user') == 0) {
-      return [
-        'controller'    => 'account',
-        'action'        => 'adminDeleteUser',
-        'user'          => substr($path, 12)
-      ];
-    }
-  }
   
   
 	public function getRouter() {
@@ -200,7 +205,7 @@ class Auth extends Configurable implements PluginInterface {
 			$this->_router->addActions($this->options['actions']);
 			foreach ($this->_authServices as $authService)
 				$this->_router->addActions($authService->getActions());
-			}
+        }
 		return $this->_router;
 	}
   
@@ -226,89 +231,89 @@ class Auth extends Configurable implements PluginInterface {
 
 
   
-  // Obtiene los rols del usuario actual, invitado si no esta autenticado
-  public function getCurrentRoles(Guid $scope = null) {
-    global $application;
-    if($scope == null)
-      $scope = self::getDefaultScope();
-    $user = $this->getSession()->getIdentity();
-    if($user === FALSE)
-      return [
-        'scope' => $scope['id'],
-        'name'  => self::ROLE_GUEST];
-    return $application->getProvider('users')->getUserRoles(new Guid($user['id']), $scope);
-  }
-  
-  public static function getRolesByScope(array $scope = NULL) {
-    global $application;
-    if($scope == null)
-      $scope = self::getDefaultScope();
-    $default = FALSE;
-    if(isset($scope['default']) && is_callable($scope['default']))
-      $default = call_user_func($scope['default']);
-    if($default)
-      $default = array_combine(array_column($default, 'rol'), $default);
-    $result = $application->getProvider('users')->getRolesByScope(new Guid($scope['id']), $default);
-    if($default) {
-      $default  = array_combine(array_map([self, 'rolKey'], $default), $default);
-      $result   = array_combine(array_map([self, 'rolKey'], $result), $result);
-      return array_merge($default, $result);
+    // Obtiene los rols del usuario actual, invitado si no esta autenticado
+    public function getCurrentRoles(Guid $scope = null) {
+        global $application;
+        if($scope == null)
+        $scope = self::getDefaultScope();
+        $user = $this->getSession()->getIdentity();
+        if($user === FALSE)
+        return [
+            'scope' => $scope['id'],
+            'name'  => self::ROLE_GUEST];
+        return $application->getProvider('users')->getUserRoles(new Guid($user['id']), $scope);
     }
-   return $result;
-  }
   
-  public static function rolKey(array $rol) {
-    return $rol['scope'] . '-' . $rol['rol'] . '-' . $rol['name'];
-  }
-  
-  public static function getDefaultScope() {
-    if(self::$_defaultScope == null) {
-      global $application;
-      $config = $application->getConfig();
-      $id = strtoupper(md5($config['defaultDomain']));
-      self::$_defaultScope = [
-        'id'      => $id,
-        'default' => function() use ($id) { return self::getDefaultRoles($id); },
-        'name'    => 'Aplicación'];
+    public static function getRolesByScope(array $scope = NULL) {
+        global $application;
+        if($scope == null)
+            $scope = self::getDefaultScope();
+        $default = FALSE;
+        if(isset($scope['default']) && is_callable($scope['default']))
+            $default = call_user_func($scope['default']);
+        if($default)
+            $default = array_combine(array_column($default, 'rol'), $default);
+        $result = $application->getProvider('users')->getRolesByScope(new Guid($scope['id']), $default);
+        if($default) {
+            $default  = array_combine(array_map([self, 'rolKey'], $default), $default);
+            $result   = array_combine(array_map([self, 'rolKey'], $result), $result);
+            return array_merge($default, $result);
+        }
+        return $result;
     }
-    return self::$_defaultScope;
-  }
   
-  public static function getDefaultRoles($scope) {
-    global $application;
-    $config = $application->getConfig();
-    return [
-      [ 'scope' => $scope,
-        'rol'   => str_repeat('0', 32),
-        'name'  => self::ROLE_GUEST],
-      [ 'scope' => $scope,
-        'rol'   => strtoupper(md5($config['defaultDomain'] . '-' . self::ROLE_ADMIN)),
-        'name'  => self::ROLE_ADMIN]];
-  }
-  
-  public function getScopes() {
-    global $application;
-    $config = $application->getConfig();    
-    // Añadir scopes de otros modulos
-    return [$config['defaultDomain'] => self::getDefaultScope()];
-  }
-  
-  // Obtiene si el usuario actual tiene permisos para realizar una acción
-  public function hasPermision($permisionName) {
-    if(!isset($_SESSION['auth']))
-      return false;
-    else if($this->getIdentity()->isInRole(Kansas_User_Abstract::ROLE_ADMIN))
-      return true;
-    else
-      return $this->getRolePermisions()->hasPermision($this->getIdentity(), $permisionName);
-  }
-  
-  // Obt
-  protected function getRolePermisions() {
-    if($this->_rolePermisions == null) {
-      
+    public static function rolKey(array $rol) {
+        return $rol['scope'] . '-' . $rol['rol'] . '-' . $rol['name'];
     }
-    return $this->_rolePermisions;
-  }
+  
+    public static function getDefaultScope() {
+        if(self::$_defaultScope == null) {
+        global $application;
+        $config = $application->getConfig();
+        $id = strtoupper(md5($config['defaultDomain']));
+        self::$_defaultScope = [
+            'id'      => $id,
+            'default' => function() use ($id) { return self::getDefaultRoles($id); },
+            'name'    => 'Aplicación'];
+        }
+        return self::$_defaultScope;
+    }
+  
+    public static function getDefaultRoles($scope) {
+        global $application;
+        $config = $application->getConfig();
+        return [
+            [ 'scope' => $scope,
+                'rol'   => str_repeat('0', 32),
+                'name'  => self::ROLE_GUEST],
+            [ 'scope' => $scope,
+                'rol'   => strtoupper(md5($config['defaultDomain'] . '-' . self::ROLE_ADMIN)),
+                'name'  => self::ROLE_ADMIN]];
+    }
+  
+    public function getScopes() {
+        global $application;
+        $config = $application->getConfig();    
+        // Añadir scopes de otros modulos
+        return [$config['defaultDomain'] => self::getDefaultScope()];
+    }
+  
+    // Obtiene si el usuario actual tiene permisos para realizar una acción
+    public function hasPermision($permisionName) {
+        if(!isset($_SESSION['auth']))
+            return false;
+        else if($this->getIdentity()->isInRole(Kansas_User_Abstract::ROLE_ADMIN))
+            return true;
+        else
+            return $this->getRolePermisions()->hasPermision($this->getIdentity(), $permisionName);
+    }
+  
+    // Obt
+    protected function getRolePermisions() {
+        if($this->_rolePermisions == null) {
+        
+        }
+        return $this->_rolePermisions;
+    }
   
 }
