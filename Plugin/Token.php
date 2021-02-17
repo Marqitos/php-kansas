@@ -36,7 +36,7 @@ class Token extends Configurable implements PluginInterface {
             case 'development':
             case 'test':
                 return [
-                    'device'    => true,
+                    'device'    => false,
                     'exp'       => 10 * 24 * 60 * 60, // 10 días
                     'secret'    => false
                 ];
@@ -195,14 +195,14 @@ class Token extends Configurable implements PluginInterface {
 /*                
     public function getToken($device = true) {
         global $application;
-        $auth = $application->getModule('auth');
+        $auth = $application->getPlugin('auth');
         if(!$auth->hasIdentity())
             return false;
         
         global $application;
         $userId		= $auth->getIdentity()->getId();
-        $deviceId	= $device && $application->hasModule('track') 
-            ? $application->getModule('track')->getDevice()->getId()
+        $deviceId	= $device && $application->hasPlugin('track') 
+            ? $application->getPlugin('track')->getDevice()->getId()
             : null;
         $token = $application->getProvider('Token')->getToken($userId, $deviceId);
         if($token == null)
@@ -212,7 +212,7 @@ class Token extends Configurable implements PluginInterface {
     
     public function getAuthTokenUrl($url, $device = true) {
         global $application;
-        return $_SERVER['SERVER_NAME'] . '/' . $application->getModule('Users')->getBasePath() . 'token?' . http_build_query([
+        return $_SERVER['SERVER_NAME'] . '/' . $application->getPlugin('Users')->getBasePath() . 'token?' . http_build_query([
             'token' => $this->getToken($device),
             'ru'	=> $url
         ]);

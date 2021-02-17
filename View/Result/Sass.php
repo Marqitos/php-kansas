@@ -8,14 +8,14 @@ class Kansas_View_Result_Sass
 	private $_file;
 	
 	public function __construct($file) {
-    parent::__construct('text/css; charset: UTF-8');
+		parent::__construct('text/css; charset: UTF-8');
 		$this->_file = $file;
 	}
 	
 	public function getResult(&$noCache) {
 		global $application;
-    $noCache = true;
-		return $application->getModule('Sass')->toCss($this->_file);
+		$noCache = true;
+		return $application->getPlugin('Sass')->toCss($this->_file);
 	}
 
 }

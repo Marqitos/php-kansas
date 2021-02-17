@@ -30,7 +30,7 @@ class Kansas_Module_Facebook
 	public function appPreInit() { // añadir proveedor de inicio de sesión - comprobar inicio de sesión
 		global $application;
     if($this->options['signIn']) {
-      $usersModule = $application->getModule('Auth');
+      $usersModule = $application->getPlugin('Auth');
       $usersModule->setAuthService('facebook', $this);
       $usersModule->getRouter()->setOptions($this->options);
     }
@@ -100,7 +100,7 @@ class Kansas_Module_Facebook
     global $application;
     $cacheId = 'facebookId-' . $url;
     $cache = false;
-    if($cache = $application->hasModule('cache') && !$session && $cache->test($cacheId)) {
+    if($cache = $application->hasPlugin('cache') && !$session && $cache->test($cacheId)) {
       return $cache->load($cacheId);
     } else {
       if(!$session)
@@ -121,7 +121,7 @@ class Kansas_Module_Facebook
   
   public function getUserSession() {
     global $application;
-    $auth = $application->getModule('Auth');
+    $auth = $application->getPlugin('Auth');
     if(!$auth->hasIdentity())
       return false;
     // Obtener token desde base de datos, o sesión php
