@@ -59,8 +59,9 @@ class SessionDefault implements SessionInterface {
      * @return void
      */
     public function initialize($force = false, $lifetime = 0, $domain = NULL) {
-        if(session_status() != PHP_SESSION_ACTIVE)
+        if(session_status() == PHP_SESSION_ACTIVE) {
             return session_id();
+        }
         $cookieName = session_name();
 
         if (isset($_COOKIE[$cookieName]) ||
@@ -75,6 +76,7 @@ class SessionDefault implements SessionInterface {
             $application->registerCallback('render',  [$this, "appRender"]);
             return session_id();
        }
+       return false;
     }
 
     /**
