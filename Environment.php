@@ -30,7 +30,7 @@ class Environment {
   
     private $status;
     private $request;
-    private $request_time;
+    private $requestTime;
     private $t_inicio;
     private $version;
     private $phpVersion;
@@ -75,12 +75,11 @@ class Environment {
     public static function getInstance($status = null, array $specialFolders = []) {
         if(self::$instance == null) {
             global $environment;
-            if(empty($status))
-                $status = getenv('APPLICATION_ENV');
-            if(empty($status) && defined('APP_ENVIRONMENT'))
-                $status = APP_ENVIRONMENT;
-            if(empty($status))
-                $status = self::ENV_PRODUCTION;
+            if(empty($status)) {
+                $status = defined('APP_ENVIRONMENT')
+                    ? APP_ENVIRONMENT
+                    : self::ENV_PRODUCTION;
+            }
             $environment = self::$instance = new self($status, $specialFolders);
         }
         return self::$instance;
@@ -116,18 +115,17 @@ class Environment {
         return $this->request;
     }
   
-    public function setTheme($theme) {
-        if(is_string($theme))
-            $theme = explode(':', $theme);
+    public function setTheme($theme, $add = false) {
+        if(is_string($theme)) {
+            $theme = [$theme];
+        }
         if(!is_array($theme)) {
             require_once 'System/ArgumentOutOfRangeException.php';
-            throw new ArgumentOutOfRangeException();
+            throw new ArgumentOutOfRangeException('theme');
         }
-        if($theme[0] == '') {
-            unset($theme[0]);
-            $this->theme = array_merge($this->theme, $theme);        
-        } else
-            $this->theme = $theme;
+        $this->theme = $add
+            ? array_merge($this->theme, $theme)
+            : $theme;
     }
   
     public function getThemePaths() {
@@ -140,7 +138,7 @@ class Environment {
 
     public function getFile($filename, $specialFolder = 0) {
         if($specialFolder != 0) {
-            $path = $this->getSpecialFolder($especialFolder);
+            $path = $this->getSpecialFolder($specialFolder);
             $filename = $path . $filename;
         }
         if(class_exists($this->fileClass)) {
@@ -152,17 +150,19 @@ class Environment {
         $time = self::$instance->getExecutionTime();
         
         if($message instanceof Exception) {
-            $message = $message->getMessage();
             $fileError = $message->getFile();
             $lineError = $message->getLine();
+            $message = $message->getMessage();
         } elseif(is_array($message)) {
             $fileError = $message['file'];
             $lineError = $message['line'];
             $message = $message['message'];
         }
                 
-        if(self::$instance->status != self::ENV_DEVELOPMENT && $level != E_USER_WARNING)  
+        if(self::$instance->status != self::ENV_DEVELOPMENT && 
+           $level != E_USER_WARNING) {
             return;
+        }
         
         $level = ($level == E_USER_ERROR)    ? 'ERROR'
                : (($level == E_USER_WARNING) ? 'WARNING'
@@ -216,7 +216,7 @@ class Environment {
                 return realpath(dirname(__FILE__) . '/../../../private');
         }
         require_once 'System/ArgumentOutOfRangeException.php';
-        throw new ArgumentOutOfRangeException('El valor especificado no es válido');
+        throw new ArgumentOutOfRangeException('specialFolder', 'El valor especificado no es válido');
     }
 
     // Devuelve posibles valores para una carpeta temporal
