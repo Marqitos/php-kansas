@@ -1,8 +1,15 @@
 <?php
+/**
+ * Clase principal de ejecución de la aplicación
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.1
+ */
 
 namespace Kansas;
 
-use Exception;
 use SplPriorityQueue;
 use Throwable;
 use System\ArgumentOutOfRangeException;
@@ -10,10 +17,7 @@ use System\Configurable;
 use System\NotSupportedException;
 use System\Net\WebException;
 use Kansas\Environment;
-use Kansas\Loader\PluginInterface;
-use Kansas\PluginLoader;
 use Kansas\Router\RouterInterface;
-use Kansas\View\Smarty;
 use Kansas\View\Result\ViewResultInterface;
 use Kansas\Db\Adapter as DbAdapter;
 
@@ -31,8 +35,6 @@ class Application extends Configurable {
 	private $_providers = [];
 	private $db;
 
-	private $_modules	    = [];
-	private $_modulesLoaded = false;
     private $plugins;
 
 	private $_routers;
@@ -63,48 +65,46 @@ class Application extends Configurable {
 	// Miembros de System\Configurable\ConfigurableInterface
 	public function getDefaultOptions($environment) : array {
 		switch ($environment) {
-		case 'production':
-		case 'development':
-		case 'test':
-			return [
-				'db' => false,
-				'default_domain' => '',
-				'error' => [$this, 'errorManager'],
-				'loader' => [
-					'controller' => [],
-					'plugin'     => [],
-					'provider'	 => []
-				],
-				'log' => ['Kansas\\Environment', 'log'],
-				'plugin' => [],
-				'theme' => ['shared'],
-				'title' => [
-					'class'      => 'Kansas\\TitleBuilder\\DefaultTitleBuilder'
-				],
-				'view' => [],
-			];
-		default:
-			require_once 'System/NotSupportedException.php';
-			throw new NotSupportedException("Entorno no soportado [$environment]");
+			case Environment::ENV_PRODUCTION:
+			case Environment::ENV_DEVELOPMENT:
+			case Environment::ENV_TEST:
+				return [
+					'db' => false,
+					'default_domain' => '',
+					'error' => [$this, 'errorManager'],
+					'loader' => [
+						'controller' => [],
+						'plugin'     => [],
+						'provider'	 => []
+					],
+					'log' => ['Kansas\\Environment', 'log'],
+					'plugin' => [],
+					'theme' => ['shared'],
+					'title' => [
+						'class'      => 'Kansas\\TitleBuilder\\DefaultTitleBuilder'
+					],
+					'view' => [],
+				];
+			default:
+				require_once 'System/NotSupportedException.php';
+				throw new NotSupportedException("Entorno no soportado [$environment]");
 		}
 	}
 
 	public function onOptionChanged($optionName) {
 		global $environment;
-
-		switch ($optionName) {
-			case 'loader':
-				if(!is_array($this->options['loader'])){
-					require_once 'System/ArgumentOutOfRangeException.php';
-					throw new ArgumentOutOfRangeException();
-				}
-				foreach($this->options['loader'] as $loaderName => $options) {
-					$environment->addLoaderPaths($loaderName, $options);
-				}
-				break;
-			case 'theme':
-				$environment->setTheme($this->options['theme']);
-				break;
+		if($optionName == 'loader') {
+			if(!is_array($this->options['loader'])){
+				require_once 'System/ArgumentOutOfRangeException.php';
+				throw new ArgumentOutOfRangeException('optionName');
+			}
+			foreach($this->options['loader'] as $loaderName => $options) {
+				$environment->addLoaderPaths($loaderName, $options);
+			}
+		} elseif($optionName == 'theme') {
+			$environment->setTheme($this->options['theme']);
+		} elseif($optionName == 'language') {
+			$environment->setLanguage($this->options['language']);
 		}
 	}
 
@@ -130,7 +130,9 @@ class Application extends Configurable {
             throw new ArgumentOutOfRangeException('pluginName', 'Se esperaba una cadena', $pluginName);
         }
         $pluginName = ucfirst($pluginName);
-        if(!is_array($options)) $options = [];
+        if(!is_array($options)) {
+			$options = [];
+		}
         if(is_array($this->plugins)) {
             if(isset($this->plugins[$pluginName])) {
 				$this->plugins[$pluginName]->setOptions($options);
@@ -139,8 +141,9 @@ class Application extends Configurable {
                 $this->options['plugin'][$pluginName] = $options;
                 return $this->loadPlugin($pluginName, $options);
             }
-        } else
+        } else {
 			$this->options['plugin'][$pluginName] = $options;
+		}
 		return false;
     }
 
@@ -159,7 +162,7 @@ class Application extends Configurable {
         $this->loadPlugins();
         $result = [];
         foreach($this->plugins as $pluginName => $plugin) {
-            if($plugin != false) {
+            if(!$plugin) {
                 $result[$pluginName] = [
                     'type'      => get_class($plugin),
                     'options'	=> $plugin->getOptions(),
@@ -171,8 +174,9 @@ class Application extends Configurable {
     }
 
     public function loadPlugins() {
-        if(is_array($this->plugins))
+        if(is_array($this->plugins)) {
 			return;
+		}
         $this->plugins = [];
         foreach(array_keys($this->options['plugin']) as $pluginName) {
 			$this->getPlugin($pluginName);
@@ -223,21 +227,13 @@ class Application extends Configurable {
 	}
 	
 	public function run() {
-		global $environment;
 		$this->loadPlugins();
 		$params = false;
-		if($environment->getStatus() == 'install') {
-			require_once 'Kansas/Router/Install.php';
-			// use Kansas\Router\Install as RouterInstall;
-			$router = new RouterInstall();
-			$params = $router->match();
-		} else {
-			$this->raisePreInit(); // PreInit event
-			foreach($this->_routers as $router) {
-				if($params = $router->match()) {
-					$params['router'] = get_class($router);
-					break;
-				}
+		$this->raisePreInit(); // PreInit event
+		foreach($this->_routers as $router) {
+			if($params = $router->match()) {
+				$params['router'] = get_class($router);
+				break;
 			}
 		}
 		if($params) {
@@ -268,49 +264,57 @@ class Application extends Configurable {
 	
 	/* Eventos */
 	public function registerCallback($hook, callable $callback) {
-		if(isset($this->_callbacks[$hook]))
+		if(isset($this->_callbacks[$hook])) {
 			$this->_callbacks[$hook][] = $callback;
+		}
 	}
 
 	protected function raisePreInit() {
-		foreach ($this->_callbacks['preinit'] as $callback)
+		foreach ($this->_callbacks['preinit'] as $callback) {
 			call_user_func($callback);
+		}
 	}
 	protected function raiseRoute($params = []) {
 		global $environment;
 		$request	= $environment->getRequest();
-		foreach ($this->_callbacks['route'] as $callback)
+		foreach ($this->_callbacks['route'] as $callback) {
 			$params = array_merge($params, call_user_func($callback, $request, $params));
+		}
 		return $params;
 	}
 	protected function raiseRender(ViewResultInterface $result) {
-		foreach ($this->_callbacks['render'] as $callback)
+		foreach ($this->_callbacks['render'] as $callback) {
 			call_user_func($callback, $result);
+		}
 	}
 	protected function raiseDispatch($params = []) {
 		global $environment;
 		$request	= $environment->getRequest();
-		foreach ($this->_callbacks['dispatch'] as $callback)
+		foreach ($this->_callbacks['dispatch'] as $callback) {
 			$params = array_merge($params, call_user_func($callback, $request, $params));
+		}
 		return $params;
 	}
 	protected function raiseCreateProvider($provider, $providerName) {
-		foreach ($this->_callbacks['createProvider'] as $callback)
-			$params = call_user_func($callback, $provider, $providerName);
+		foreach ($this->_callbacks['createProvider'] as $callback) {
+			call_user_func($callback, $provider, $providerName);
+		}
 	}
 	protected function raiseCreateView($view) {
-		foreach ($this->_callbacks['createView'] as $callback)
-			$params = call_user_func($callback, $view);
+		foreach ($this->_callbacks['createView'] as $callback) {
+			call_user_func($callback, $view);
+		}
 	}
 
 	public function getDb() {
 		require_once 'Kansas/Db/Adapter.php';
-//		require_once 'Zend/Db/Adapter/Adapter.php';
 		if($this->db == NULL) {
-			if($this->options['db'] instanceof DbAdapter)
+			if($this->options['db'] instanceof DbAdapter) {
 				$this->db = $this->options['db'];
-			if(is_array($this->options['db']))
+			}
+			if(is_array($this->options['db'])) {
 				$this->db = new DbAdapter($this->options['db']);
+			}
 		}
 		return $this->db;
 	}
@@ -318,23 +322,21 @@ class Application extends Configurable {
 	/* Miembros de singleton */
 	public static function getInstance($options) {
 		global $application;
-		if($application == null)
+		if($application == null) {
 			$application = self::$_instance = new self($options);	
+		}
 		return $application;
 	}
 	
 	public function getView() {
 		global $environment;
-
-
 		if($this->_view == null) {
-			//require_once 'Kansas/View/Smarty.php';
-			//$this->_view = new Smarty($this->options['view']);
 			$viewClass = $this->options['view']['class'];
 			unset($this->options['view']['class']);
 			$this->_view = new $viewClass($this->options['view']);
-			if($this->_view->getCaching())
+			if($this->_view->getCaching()) {
 				$this->_view->setCacheId($environment->getRequest()->getUri());
+			}
 			$this->raiseCreateView($this->_view);
 		}
 		return $this->_view;
@@ -342,11 +344,11 @@ class Application extends Configurable {
 	
 	public function createTitle() {
 		if($this->_title == NULL) {
-		$titleClass = (isset($this->options['title']['class']))
-			? $this->options['title']['class']
-			: 'Kansas\\TitleBuilder\\DefaultTitleBuilder';
-		unset($this->options['title']['class']);
-		$this->_title = new $titleClass($this->options['title']);
+			$titleClass = (isset($this->options['title']['class']))
+				? $this->options['title']['class']
+				: 'Kansas\\TitleBuilder\\DefaultTitleBuilder';
+			unset($this->options['title']['class']);
+			$this->_title = new $titleClass($this->options['title']);
 		}
 		return $this->_title;
 	}
@@ -357,8 +359,9 @@ class Application extends Configurable {
 	
 	/* Gestion de errores */
 	public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
-		if (!(error_reporting() & $errno))
-			return false; // Este código de error no está incluido en error_reporting
+		if (!(error_reporting() & $errno)) { // Este código de error no está incluido en error_reporting
+			return false; 
+		}
 		$trace = debug_backtrace();
 		array_shift($trace);
 		
@@ -372,24 +375,28 @@ class Application extends Configurable {
 			'file'			=> $errfile,
 			'context'		=> $errcontext
 		];
-		if(error_reporting() != 0)
+		if(error_reporting() != 0) {
 			@call_user_func($this->options['log'], $errno, $errData);
-		if($errno == E_USER_ERROR) 
+		} 
+		if($errno == E_USER_ERROR) {
 			@call_user_func($this->options['error'], $errData);
+		}
 		return true; // No ejecutar el gestor de errores interno de PHP
 	}
 	
 	public function exceptionHandler(Throwable $ex) {
 		$errData = self::getErrorData($ex);
-		if(error_reporting() != 0)
+		if(error_reporting() != 0) {
 			@call_user_func($this->options['log'], E_USER_ERROR, $errData);
+		}
 		@call_user_func($this->options['error'], $errData);
 		exit(1);
 	}
 	
 	public function log($level, $message) {
-		if($message instanceof Throwable)
+		if($message instanceof Throwable) {
 			$message = self::getErrorData($message);
+		}
 		call_user_func($this->options['log'], $level, $message);
 	}
 	

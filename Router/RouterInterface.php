@@ -1,4 +1,12 @@
 <?php
+/**
+ * Representa la funcionalidad basica de un router (MVC)
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Router;
 
@@ -11,12 +19,3 @@ interface RouterInterface extends ConfigurableInterface {
 	public function assemble($data = [], $reset = false, $encode = false);
 	public function getBasePath();
 }
-/*
-trait Router_Routers {
-	private $_routers;
-	protected function getRouters() {
-		if($this->_routers == null)
-			$this->_routers = new SplPriorityQueue();
-		return $this->_routers;
-	}
-}*/

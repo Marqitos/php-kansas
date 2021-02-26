@@ -1,5 +1,14 @@
 <?php
-namespace Kansas;
+/**
+ * Proporciona información relacionada con las carpetas, tiempo de ejecución, la petición actual e idiomas
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.1
+ */
+
+ namespace Kansas;
 
 use Exception;
 use System\ArgumentOutOfRangeException;
@@ -133,7 +142,7 @@ class Environment {
             return realpath(
                 $this->getSpecialFolder(self::SF_THEMES). '/' . $theme . '/');
         };
-        return array_reverse(array_map($func, $this->theme));
+        return array_map($func, $this->theme);
     }
 
     public function getFile($filename, $specialFolder = 0) {
@@ -164,14 +173,15 @@ class Environment {
             return;
         }
         
-        $level = ($level == E_USER_ERROR)    ? 'ERROR'
+        $level =  ($level == E_USER_ERROR)   ? 'ERROR'
                : (($level == E_USER_WARNING) ? 'WARNING'
                : (($level == E_USER_NOTICE)  ? 'NOTICE'
-                                                : $level));
+                                             : $level));
         
         echo "<!-- log [" . $level . "]\n" . $time . ' - ' . $message . "\n";
-        if(isset($lineError))
-        echo $lineError . ' -> ' . $fileError . "\n";
+        if(isset($lineError)) {
+            echo $lineError . ' -> ' . $fileError . "\n";
+        }
         echo " -->\n";
     }
   
@@ -181,8 +191,9 @@ class Environment {
             throw new ArgumentOutOfRangeException('Se esperaba un entero');
         }
         if(isset($this->specialFolders[$specialFolder]) &&
-           $dir = realpath($this->specialFolders[$specialFolder]))
+           $dir = realpath($this->specialFolders[$specialFolder])) {
             return $dir . '/';
+        }
 
         switch($specialFolder) {
             case self::SF_PUBLIC:
@@ -198,7 +209,9 @@ class Environment {
             case self::SF_TEMP:
                 require_once 'System/IO/File.php';
                 foreach(self::tmpDirGenerator(dirname(__FILE__) . '/../../../tmp') as $dir) {
-                    if (File::IsGoodTmpDir($dir)) return realpath($dir) . '/';
+                    if (File::IsGoodTmpDir($dir)) {
+                        return realpath($dir) . '/';
+                    }
                 }
                 require_once 'System/IO/IOException.php';
                 throw new IOException('No se puede determinar un directorio temporal, especifique uno manualmente.');
@@ -221,24 +234,28 @@ class Environment {
 
     // Devuelve posibles valores para una carpeta temporal
     protected static function tmpDirGenerator($tempDir = null) {
-        if(is_string($tempDir))
+        if(is_string($tempDir)) {
             yield $tempDir;
+        }
         foreach ([$_ENV, $_SERVER] as $tab) {
             foreach (['TMPDIR', 'TEMP', 'TMP', 'windir', 'SystemRoot'] as $key) {
                 if (isset($tab[$key])) {
-                if (($key == 'windir') or ($key == 'SystemRoot'))
-                    yield realpath($tab[$key] . '\\temp');
-                else
-                    yield realpath($tab[$key]);
+                    if (($key == 'windir') || ($key == 'SystemRoot')) {
+                        yield realpath($tab[$key] . '\\temp');
+                    } else {
+                        yield realpath($tab[$key]);
+                    }
                 }
             }
         }
         $upload = ini_get('upload_tmp_dir');
-        if ($upload)
+        if ($upload) {
             yield realpath($upload);
+        }
 
-        if (function_exists('sys_get_temp_dir'))
+        if (function_exists('sys_get_temp_dir')) {
             yield sys_get_temp_dir();
+        }
 
         // Attemp to detect by creating a temporary file
         $tempFile = tempnam(md5(uniqid(rand(), TRUE)), '');
@@ -252,8 +269,7 @@ class Environment {
     }
 
     public function getConfig($filename, array $iniOptions = []) {
-        // Intentar busqueda en cache
-        
+        // TODO: Intentar busqueda en cache
         // Cargar desde archivo ini
         require_once 'Kansas/Config.php';
         return Config::ParseIni($filename, $iniOptions, $this->getStatus());
@@ -264,8 +280,9 @@ class Environment {
     }
 
     public function getPhpVersion() {
-        if(!isset($this->phpVersion))
+        if(!isset($this->phpVersion)) {
             $this->phpVersion = new Version(PHP_VERSION);
+        }
         return $this->phpVersion;
     }
 
@@ -308,7 +325,6 @@ class Environment {
         return new $providerClass();
     }
 
-
     public function addLoaderPaths($loaderName, $options) {
         if(!isset($this->loaders[$loaderName])) {
             var_dump($loaderName, $options);
@@ -317,11 +333,12 @@ class Environment {
         }
         require_once 'Kansas/PluginLoader.php';
         if($this->loaders[$loaderName] instanceof PluginLoader) {
-            foreach($options as $prefix => $path)
-                $this->loaders->addPrefixPath($prefix, realpath($path));
-        } else
+            foreach($options as $prefix => $path) {
+                $this->loaders[$loaderName]->addPrefixPath($prefix, realpath($path));
+            }
+        } else {
             $this->loaders[$loaderName] = array_merge($this->loaders[$loaderName], $options);
+        }
     }
-  
 
 }

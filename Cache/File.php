@@ -1,4 +1,12 @@
 <?php
+/**
+ * Proporciona almacenamiento en cache mediante ficheros
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Cache;
 
@@ -79,13 +87,13 @@ class File extends Cache implements ExtendedCacheInterface {
     protected $_metadatasArray = [];
 
     /// Miembros de System_Configurable_Interface
-    public function getDefaultOptions($enviromentStatus) {
+    public function getDefaultOptions($enviromentStatus) : array {
         global $environment;
         switch ($enviromentStatus) {
             case 'production':
             case 'development':
             case 'test':
-                return $options = [
+                return [
                     'cache_dir' => $environment->getSpecialFolder(Environment::SF_CACHE),
                     'read_control' => true,
                     'read_control_type' => 'crc32',
@@ -109,10 +117,11 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return string
      */
     protected function getCacheDir() {
+        global $environment;
         if($this->_cacheDir == null) {
             $value = ($this->options['cache_dir'] !== null)
                 ? $this->options['cache_dir']
-                : Environment::getTmpDir();
+                : $environment->getSpecialFolder(Environment::SF_TEMP);
             if (!is_dir($value)) {
                 require_once 'System/IO/DirectoryNotFoundException.php';
                 throw new DirectoryNotFoundException();
@@ -140,8 +149,9 @@ class File extends Cache implements ExtendedCacheInterface {
                     throw new IOException('Prefijo incorrecto: debe usar solo [a-zA-Z0-9_]');
                 }
                 $this->_fileNamePrefix = $this->options['file_name_prefix'];
-            } else
+            } else {
                 $this->_fileNamePrefix = "";
+            }
         }
         return $this->_fileNamePrefix;
     }
@@ -200,8 +210,9 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return string|false cached datas
      */
     public function load($id, $doNotTestCacheValidity = false) {
-        if (!($this->_test($id, $doNotTestCacheValidity))) // The cache is not hit !
+        if (!($this->_test($id, $doNotTestCacheValidity))) { // The cache is not hit !
             return false;
+        }
         $metadatas = $this->_getMetadatas($id);
         $file = $this->getFile($id);
         $data = $file->read();
@@ -243,10 +254,9 @@ class File extends Cache implements ExtendedCacheInterface {
     public function save($data, $id, array $tags = [], $specificLifetime = false) {
         clearstatcache();
         $file = $this->getFile($id);
-        if ($this->options['read_control'])
-            $hash = $this->_hash($data);
-        else
-            $hash = '';
+        $hash = $this->options['read_control']
+            ? $this->_hash($data)
+            : '';
         $metadatas = [
             'hash' => $hash,
             'mtime' => time(),
@@ -365,11 +375,11 @@ class File extends Cache implements ExtendedCacheInterface {
         if ($total == 0) {
             require_once 'System/IO/IOException.php';
             throw new IOException('No se obtener el espacio libre en disco');
-        } else {
-            if ($free >= $total)
-                return 100;
-            return ((int) (100. * ($total - $free) / $total));
         }
+        if ($free >= $total) {
+            return 100;
+        }
+        return ((int) (100. * ($total - $free) / $total));
     }
 
     /**
@@ -385,10 +395,10 @@ class File extends Cache implements ExtendedCacheInterface {
      */
     public function getMetadatas($id) {
         $metadatas = $this->_getMetadatas($id);
-        if (!$metadatas)
+        if (!$metadatas || 
+            time() > $metadatas['expire']) {
             return false;
-        if (time() > $metadatas['expire'])
-            return false;
+        }
         return [
             'expire' => $metadatas['expire'],
             'tags' => $metadatas['tags'],
@@ -405,16 +415,16 @@ class File extends Cache implements ExtendedCacheInterface {
      */
     public function touch($id, $extraLifetime) {
         $metadatas = $this->_getMetadatas($id);
-        if (!$metadatas)
+        if (!$metadatas || 
+            time() > $metadatas['expire']) {
             return false;
-        if (time() > $metadatas['expire'])
-            return false;
+        }
         $metadatas['mtime'] = time();
         $metadatas['expire'] = $metadatas['expire'] + $extraLifetime;
         $res = $this->_setMetadatas($id, $metadatas);
-        if (!$res)
-            return false;
-        return true;
+        return (!$res)
+            ? false
+            : true;
     }
 
     /**
@@ -449,12 +459,13 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return array|false Associative array of metadatas
      */
     protected function _getMetadatas($id) {
-        if (isset($this->_metadatasArray[$id]))
+        if (isset($this->_metadatasArray[$id])) {
             return $this->_metadatasArray[$id];
-        else {
+        } else {
             $metadatas = $this->_loadMetadatas($id);
-            if (!$metadatas)
+            if (!$metadatas) {
                 return false;
+            }
             $this->_setMetadatas($id, $metadatas, false);
             return $metadatas;
         }
@@ -475,8 +486,9 @@ class File extends Cache implements ExtendedCacheInterface {
         }
         if ($save) {
             $result = $this->_saveMetadatas($id, $metadatas);
-            if (!$result)
+            if (!$result) {
                 return false;
+            }
         }
         $this->_metadatasArray[$id] = $metadatas;
         return true;
@@ -489,8 +501,9 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return boolean True if no problem
      */
     protected function _delMetadatas($id) {
-        if (isset($this->_metadatasArray[$id]))
+        if (isset($this->_metadatasArray[$id])) {
             unset($this->_metadatasArray[$id]);
+        }
         $file = $this->_metadatasFile($id);
         return $this->_remove($file);
     }
@@ -540,7 +553,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return string Metadatas file name (with path)
      */
     protected function _metadatasFile($id) {
-        $path;
+        $path = null;
         $filename = $this->getFilename($id . '.metadatas', $path);
 		return $path . $filename;
     }
@@ -552,11 +565,8 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return boolean True if it's a metadatas one
      */
     protected function _isMetadatasFile($fileName) {
-			$id = $this->_fileNameToId($fileName);
-			if (substr($id, strlen($id) - 10) == '.metadatas')
-				return true;
-			else
-				return false;
+        $id = $this->_fileNameToId($fileName);
+        return (substr($id, strlen($id) - 10) == '.metadatas');
     }
 
     /**
@@ -569,8 +579,9 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return boolean True if ok
      */
     protected function _remove($file) {
-			if (!is_file($file))
+			if (!is_file($file)) {
 				return false;
+            }
 			if (!@unlink($file)) { // we can't remove the file (because of locks or any problem)
 				global $application;
 				$application->log(E_USER_NOTICE, 'Kansas\Cache\File::_remove() : no podemos eliminar ' .$file);
@@ -599,34 +610,40 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return boolean True if no problem
      */
     protected function _clean($dir, $mode = Cache::CLEANING_MODE_ALL, $tags = array()) {
-        if (!is_dir($dir))
+        if (!is_dir($dir)) {
             return false;
+        }
         $result = true;
         $glob = glob($dir . $this->getFileNamePrefix() . '--*');
-        if ($glob === false) // On some systems it is impossible to distinguish between empty match and an error.
+        if ($glob === false) { // On some systems it is impossible to distinguish between empty match and an error.
             return true;
+        }
         foreach ($glob as $file)  {
             if (is_file($file)) {
                 $fileName = basename($file);
                 if ($this->_isMetadatasFile($fileName)) {
                     // in CLEANING_MODE_ALL, we drop anything, even remainings old metadatas files
-                    if ($mode != Cache::CLEANING_MODE_ALL)
+                    if ($mode != Cache::CLEANING_MODE_ALL) {
                         continue;
+                    }
                 }
                 $id = $this->_fileNameToId($fileName);
                 $metadatas = $this->_getMetadatas($id);
-                if ($metadatas === FALSE)
+                if ($metadatas === FALSE) {
                     $metadatas = array('expire' => 1, 'tags' => array());
+                }
                 switch ($mode) {
                     case Cache::CLEANING_MODE_ALL:
                         $res = $this->remove($id);
-                        if (!$res) // in this case only, we accept a problem with the metadatas file drop
+                        if (!$res) { // in this case only, we accept a problem with the metadatas file drop
                             $res = $this->_remove($file);
+                        }
                         $result = $result && $res;
                         break;
                     case Cache::CLEANING_MODE_OLD:
-                        if (time() > $metadatas['expire'])
+                        if (time() > $metadatas['expire']) {
                             $result = $this->remove($id) && $result;
+                        }
                         break;
                     case Cache::CLEANING_MODE_MATCHING_TAG:
                         $matching = true;
@@ -636,8 +653,9 @@ class File extends Cache implements ExtendedCacheInterface {
                                 break;
                             }
                         }
-                        if ($matching)
+                        if ($matching) {
                             $result = $this->remove($id) && $result;
+                        }
                         break;
                     case Cache::CLEANING_MODE_NOT_MATCHING_TAG:
                         $matching = false;
@@ -647,8 +665,9 @@ class File extends Cache implements ExtendedCacheInterface {
                                 break;
                             }
                         }
-                        if (!$matching)
+                        if (!$matching) {
                             $result = $this->remove($id) && $result;
+                        }
                         break;
                     case Cache::CLEANING_MODE_MATCHING_ANY_TAG:
                         $matching = false;
@@ -658,8 +677,9 @@ class File extends Cache implements ExtendedCacheInterface {
                                 break;
                             }
                         }
-                        if ($matching)
+                        if ($matching) {
                             $result = $this->remove($id) && $result;
+                        }
                         break;
                     default:
                         require_once 'System/ArgumentOutOfRangeException.php';
@@ -670,19 +690,22 @@ class File extends Cache implements ExtendedCacheInterface {
             if ((is_dir($file)) and ($this->options['hashed_directory_level']>0)) {
                 // Recursive call
                 $result = $this->_clean($file . DIRECTORY_SEPARATOR, $mode, $tags) && $result;
-                if ($mode=='all') // if mode=='all', we try to drop the structure too
+                if ($mode=='all') { // if mode=='all', we try to drop the structure too
                     @rmdir($file);
+                }
             }
         }
         return $result;
     }
 
     protected function _get($dir, $mode, $tags = []) {
-        if (!is_dir($dir))
-					return false;
+        if (!is_dir($dir)) {
+            return false;
+        }
         $glob = glob($dir . $this->getFileNamePrefix() . '--*');
-        if ($glob === false) // On some systems it is impossible to distinguish between empty match and an error.
-					return [];
+        if ($glob === false) { // On some systems it is impossible to distinguish between empty match and an error.
+            return [];
+        }
         $result = [];
         foreach ($glob as $file)  {
             if (is_file($file)) {
@@ -764,8 +787,9 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return int expire time (unix timestamp)
      */
     protected function _expireTime($lifetime) {
-        if ($lifetime === null)
+        if ($lifetime === null) {
             return 9999999999;
+        }
         return time() + $lifetime;
     }
 
@@ -807,7 +831,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * Devuelve un archivo
      *
      * @param  string $id Cache id
-     * @return string File name (with path)
+     * @return System\IO\File File name (with path)
      */
     protected function getFile($id) {
         global $environment;
@@ -831,15 +855,16 @@ class File extends Cache implements ExtendedCacheInterface {
                 $root = $root . $this->getFileNamePrefix() . '--' . substr($hash, 0, $i + 1) . DIRECTORY_SEPARATOR;
                 $partsArray[] = $root;
             }
-            if (!is_writable($path)) // maybe, we just have to build the directory structure
+            if (!is_writable($path)) { // maybe, we just have to build the directory structure
                 $this->_recursiveMkdirAndChmod($partsArray);
-            if (!is_writable($path))
+            }
+            if (!is_writable($path)) {
                 return $root;
+            }
         }
-        if ($parts)
-            return $partsArray;
-        else
-            return $root;
+        return $parts
+            ? $partsArray
+            : $root;
     }
 
     /**
@@ -867,10 +892,12 @@ class File extends Cache implements ExtendedCacheInterface {
      */
     protected function _test($id, $doNotTestCacheValidity) {
         $metadatas = $this->_getMetadatas($id);
-        if (!$metadatas)
+        if (!$metadatas) {
             return false;
-        if ($doNotTestCacheValidity || (time() <= $metadatas['expire']))
+        }
+        if ($doNotTestCacheValidity || (time() <= $metadatas['expire'])) {
             return $metadatas['mtime'];
+        }
         return false;
     }
 

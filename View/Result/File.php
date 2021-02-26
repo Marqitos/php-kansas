@@ -1,6 +1,16 @@
 <?php 
+/**
+ * Representa el resultado de una solicitud, en la que se va a devolver un archivo
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
+
 namespace Kansas\View\Result;
 
+use MIME_Type;
 use Kansas\View\Result\FileAbstract;
 use function realpath;
 use function finfo_open;
@@ -49,34 +59,35 @@ class File extends FileAbstract {
     parent::sendHeaders();
     
     if($this->getUseXSendFile()) {
-      if(strtolower(substr(php_uname('s'), 0, 3)) == 'win')
-        $filename = str_replace('\\', '/', $this->_filename);
-      else
-        $filename = $this->_filename;
+      $filename = (strtolower(substr(php_uname('s'), 0, 3)) == 'win')
+        ? str_replace('\\', '/', $this->_filename)
+        : $this->_filename;
       header("X-SENDFILE: " . $filename);
     } else {
       $buffer = ''; 
       $cnt =0; 
       $handle = fopen($this->_filename, 'rb'); 
-      if ($handle === false) 
+      if ($handle === false) {
         return false; 
+      }
       while (!feof($handle)) { 
         $buffer = fread($handle, $this->_chunksize); 
         echo $buffer; 
         ob_flush(); 
         flush(); 
-        if ($this->_retbytes)
+        if ($this->_retbytes) {
           $cnt += strlen($buffer); 
+        }
       } 
       $status = fclose($handle); 
-      return ($this->_retbytes && $status)?
-        $cnt: // return num. bytes delivered like readfile() does. 
-        $status; 
+      return ($this->_retbytes && $status)
+        ? $cnt // return num. bytes delivered like readfile() does.
+        : $status; 
     }
   }
  
-  public function getUseXSendFile() { // Por defecto devuelve true
-    return !function_exists('apache_get_modules') || in_array('mod_xsendfile', apache_get_modules());
+  public function getUseXSendFile() {
+    return function_exists('apache_get_modules') && in_array('mod_xsendfile', apache_get_modules());
   }
 
 }

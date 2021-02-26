@@ -1,4 +1,12 @@
 <?php
+/**
+ * Representa el resultado de una solicitud, en la que se va a devolver codigo css a partir de scss
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\View\Result;
 

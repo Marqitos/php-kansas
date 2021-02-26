@@ -1,4 +1,12 @@
 <?php
+/**
+ * Proporciona la funcionalidad basica de un router (MVC)
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas;
 
@@ -45,10 +53,12 @@ abstract class Router extends Configurable implements RouterInterface {
 		require_once 'System/String/startWith.php';
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
 		$basePath = $router->getBasePath();
-		if(!startWith($path, $basePath))
+		if(!startWith($path, $basePath)) {
 			return false;
-		if(substr($path, strlen($basePath)) == false)
+		}
+		if(!substr($path, strlen($basePath))) {
 			return '';
+		}
 		return substr($path, strlen($basePath));
 	}
 	

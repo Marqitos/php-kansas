@@ -1,4 +1,12 @@
 <?php
+/**
+ * Proporciona un creador de titulos
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\TitleBuilder;
 
@@ -71,21 +79,15 @@ class DefaultTitleBuilder extends Configurable implements TitleBuilderInterface 
 	}
 	
 	public function __toString() {
-		if(count($this->_items) == 0)
+		if(count($this->_items) == 0) {
 			$result = [$this->options['title']];
-		elseif(empty($this->options['title']))
+		} elseif(empty($this->options['title'])) {
 			$result = $this->_items;
-		else {
-			switch($this->options['attachOrder']) {
-				case self::APPEND:
-					$result = array_merge((array)$this->options['title'], $this->_items);
-					break;
-				default:
-					$result = array_merge($this->_items, (array)$this->options['title']);
-					break;
-			}
+		} else {
+			$result = ($this->options['attachOrder'] == self::APPEND)
+				? array_merge((array)$this->options['title'], $this->_items)
+				: array_merge($this->_items, (array)$this->options['title']);
 		}
-    return implode($this->getSeparator(), $result);
+		return implode($this->getSeparator(), $result);
 	}
-		
 }

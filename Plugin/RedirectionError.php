@@ -1,6 +1,16 @@
 <?php
+/**
+ * Plugin para causar una redirección en caso de error 404
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
+
 namespace Kansas\Plugin;
 
+use Exception;
 use System\Configurable;
 use System\NotSuportedException;
 use Kansas\Plugin\PluginInterface;
@@ -11,52 +21,51 @@ require_once 'Kansas/Plugin/PluginInterface.php';
 
 class RedirectionError extends Configurable implements PluginInterface {
 
-  private $next;
+	private $next;
 
 	public function __construct(array $options) {
-    parent::__construct($options);
-    global $application;
-    try {
-      $this->next = $application->getOptions()['error'];
-    } catch(Exception $ex) {
-      $this->next = [$application, 'errorManager'];
-    }
+		parent::__construct($options);
+		global $application;
+		try {
+			$this->next = $application->getOptions()['error'];
+		} catch(Exception $ex) {
+			$this->next = [$application, 'errorManager'];
+		}
 		$application->setOption('error', [$this, 'errorManager']);
 	}
   
-  /// Miembros de Kansas_Module_Interface
-  public function getDefaultOptions($environment) {
-    switch ($environment) {
-      case 'production':
-      case 'development':
-      case 'test':
-        return [
-          'basePath' => '',
-          'append'   => true
-        ];
-      default:
-        require_once 'System/NotSuportedException.php';
-        throw new NotSuportedException("Entorno no soportado [$environment]");
-    }
-  }
+	/// Miembros de Kansas_Module_Interface
+	public function getDefaultOptions($environment) : array {
+		switch ($environment) {
+		case 'production':
+		case 'development':
+		case 'test':
+			return [
+				'basePath' => '',
+				'append'   => true];
+		default:
+			require_once 'System/NotSuportedException.php';
+			throw new NotSuportedException("Entorno no soportado [$environment]");
+		}
+	}
   
-  public function getVersion() {
+	public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
-	}	  
+	}
   
-  public function errorManager($params) {
-    global $application;
-    if($params['code'] == 404 && $path = $this->options['basePath']) {
-      global $environment;
-      if($this->options['append'])
-        $path = rtrim($path, '/') . $environment->getRequest()->getRequestUri();
-      require_once 'Kansas/View/Result/Redirect.php';
-      $result = Redirect::gotoUrl($path);
-      $result->executeResult();
-    } else {
-      call_user_func($this->next, $params);
-    }
-  }
+	public function errorManager($params) {
+		if($params['code'] == 404 && $path = $this->options['basePath']) {
+			global $environment;
+			if($this->options['append']) {
+				$path = rtrim($path, '/') . $environment->getRequest()->getRequestUri();
+			}
+			require_once 'Kansas/View/Result/Redirect.php';
+			$result = Redirect::gotoUrl($path);
+			$result->executeResult();
+		} else {
+			call_user_func($this->next, $params);
+		}
+	}
   
 }

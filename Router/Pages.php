@@ -1,4 +1,13 @@
 <?php
+/**
+ * Proporciona enrutamiento estatico mediante la coincidencia con la ruta
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
+
 namespace Kansas\Router;
 
 use Kansas\Router;
@@ -22,10 +31,11 @@ class Pages extends Router {
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
     
         $pages = $this->options['pages'];
-        if($path == '' && isset($pages['.']))
+        if($path == '' && isset($pages['.'])) {
             $params = $this->getParams($pages['.']);
-        elseif(isset($pages[$path]))
+        } elseif(isset($pages[$path])) {
             $params = $this->getParams($pages[$path]);
+        }
             
         return $params;
     }
