@@ -1,4 +1,12 @@
 <?php
+/**
+ * Controlador principal en una aplicación con patrón MVC
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.1
+ */
 
 namespace Kansas\Controller;
 use Kansas\Controller\AbstractController;
@@ -10,11 +18,11 @@ use System\ArgumentOutOfRangeException;
 use System\ArgumentNullException;
 
 use function call_user_func;
+use function get_class;
+use function header;
 use function http_response_code;
 use function is_callable;
-use function get_class;
 use function is_string;
-use function header;
 
 require_once 'Kansas/Controller/AbstractController.php';
 
@@ -23,16 +31,19 @@ class Index	extends AbstractController {
 	private static $actions = [];
 
 	public function callAction ($action, array $vars) {
-		if(is_callable([$this, $action]))
+		if(is_callable([$this, $action])) {
 			return $this->$action($vars);
-		if(isset(self::$actions[$action]))
+		}
+		if(isset(self::$actions[$action])) {
 			return call_user_func(self::$actions[$action], $this, $vars);
+		}
 		require_once 'System/NotImplementedException.php';
 		throw new NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
 	}
 
 	public static function addAction($actionName, callable $callback) {
 		if(!is_string($actionName)) {
+			require_once 'System/ArgumentOutOfRangeException.php';
 			throw new ArgumentOutOfRangeException('actionName');
 		}
 		self::$actions[$actionName] = $callback;
@@ -40,6 +51,7 @@ class Index	extends AbstractController {
 
 	public function template(array $vars = []) {
 		if(!isset($vars['template'])) {
+			require_once 'System/ArgumentOutOfRangeException.php';
 			throw new ArgumentNullException('vars["template"]');
 		}
 		$template = $vars['template'];
@@ -49,6 +61,7 @@ class Index	extends AbstractController {
 	
 	public function redirection(array $vars = []) {
 		if(!isset($vars['gotoUrl'])) {
+			require_once 'System/ArgumentOutOfRangeException.php';
 			throw new ArgumentNullException('vars["gotoUrl"]');
 		}
 		
