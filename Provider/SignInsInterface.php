@@ -8,6 +8,7 @@
  * @since v0.4
  */
 
+namespace Kansas\Provider;
 
 interface SignInsInterface {
 	/**
