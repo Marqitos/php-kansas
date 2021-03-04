@@ -1,4 +1,12 @@
 <?php
+/**
+ * Plugin para el manejo de archivos sass
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 require_once 'Kansas/Plugin/Abstract.php';
 require_once 'Kansas/Controller/Index.php';
@@ -7,11 +15,10 @@ class Kansas_Module_Sass
   extends Kansas_Module_Abstract {
 		
 	private $_parser;
-	private $_router;
 
 	public function __construct(array $options) {
-    parent::__construct($options);
-    Kansas_Controller_Index::addAction('sass', [$this, 'controllerAction']);
+		parent::__construct($options);
+		Kansas_Controller_Index::addAction('sass', [$this, 'controllerAction']);
 	}
 
   /// Miembros de Kansas_Module_Interface

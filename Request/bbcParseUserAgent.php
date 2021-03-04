@@ -1,4 +1,12 @@
 <?php
+/**
+ * Devuelve un elemento que cumple unas reglas de USER_AGENT
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Request;
 
@@ -23,7 +31,7 @@ function bbcParseUserAgent($userAgent, array $items) {
                     $str = preg_replace(":\\\\([0-9]{1}):", "\$regs[\\1]", $note);
                     eval("\$str = \"$str\";");
                     $result['note'] = $str;
-                } else if (preg_match(":^text\:.*:", $note)) {
+                } elseif (preg_match(":^text\:.*:", $note)) {
                     $result['note'] = substr($note, 5);
                 }
                 unset($result['rule']);

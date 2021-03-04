@@ -43,9 +43,9 @@ abstract class Router extends Configurable implements RouterInterface {
 	}
 	
 	public function assemble($data = [], $reset = false, $encode = false) {
-		return isset($data['basepath']) ?
-			$data['basepath']:
-			'/' . $this->getBasePath();
+		return isset($data['basepath']) 
+			? $data['basepath']
+			: '/' . $this->getBasePath();
 	}
 
 	public static function getPath(RouterInterface $router) {
