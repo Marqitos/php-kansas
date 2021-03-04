@@ -1,10 +1,18 @@
 <?php
+/**
+ * Plugin para clasificar varias rutas base con formas de interaccion diferentes (Web html, API, ...).
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Plugin;
 
 use System\Configurable;
 use Kansas\Plugin\PluginInterface;
-use System\NotSuportedException;
+use System\NotSupportedException;
 use Kansas\Plugin\Zone\ZoneInterface;
 
 use function System\String\startWith;
@@ -27,8 +35,8 @@ class Zones extends Configurable implements PluginInterface {
 		case 'test':
 			return [];
 		default:
-			require_once 'System/NotSuportedException.php';
-			throw new NotSuportedException("Entorno no soportado [$environment]");
+			require_once 'System/NotSupportedException.php';
+			throw new NotSupportedException("Entorno no soportado [$environment]");
 		}
 	}
 

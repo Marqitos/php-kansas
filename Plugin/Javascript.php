@@ -11,7 +11,7 @@
 namespace Kansas\Plugin;
 
 use System\Configurable;
-use System\NotSuportedException;
+use System\NotSupportedException;
 use Kansas\Controller\ControllerInterface;
 use Kansas\Controller\Index;
 use Kansas\Plugin\PluginInterface;
@@ -53,8 +53,8 @@ class Javascript extends Configurable implements PluginInterface {
 				'packages' => [],
 				'minifier' => false]; // En entorno de desarrollo no minimiza la salida de javascript
 		default:
-			require_once 'System/NotSuportedException.php';
-			throw new NotSuportedException("Entorno no soportado [$environment]");
+			require_once 'System/NotSupportedException.php';
+			throw new NotSupportedException("Entorno no soportado [$environment]");
 		}
 	}
 

@@ -1,9 +1,18 @@
 <?php
+/**
+ * Router que devuelve las imagenes sobre navegadores, sistemas operativos, robots y regiones.
+ * Correspondientes a los datos de acceso de dispositivos
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Router;
 
 use Kansas\Router;
-use System\NotSuportedException;
+use System\NotSupportedException;
 use Kansas\Environment;
 
 require_once 'Kansas/Router.php';
@@ -15,7 +24,7 @@ class TrailResources extends Router {
     }
     
     /// Miembros de Kansas\Configurable
-    public function getDefaultOptions($environmentStatus) {
+    public function getDefaultOptions($environmentStatus) : array {
         global $environment;
         switch ($environmentStatus) {
             case 'production':
@@ -32,8 +41,8 @@ class TrailResources extends Router {
                     ]
                 ];
             default:
-                require_once 'System/NotSuportedException.php';
-                throw new NotSuportedException("Entorno no soportado [$environmentStatus]");
+                require_once 'System/NotSupportedException.php';
+                throw new NotSupportedException("Entorno no soportado [$environmentStatus]");
         }
     }
 

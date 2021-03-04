@@ -1,8 +1,17 @@
 <?php
+/**
+ * Plugin para la autentificación mediante HTTP Digest
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
-namespace Kansas\Plugin;
+ namespace Kansas\Plugin;
 
 use System\Configurable;
+use System\NotSupportedException;
 use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Auth\AuthException;
@@ -47,8 +56,8 @@ class Digest extends Configurable implements PluginInterface, AuthService {
                 'actions' => [
             ]];
         default:
-            require_once 'System/NotSuportedException.php';
-            throw new NotSuportedException("Entorno no soportado [$environment]");
+            require_once 'System/NotSupportedException.php';
+            throw new NotSupportedException("Entorno no soportado [$environment]");
         }
     }
     
@@ -73,6 +82,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
 
       /// Eventos de la aplicación
     public function appPreInit() {
+        global $application;
         $authPlugin = $application->getPlugin('Auth');
         $authPlugin->addAuthService($this);
     }

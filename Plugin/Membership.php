@@ -1,4 +1,12 @@
 <?php
+/**
+ * Plugin para la autenticación mediante usuario y contraseña
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Plugin;
 
@@ -6,7 +14,7 @@ use Exception;
 use System\Configurable;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Auth\ServiceInterface as AuthService;
-use System\NotSuportedException;
+use System\NotSupportedException;
 use Kansas\Auth\AuthException;
 
 require_once 'System/Configurable.php';
@@ -26,7 +34,7 @@ class Membership extends Configurable implements PluginInterface, AuthService {
   }
   
   /// Miembros de Kansas_Module_Interface
-  public function getDefaultOptions($environment) {
+  public function getDefaultOptions($environment) : array {
     switch ($environment) {
       case 'production':
       case 'development':
@@ -55,8 +63,8 @@ class Membership extends Configurable implements PluginInterface, AuthService {
           ]
         ];
       default:
-        require_once 'System/NotSuportedException.php';
-        throw new NotSuportedException("Entorno no soportado [$environment]");
+        require_once 'System/NotSupportedException.php';
+        throw new NotSupportedException("Entorno no soportado [$environment]");
     }
   }
 
@@ -78,7 +86,7 @@ class Membership extends Configurable implements PluginInterface, AuthService {
     return "membership";
   }
 
-  
+  // TODO: Adaptar proveedores de datos mediante configuración
   public function authenticate($email, $password, $remember, $remoteAddress, $userAgent) {
     require_once 'Kansas/Auth/AuthException.php';
     global $application;

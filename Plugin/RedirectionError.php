@@ -12,7 +12,7 @@ namespace Kansas\Plugin;
 
 use Exception;
 use System\Configurable;
-use System\NotSuportedException;
+use System\NotSupportedException;
 use Kansas\Plugin\PluginInterface;
 use Kansas\View\Result\Redirect;
 
@@ -44,8 +44,8 @@ class RedirectionError extends Configurable implements PluginInterface {
 				'basePath' => '',
 				'append'   => true];
 		default:
-			require_once 'System/NotSuportedException.php';
-			throw new NotSuportedException("Entorno no soportado [$environment]");
+			require_once 'System/NotSupportedException.php';
+			throw new NotSupportedException("Entorno no soportado [$environment]");
 		}
 	}
   

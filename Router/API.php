@@ -1,9 +1,17 @@
 <?php
+/**
+ * Plugin que representa la API de una aplicación web
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Router;
 
 use Kansas\Router;
-use System\NotSuportedException;
+use System\NotSupportedException;
 
 require_once 'Kansas/Router.php';
 
@@ -22,8 +30,8 @@ class API extends Router {
 					'params'	=> []
 				];
 			default:
-				require_once 'System/NotSuportedException.php';
-				throw new NotSuportedException("Entorno no soportado [$environment]");
+				require_once 'System/NotSupportedException.php';
+				throw new NotSupportedException("Entorno no soportado [$environment]");
 		}
 	}
 

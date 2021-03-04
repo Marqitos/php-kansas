@@ -1,6 +1,16 @@
 <?php
-namespace Kansas\Provider;
+/**
+ * Proveedor MySql para acceso a datos de usuario
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
+ namespace Kansas\Provider;
+
+use System\NotSupportedException;
 use Kansas\Provider\AbstractDb;
 use System\Guid;
 
@@ -88,8 +98,10 @@ class Users extends AbstractDb {
 	
   // Guarda los datos de un nuevo usuario, y establece su ID
 	public function create(array &$row) {
-    if(isset($row['id']))
-      throw new System_NotSuportedException();
+    if(isset($row['id'])) {
+		require_once 'System/NotSupportedException.php';
+		throw new NotSupportedException();
+	}
     
     $id = Guid::newGuid();
     $sql = "INSERT INTO `users` (`id`, `name`, `email`, `comment`) VALUES (UNHEX(?), ?, ?, ?)";

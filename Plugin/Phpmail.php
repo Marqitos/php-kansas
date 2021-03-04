@@ -1,10 +1,17 @@
 <?php
+/**
+ * Plugin para el envío de mensajes utilizando PHPMailer
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Plugin;
 
-use Exception;
 use System\Configurable;
-use System\NotSuportedException;
+use System\NotSupportedException;
 use Kansas\Environment;
 use Kansas\View\Template;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -21,8 +28,6 @@ class Phpmail extends Configurable implements PluginInterface {
         require_once 'PHPMailer/PHPMailer/SMTP.php';
 		parent::__construct($options);
     }
-    
-
   
 	// Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions($environment) : array {
@@ -38,18 +43,18 @@ class Phpmail extends Configurable implements PluginInterface {
                 // SMTP::DEBUG_CLIENT = client messages
                 // SMTP::DEBUG_SERVER = client and server messages
                 'debug'     => SMTP::DEBUG_OFF,
-                'host'      => 'dns134198.phdns18.es',
-                'port'      => 587,
-                'auth'      => true,
-                'username'  => 'reprogalicia@reprogalicia.com',
-                'password'  => 'g2R7&y4v',
-                'fromEmail' => 'reprogalicia@reprogalicia.com',
-                'fromName'  => 'Reprogalicia'
+                'host'      => '',
+                'port'      => 0,
+                'auth'      => false,
+                'username'  => '',
+                'password'  => '',
+                'fromEmail' => '',
+                'fromName'  => ''
             ]
         ];
         default:
-            require_once 'System/NotSuportedException.php';
-            throw new NotSuportedException("Entorno no soportado [$environment]");
+            require_once 'System/NotSupportedException.php';
+            throw new NotSupportedException("Entorno no soportado [$environment]");
         }
     }
 
@@ -83,7 +88,6 @@ class Phpmail extends Configurable implements PluginInterface {
         $txtMessage = $template->fetch();
 
         $mail = $this->getSMTP();
-        //$mail->addAddress('informatica@reprogalicia.com', 'Marcos Porto');
         $mail->addAddress($to);
         $mail->Subject = $subject;
         $mail->msgHTML($htmlMessage);

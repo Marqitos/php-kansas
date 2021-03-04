@@ -3,8 +3,6 @@
  * Proporciona almacenamiento en cache mediante ficheros
  *
  * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
  * @since v0.4
  */
 
@@ -13,7 +11,7 @@ namespace Kansas\Cache;
 use System\ArgumentOutOfRangeException;
 use System\IO\DirectoryNotFoundException;
 use System\IO\IOException;
-use System\NotSuportedException;
+use System\NotSupportedException;
 use Kansas\Cache;
 use Kansas\Cache\ExtendedCacheInterface;
 use Kansas\Environment;
@@ -104,16 +102,16 @@ class File extends Cache implements ExtendedCacheInterface {
                     'metadatas_array_max_size' => 100
                 ];
             default:
-                require_once 'System/NotSuportedException.php';
-                throw new NotSuportedException("Entorno no soportado [$enviromentStatus]");
+                require_once 'System/NotSupportedException.php';
+                throw new NotSupportedException("Entorno no soportado [$enviromentStatus]");
         }
     }
 
     /**
      * Obtiene el directorio de cache
      *
-     * @throws System_IO_DirectoryNotFoundException
-     * @throws System_IO_IOException
+     * @throws DirectoryNotFoundException
+     * @throws IOException
      * @return string
      */
     protected function getCacheDir() {
@@ -138,7 +136,7 @@ class File extends Cache implements ExtendedCacheInterface {
     /**
      * Obtiene el prefijo de los archivos de cache
      *
-     * @throws System_IO_IOException
+     * @throws IOException
      * @return string
      */
     protected function getFileNamePrefix() {
@@ -159,14 +157,14 @@ class File extends Cache implements ExtendedCacheInterface {
     /**
      * Obtiene el maximo de metadatos que se pueden almacenar
      *
-     * @throws System_ArgumentOutOfRangeException
+     * @throws NotSupportedException
      * @return string
      */
     protected function getMetadatasArrayMaxSize() {
         if($this->_metadatasArrayMaxSize == null) {
             if ($this->options['metadatas_array_max_size'] < 10) {
-                require_once 'System/ArgumentOutOfRangeException.php';
-                throw new ArgumentOutOfRangeException('Invalid metadatas_array_max_size, must be > 10');
+                require_once 'System/NotSupportedException.php';
+                throw new NotSupportedException('Invalid metadatas_array_max_size, must be > 10');
             }
             $this->_metadatasArrayMaxSize = $this->options['metadatas_array_max_size'];
         }

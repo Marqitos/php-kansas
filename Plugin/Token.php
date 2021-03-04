@@ -1,4 +1,12 @@
 <?php
+/**
+ * Plugin para el uso de tokesn JWT
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Plugin;
 
@@ -7,10 +15,12 @@ use Kansas\Router\Token as router;
 use System\ArgumentOutOfRangeException;
 use System\Configurable;
 use System\Guid;
-use System\NotSuportedException;
+use System\NotSupportedException;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Signer\Key;
+use Lcobucci\JWT\Token as JWToken;
 
 use function time;
 use function Kansas\Request\getTrailData;
@@ -41,8 +51,8 @@ class Token extends Configurable implements PluginInterface {
                     'secret'    => false
                 ];
             default:
-                require_once 'System/NotSuportedException.php';
-                throw new NotSuportedException("Entorno no soportado [$environment]");
+                require_once 'System/NotSupportedException.php';
+                throw new NotSupportedException("Entorno no soportado [$environment]");
         }
     }
 
@@ -71,17 +81,20 @@ class Token extends Configurable implements PluginInterface {
         if($this->options['secret']) { // Comprobar firma mediante Hmac/Sha256
             require_once 'Lcobucci/JWT/Signer/Hmac/Sha256.php';
             $signer = new Sha256();
-            if(!$token->verify($signer, $this->options['secret']))
+            if(!$token->verify($signer, $this->options['secret'])) {
                 return false;
+            }
         }
         if($this->options['device'] === true) { // Comprobar dispositivo
-            if(!$token->hasClaim('dev'))
+            if(!$token->hasClaim('dev')) {
                 return false;
+            }
             require_once 'Kansas/Request/getTrailData.php';
 			$request = $environment->getRequest();
             $userAgent = getTrailData($request)['userAgent'];
-            if(md5($userAgent, true) != hex2bin($token->getClaim('dev')))
+            if(md5($userAgent, true) != hex2bin($token->getClaim('dev'))) {
                 return false;
+            }
         }
         return $token;
     }
@@ -106,39 +119,11 @@ class Token extends Configurable implements PluginInterface {
             unset($data['user']);
         }
         $data = array_merge($tokenData, $data);
-        if(isset($data['exp']) && $data['exp'] = false)
+        if(isset($data['exp']) && !$data['exp']) {
             unset($data['exp']);
+        }
         $token = $this->createToken($data);
         $id = new Guid($token->getClaim('jti'));
-
-/*
-        global $application;
-        require_once 'System/Guid.php';
-        require_once 'Lcobucci/JWT/Builder.php';
-        $id = Guid::newGuid();
-        $builder = new Builder();
-        $builder->setIssuer('https://caybemarmoleria.es')   // Configures the issuer (iss claim)
-            ->setId($id->getHex())                          // Configures the id (jti claim)
-            ->setIssuedAt(time())                           // Configures the time that the token was issued (iat claim)
-            ->setExpiration(time() + $this->options['exp']);    // Configures the expiration time of the token (exp claim)
-        if(isset($data['user'])) {
-            if($data['user'] instanceof Guid)
-                $builder->setSubject($data['user']->getHex());
-            else
-                $builder->setSubject($data['user']);
-            unset($data['user']);
-        }
-        foreach($data as $key => $value)
-            $builder->set($key, $value);
-        if($this->options['secret']) { // Firma el token mediante Hmac/Sha256
-            require_once 'Lcobucci/JWT/Signer/Hmac/Sha256.php';
-            $signer = new Sha256();
-            $builder->sign($signer, $this->options['secret']); // creates a signature
-        }
-        $token = $builder->getToken();
-        $provider = $application->getProvider('token');
-        $provider->saveToken($id, $token);
-*/
 
         if($this->options['secret']) { // Devuelve un enlace firmado
             $signature = explode('.', (string) $token)[2];
@@ -166,59 +151,72 @@ class Token extends Configurable implements PluginInterface {
             'exp'   => time() + $this->options['exp']
         ], $data);
         $builder = new Builder();
-        foreach($data as $claim => $value)
-            $builder->set($claim, $value);
-        if(isset($data['jti'])) // Establecemos Id
-            $id = new Guid($data['jti']);
-        else {
-            $id = Guid::newGuid();
-            $builder->setId($id->getHex());
+        foreach($data as $claim => $value) {
+            $builder->withClaim($claim, $value);
         }
-        if($device === null)
+        if(isset($data['jti'])) { // Establecemos Id
+            $id = new Guid($data['jti']);
+        } else {
+            $id = Guid::newGuid();
+            $builder->identifiedBy($id->getHex());
+        }
+        if($device === null) {
             $device = $this->options['device'];
+        }
         if($device === true) {
             require_once 'Kansas/Request/getTrailData.php';
 			$request = $environment->getRequest();
             $userAgent = getTrailData($request)['userAgent'];
-            $builder->set('dev', md5($userAgent)); // guardar información del dispositivo
+            $builder->withClaim('dev', md5($userAgent)); // guardar información del dispositivo
         }
         if($this->options['secret']) { // Firma el token mediante Hmac/Sha256
             require_once 'Lcobucci/JWT/Signer/Hmac/Sha256.php';
             $signer = new Sha256();
-            $builder->sign($signer, $this->options['secret']); // creates a signature
+            $key = new Key($this->options['secret']);
+            $token = $builder->getToken($signer, $key); // creates a signature
+        } else {
+            $token = $builder->getToken();
         }
-        $token = $builder->getToken();
         $provider = $application->getProvider('token');
         $provider->saveToken($id, $token);
         return $token;
     }
-/*                
-    public function getToken($device = true) {
+
+    public function updateToken(JWToken $token, array $changes) {
         global $application;
-        $auth = $application->getPlugin('auth');
-        if(!$auth->hasIdentity())
-            return false;
-        
-        global $application;
-        $userId		= $auth->getIdentity()->getId();
-        $deviceId	= $device && $application->hasPlugin('track') 
-            ? $application->getPlugin('track')->getDevice()->getId()
-            : null;
-        $token = $application->getProvider('Token')->getToken($userId, $deviceId);
-        if($token == null)
-            $token = $application->getProvider('Token')->createToken($userId, $deviceId);
+        require_once 'System/Guid.php';
+        require_once 'Lcobucci/JWT/Builder.php';
+        $claims = $token->getClaims();
+        $data = [];
+        foreach($claims as $claim) {
+            if(isset($changes[$claim->getName()])) {
+                $data[$claim->getName()] = $changes[$claim->getName()];
+                unset($changes[$claim->getName()]);
+            } else {
+                $data[$claim->getName()] = $claim->getValue();
+            }
+        }
+        $data = array_merge($data, $changes);
+        $builder = new Builder();
+        foreach($data as $claim => $value) {
+            $builder->withClaim($claim, $value);
+        }
+        if($this->options['secret']) { // Firma el token mediante Hmac/Sha256
+            require_once 'Lcobucci/JWT/Signer/Hmac/Sha256.php';
+            $signer = new Sha256();
+            $key = new Key($this->options['secret']);
+            $token = $builder->getToken($signer, $key); // creates a signature
+        } else {
+            $token = $builder->getToken();
+        }
+        if(isset($data['jti'])) { // Establecemos Id
+            $id = new Guid($data['jti']);
+            $provider = $application->getProvider('token');
+            $provider->saveToken($id, $token);
+        }
         return $token;
     }
-    
-    public function getAuthTokenUrl($url, $device = true) {
-        global $application;
-        return $_SERVER['SERVER_NAME'] . '/' . $application->getPlugin('Users')->getBasePath() . 'token?' . http_build_query([
-            'token' => $this->getToken($device),
-            'ru'	=> $url
-        ]);
-    }
-    
-    */
+
     public function getRouter() {
         if(!isset($this->router)) {
             require_once 'Kansas/Router/Token.php';

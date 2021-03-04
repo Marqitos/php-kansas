@@ -1,8 +1,10 @@
 <?php
+
 namespace Kansas\Auth\Session;
 
 use System\Configurable;
 use System\Guid;
+use System\NotSupportedException;
 use Kansas\Auth\Session\SessionInterface;
 
 use function intval;
@@ -31,8 +33,8 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
                     'domain'    => ''
                 ];
             default:
-                require_once 'System/NotSuportedException.php';
-                throw new NotSuportedException("Entorno no soportado [$environment]");
+                require_once 'System/NotSupportedException.php';
+                throw new NotSupportedException("Entorno no soportado [$environment]");
         }
     }
 
@@ -75,8 +77,9 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
             $lifetime += time();
             $data['exp'] = $lifetime;
         }
-        if($domain !== null)
+        if($domain !== null) {
             $data['aud'] = $domain;
+        }
         $this->token = $tokenPlugin->createToken($data);
         setcookie( // Establecer cookie
             'token',
@@ -102,8 +105,9 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
     }
     
     public function initialize($cookie = false, $lifetime = null, $domain = null) {
-        if($this->initialized)
+        if($this->initialized) {
             return;
+        }
         global $application, $environment;
         $request = $environment->getRequest();
         if($request->hasHeader('Authorization')) { // Obtener sessión de headers
@@ -129,25 +133,22 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
                 $userId = false;
                 $this->tryParseUser($this->token->getClaim('sub'), $userId);
                 $usersProvider = $application->getProvider('users');
-                $user = $usersProvider->getById($userId);
-                if($user && $user['isEnabled'])
-                    $this->user = $user;
+                $userRow = $usersProvider->getById($userId);
+                if($userRow && $userRow['isEnabled']) {
+                    $this->user = $userRow;
+                }
             }
             if( $this->token && 
                 $this->token->hasClaim('exp') &&
-                $lifetime > 0) { // Renovar cookie si es necesario
+                $lifetime > 0) { // Renovar token si es necesario
                 $updateTime = intval($this->token->getClaim('exp')) - ($lifetime / 2);
-                if($updateTime > time()) {
+                if($updateTime < time()) {
                     $lifetime += time();
-                    $this->token->setClaim('exp', $lifetime);
                     $tokenPlugin = $application->getPlugin('token'); // crear token
-                    $this->token = $tokenPlugin->updateToken($this->token);
-                    setcookie( // Establecer cookie
-                        'token',
-                        (string) $this->token,
-                        $lifetime,
-                        '/',
-                        $domain);
+                    $this->token = $tokenPlugin->updateToken($this->token, [
+                        'exp' => $lifetime
+                    ]);
+                    setcookie('token', (string) $this->token, $lifetime, '/', $domain); // Establecer cookie
                 }
             }
             $this->initialized = true;
@@ -176,8 +177,9 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
 
     public function getId() {
         $this->initialize();
-        if($this->token && $this->token->hasClaim('jti'))
+        if($this->token && $this->token->hasClaim('jti')) {
             return $this->token->getClaim('jti');
+        }
         return false;
     }
 
