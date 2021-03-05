@@ -46,13 +46,15 @@ class Template {
      * @param $index string Indice opcional, si se especifica se devolverá el dato guardado con esa clave, si existe o false si no existe. Si no se espedicica devuelve el array con todos los valores.
      * @return array|false|mixed Un array si no se especifica $index, y false o un valor si se especifica $index.
      */
-    public static function getDatacontext($index = null) {
+    public static function getDatacontext($index = null, $default = false) {
         if($index == null) {
             return self::$datacontext;
         } else if(isset(self::$datacontext[$index])) {
-            return self::$datacontext[$index];
+            return (is_array($default) && is_string(self::$datacontext[$index]))
+                ? [self::$datacontext[$index]]
+                : self::$datacontext[$index];
         } else {
-            return false;
+            return $default;
         }
     }
 
