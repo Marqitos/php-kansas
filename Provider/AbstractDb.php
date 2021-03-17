@@ -1,6 +1,16 @@
 <?php
+/**
+ * Representa un proveedor MySql para acceso a datos
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Provider;
+use function floatval;
+use function intval;
 
 abstract class AbstractDb {
 	
@@ -13,7 +23,7 @@ abstract class AbstractDb {
 		$this->cache = $application->hasPlugin('BackendCache');
 	}
 	
-	public function isInstalledDb() {
+	public function isInstalledDb($tableName, &$tableColumns) {
 		// SHOW DATABASES
 		// SHOW COLUMNS FROM mytable
 	}
@@ -23,5 +33,17 @@ abstract class AbstractDb {
 		//CREATE SCHEMA `mydb` DEFAULT CHARACTER SET utf8 ;
 		
 	}
+
+    public static function intOrNull($value) {
+        return $value == null
+            ? null
+            : intval($value);
+    }
+
+    public static function floatOrNull($value) {
+        return $value == null
+            ? null
+            : floatval($value);
+    }
 	
 }
