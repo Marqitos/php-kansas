@@ -77,4 +77,27 @@ class Template {
         return $title;     
     }
 
+    public static function parse($input, $outFormat, $inFormat = 'txt') {
+        if(is_array($input)) { // procesamos si input es un array ['format', 'value']
+            if(isset($input['format'])) {
+                $inFormat = $input['format'];
+            }
+            if(isset($input['value'])) {
+                $input = $input['value'];
+            }
+        }
+        if($inFormat == $outFormat) {
+            $output = $input;
+        }
+        if($inFormat == 'txt' &&
+           $outFormat == 'html') {
+            $output = nl2br(htmlentities($input));
+        }
+        if($inFormat == 'html' &&
+           $outFormat == 'txt') {
+            $output = strip_tags($input);
+        }
+        return $output;
+    }
+
 }
