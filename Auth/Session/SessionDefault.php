@@ -19,6 +19,7 @@ class SessionDefault implements SessionInterface {
      * @return mixed Devuelve un array con los datos de usuario, o false para sesiones no autenticadas
      */
     public function getIdentity() {
+        $this->initialize(false);
         return (isset($_SESSION['auth']))
             ? $_SESSION['auth']
             : false;
@@ -84,7 +85,7 @@ class SessionDefault implements SessionInterface {
      *
      * @return void
      */
-    public function appRender() { // desbloquear sesión
+    public function appRender() {
         session_write_close();
     }
 

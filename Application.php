@@ -216,11 +216,11 @@ class Application extends Configurable {
 		$controllerName = isset($params['controller'])
 						? ucfirst($params['controller'])
 						: 'Index';
-		unset($params['controller']);
 		$action         = isset($params['action'])
 						? $params['action']
 						: 'Index';
 		unset($params['action']);
+		unset($params['controller']);
 		$controller     = $environment->createController($controllerName);
 		$controller->init($params);
 		return $controller->callAction($action, $params);

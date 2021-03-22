@@ -10,6 +10,15 @@
 
 namespace Kansas\View;
 
+use function htmlentities;
+use function is_array;
+use function is_string;
+use function nl2br;
+use function ob_end_clean;
+use function ob_get_contents;
+use function ob_start;
+use function strip_tags;
+
 /**
  * Representa una plantilla
  */
@@ -43,14 +52,14 @@ class Template {
 
     /**
      * Obtiene el contexto en el que se debe rellenar la plantilla (Los datos para rellenarla).
-     * @param $index string Indice opcional, si se especifica se devolverá el dato guardado con esa clave, si existe o false si no existe. Si no se espedicica devuelve el array con todos los valores.
+     * @param $index string Indice opcional, si se especifica se devolverá el dato guardado con esa clave, si existe o false si no existe. Si no se especifica devuelve el array con todos los valores.
      * @return array|false|mixed Un array si no se especifica $index, y false o un valor si se especifica $index.
      */
     public static function getDatacontext($index = null, $default = false) {
         if($index == null) {
             return self::$datacontext;
         } else if(isset(self::$datacontext[$index])) {
-            return (is_array($default) && is_string(self::$datacontext[$index]))
+            return (is_array($default) && !is_array(self::$datacontext[$index]))
                 ? [self::$datacontext[$index]]
                 : self::$datacontext[$index];
         } else {

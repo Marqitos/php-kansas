@@ -342,7 +342,6 @@ class Environment {
 
     public function addLoaderPaths($loaderName, $options) {
         if(!isset($this->loaders[$loaderName])) {
-            var_dump($loaderName, $options);
             require_once 'System/Collections/KeyNotFoundException.php';
             throw new KeyNotFoundException();
         }
