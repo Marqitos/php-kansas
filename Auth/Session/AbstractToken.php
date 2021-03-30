@@ -6,6 +6,7 @@ use System\Configurable;
 use System\Guid;
 use System\NotSupportedException;
 use Kansas\Auth\Session\SessionInterface;
+use Kansas\Plugin\Token AS TokenPlugin;
 
 use function intval;
 use function System\String\startWith;
@@ -54,7 +55,12 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
      * @return mixed Devuelve un array con los datos de usuario, o false para sesiones no autenticadas
      */
     public function getIdentity() {
-        $this->initialize();
+        if(!$this->initialized) {
+            global $application;
+            $localizationPlugin     = $application->getPlugin('Localization');
+            $locale                 = $localizationPlugin->getLocale();
+            $this->initialize($locale['lang'], null, null, $locale['country']);
+        }
         return $this->user;
     }
 
@@ -92,6 +98,10 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
     }
 
     public function clearIdentity() {
+        if($this->token) {
+            require_once 'Kansas/Plugin/Token.php';
+            TokenPlugin::deleteToken($this->token);
+        }
         $this->user = false;
         unset($_COOKIE['token']);
         $res = setcookie('token', '', time() - 3600);
@@ -104,7 +114,7 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
         return $this->token;
     }
     
-    public function initialize($cookie = false, $lifetime = null, $domain = null) {
+    public function initialize($lang, $lifetime = null, $domain = null, $country = null) {
         if($this->initialized) {
             return;
         }
@@ -133,7 +143,7 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
                 $userId = false;
                 $this->tryParseUser($this->token->getClaim('sub'), $userId);
                 $usersProvider = $application->getProvider('users');
-                $userRow = $usersProvider->getById($userId);
+                $userRow = $usersProvider->getById($userId, $lang, $country);
                 if($userRow && $userRow['isEnabled']) {
                     $this->user = $userRow;
                 }
