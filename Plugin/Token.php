@@ -12,7 +12,6 @@ namespace Kansas\Plugin;
 
 use Kansas\Plugin\PluginInterface;
 use Kansas\Router\Token as router;
-use System\ArgumentOutOfRangeException;
 use System\Configurable;
 use System\Guid;
 use System\NotSupportedException;
@@ -215,6 +214,14 @@ class Token extends Configurable implements PluginInterface {
             $provider->saveToken($id, $token);
         }
         return $token;
+    }
+
+    public static function deleteToken(JWToken $token) {
+        global $application;
+        require_once 'System/Guid.php';
+        $id = new Guid($token->getClaim('jti'));
+        $provider = $application->getProvider('token');
+        $provider->deleteToken($id);
     }
 
     public function getRouter() {
