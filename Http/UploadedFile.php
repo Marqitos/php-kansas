@@ -87,12 +87,12 @@ class UploadedFile implements UploadedFileInterface {
     private $stream;
 
     /**
-     * @param string|resource $streamOrFile
+     * @param string|resource|StreamInterface $streamOrFile
      * @param int $size
      * @param int $errorStatus
      * @param string|null $clientFilename
      * @param string|null $clientMediaType
-     * @throws Exception\InvalidArgumentException
+     * @throws ArgumentException
      */
     public function __construct(
         $streamOrFile,
@@ -102,27 +102,25 @@ class UploadedFile implements UploadedFileInterface {
         string $clientMediaType = null
     ) {
         if ($errorStatus === UPLOAD_ERR_OK) {
-            if (is_string($streamOrFile)) {
+            if(is_string($streamOrFile)) {
                 $this->file = $streamOrFile;
-            }
-            if (is_resource($streamOrFile)) {
+            } elseif(is_resource($streamOrFile)) {
                 $this->stream = new Stream($streamOrFile);
+            } elseif($streamOrFile instanceof StreamInterface) {
+                $this->stream = $streamOrFile;
             }
 
-            if (! $this->file && ! $this->stream) {
-                if (! $streamOrFile instanceof StreamInterface) {
-                    throw new Exception\InvalidArgumentException('Invalid stream or file provided for UploadedFile');
-                }
-                $this->stream = $streamOrFile;
+            if (!$this->file && !$this->stream) {
+                require_once 'System/ArgumentException.php';
+                throw new ArgumentException('streamOrFile', 'Invalid stream or file provided for UploadedFile');
             }
         }
 
         $this->size = $size;
 
         if (0 > $errorStatus || 8 < $errorStatus) {
-            throw new Exception\InvalidArgumentException(
-                'Invalid error status for UploadedFile; must be an UPLOAD_ERR_* constant'
-            );
+            require_once 'System/ArgumentException.php';
+            throw new ArgumentException('errorStatus', 'Invalid error status for UploadedFile; must be an UPLOAD_ERR_* constant');
         }
         $this->error = $errorStatus;
 
@@ -184,17 +182,12 @@ class UploadedFile implements UploadedFileInterface {
         }
 
         $sapi = PHP_SAPI;
-        switch (true) {
-            case (empty($sapi) || 0 === strpos($sapi, 'cli') || 0 === strpos($sapi, 'phpdbg') || ! $this->file):
-                // Non-SAPI environment, or no filename present
-                $this->writeFile($targetPath);
-                break;
-            default:
-                // SAPI environment, with file present
-                if (false === move_uploaded_file($this->file, $targetPath)) {
-                    throw Exception\UploadedFileErrorException::forUnmovableFile();
-                }
-                break;
+        if(empty($sapi) || 0 === strpos($sapi, 'cli') || 0 === strpos($sapi, 'phpdbg') || ! $this->file) { // Non-SAPI environment, or no filename present
+            $this->writeFile($targetPath);
+        } else { // SAPI environment, with file present
+            if (false === move_uploaded_file($this->file, $targetPath)) {
+                throw Exception\UploadedFileErrorException::forUnmovableFile();
+            }
         }
 
         $this->moved = true;
@@ -247,10 +240,10 @@ class UploadedFile implements UploadedFileInterface {
             throw Exception\UploadedFileErrorException::dueToUnwritablePath();
         }
 
-        $stream = $this->getStream();
-        $stream->rewind();
-        while (! $stream->eof()) {
-            fwrite($handle, $stream->read(4096));
+        $this->getStream();
+        $this->stream->rewind();
+        while (! $this->stream->eof()) {
+            fwrite($handle, $this->stream->read(4096));
         }
 
         fclose($handle);
