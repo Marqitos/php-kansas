@@ -7,8 +7,13 @@
  * @version          0.1
  */
  
-class Kansas_TextParser_Plain
-	extends Kansas_TextParser_Abstract {
+namespace Kansas\TextParser;
+
+use function nl2br;
+
+require_once 'Kansas/TextParser/TextParserAbstract.php';
+
+class Plain extends TextParserAbstract {
 
     /**
      * @access public
@@ -35,7 +40,7 @@ class Kansas_TextParser_Plain
      */
     protected function run() {
         $this->paragraph();
-				$this->lineBreaks();
+		$this->lineBreaks();
     }
 
     /**

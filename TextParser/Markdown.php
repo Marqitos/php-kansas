@@ -11,15 +11,20 @@
  * @version          0.8
  */
 
-class Kansas_TextParser_Markdown
-	extends Kansas_TextParser_Abstract {
+namespace Kansas\TextParser;
+
+use function preg_replace;
+use function str_replace;
+
+require_once 'Kansas/TextParser/TextParserAbstract.php';
+
+class Markdown extends TextParserAbstract {
 
     /**
      * @access public
      * @param string The text formatted in Markdown
      */
-    public function __construct($sText)
-    {
+    public function __construct($sText) {
         $this->sText = $sText;
         parent::__construct();
     }
@@ -28,8 +33,7 @@ class Kansas_TextParser_Markdown
      * @access public
      * @return string The code parsed
      */
-    public function __toString()
-    {
+    public function __toString() {
         return $this->sText;
     }
 
@@ -39,8 +43,7 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function run()
-    {
+    protected function run() {
         $this->strong();
         $this->italic();
         $this->code();
@@ -59,8 +62,7 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function strong()
-    {
+    protected function strong() {
         // Strong emphasis
         $this->sText = preg_replace('/__(.+?)__/s', '<strong>\1</strong>', $this->sText);
 
@@ -74,8 +76,7 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function italic()
-    {
+    protected function italic() {
         // Emphasis
         $this->sText = preg_replace('/_([^_]+)_/', '<em>\1</em>', $this->sText);
 
@@ -89,8 +90,7 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function code()
-    {
+    protected function code() {
         $this->sText = preg_replace('/`(.+?)`/s', '<code>\1</code>', $this->sText);
     }
 
@@ -100,8 +100,7 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function link()
-    {
+    protected function link() {
         // [linked text](link URL)
         $this->sText = preg_replace('/\[([^\]]+)]\(([-a-z0-9._~:\/?#@!$&\'()*+,;=%]+)\)/i', '<a href="\2">\1</a>', $this->sText);
 
@@ -119,8 +118,7 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function img()
-    {
+    protected function img() {
         // With title ![alt image](url image) "title of image"
         $this->sText = preg_replace('/!\[([^\]]+)]\(([-a-z0-9._~:\/?#@!$&\'()*+,;=%]+)\) "([^"]+)"/', '<img src="\2" alt="\1" title="\3" />', $this->sText);
 
@@ -134,8 +132,7 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function blockquote()
-    {
+    protected function blockquote() {
         // Blockquotes
         $this->sText = preg_replace('/> "(.+?)"/', '<blockquotes><p>\1</p></blockquote>', $this->sText);
     }
@@ -146,8 +143,7 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function br()
-    {
+    protected function br() {
         // Line breaks
         $this->sText = str_replace("\n", '<br />', $this->sText);
     }
@@ -158,8 +154,7 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function hr()
-    {
+    protected function hr() {
         $this->sText = preg_replace('/^(\s)*----+(\s*)$/m', '<hr />', $this->sText);
     }
 
@@ -169,9 +164,8 @@ class Kansas_TextParser_Markdown
      * @access protected
      * @return void
      */
-    protected function heading()
-    {
-        $this->sText = preg_replace ('/##### (.+?)\n/', '<h5>\1</h5>', $this->sText); //h5
+    protected function heading() {
+        $this->sText = preg_replace('/##### (.+?)\n/', '<h5>\1</h5>', $this->sText); //h5
         $this->sText = preg_replace('/#### (.+?)\n/', '<h4>\1</h4>', $this->sText); //h4
         $this->sText = preg_replace('/### (.+?)\n/', '<h3>\1</h3>', $this->sText); //h3
         $this->sText = preg_replace('/## (.+?)\n/', '<h2>\1</h2>', $this->sText); //h2

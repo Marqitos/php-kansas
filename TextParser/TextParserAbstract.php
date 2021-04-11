@@ -11,7 +11,12 @@
  * @version          1.0
  */
 
-abstract class Kansas_TextParser_Abstract {
+namespace Kansas\TextParser;
+
+use function preg_replace;
+use function str_replace;
+
+abstract class TextParserAbstract {
 
     /**
      * @access protected

@@ -11,8 +11,13 @@
  * @version          0.8
  */
 
-class Kansas_TextParser_BbCode
-	extends Kansas_TextParser_Abstract {
+namespace Kansas\TextParser;
+
+use function preg_replace;
+
+require_once 'Kansas/TextParser/TextParserAbstract.php';
+
+class BbCode extends TextParserAbstract {
 
     /**
      * @access public
