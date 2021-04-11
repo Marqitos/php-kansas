@@ -2,23 +2,23 @@
 
 namespace Kansas\Plugin;
 
-use Kansas\Plugin\AbstractZone;
 use System\NotSupportedException;
+use System\Localization\Resources as SystemResources;
+use Kansas\Plugin\AbstractZone;
 use Kansas\Router\API as RouterAPI;
 
 use function Kansas\API\APICore;
 
+require_once 'System/Localization/Resources.php';
 require_once 'Kansas/Plugin/AbstractZone.php';
 
 class API extends AbstractZone {
-	
+    
     private $router;
-    private $callbacks = [];
 
     /// Constructor
 	public function __construct(array $options) {
         parent::__construct($options);
-		global $application;
 	}
  
 	// Miembros de System\Configurable\ConfigurableInterface
@@ -46,8 +46,7 @@ class API extends AbstractZone {
         global $application;
         if($zone instanceof API) {
             require_once 'Kansas/API/Core.php';
-            $router = $this->getRouter();
-            $router->registerCallback('Kansas\API\APICore');
+            $this->getRouter()->registerCallback('Kansas\API\APICore');
             $application->addRouter($router);
         }
     }
@@ -64,14 +63,15 @@ class API extends AbstractZone {
 		return $this->router;
 	}
 
-    const ERROR_AUTH = [
-        'error' => 'Se requiere autenticación',
+    public const ERROR_AUTH = [
+        'error' => SystemResources::WebException401Message,
         'code'  => 401,
         'scheme'=> 'Bearer'
     ];
 
-    const ERROR_REQUEST = [
-        'error' => 'Solicitud no válida',
+    public const ERROR_REQUEST = [
+        'error' => SystemResources::WebException412Message,
         'code'  => 412
     ];
+
 }

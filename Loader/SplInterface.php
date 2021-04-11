@@ -5,7 +5,6 @@
 
 namespace Kansas\Loader;
 
-use Traversable;
 use System\Configurable\ConfigurableInterface;
 
 require_once 'System/Configurable/ConfigurableInterface.php';
