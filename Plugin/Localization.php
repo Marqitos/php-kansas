@@ -8,12 +8,11 @@
  * @since v0.4
  */
 
-namespace Reprogalicia\Plugin;
+namespace Kansas\Plugin;
 
 use System\Configurable;
 use System\NotSupportedException;
 use Kansas\Plugin\PluginInterface;
-use Reprogalicia\Version;
 use function strcasecmp;
 use function strtolower;
 use function strtoupper;
@@ -51,8 +50,8 @@ class Localization extends Configurable implements PluginInterface {
 	}
 	
 	public function getVersion() {
-		require_once 'Reprogalicia/Version.php';
-		return Version::getCurrent();
+        global $environment;
+        return $environment->getVersion();
 	}	  
 
 	public function appPreInit() { // obtener idioma del cliente
