@@ -47,7 +47,7 @@ class API extends AbstractZone {
         if($zone instanceof API) {
             require_once 'Kansas/API/Core.php';
             $this->getRouter()->registerCallback('Kansas\API\APICore');
-            $application->addRouter($router);
+            $application->addRouter($this->router);
         }
     }
   
