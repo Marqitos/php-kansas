@@ -62,9 +62,9 @@ class Localization extends Configurable implements PluginInterface {
 
 	public function init() {
 		global $environment, $lang;
-		$request = $environment->getRequest();
-		$uri	= $request->getUri();
-		$path 	= $uri->getPath();
+		$request	= $environment->getRequest();
+		$uri		= $request->getUri();
+		$path 		= $uri->getPath();
 		if(substr($path, 3, 1) == '/') { 
 			$l = substr($path, 1, 2);
 			foreach($this->getAppLangs() as $appLang) {

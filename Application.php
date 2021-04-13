@@ -237,7 +237,7 @@ class Application extends Configurable {
 			}
 		}
 		if($params) {
-		  $params = array_merge($params, $this->getDefaultParams());
+		  $params = array_merge($params, self::getDefaultParams());
 		  $params = $this->raiseRoute($params); // Route event
 		  $result = $this->dispatch($params);
 		}
