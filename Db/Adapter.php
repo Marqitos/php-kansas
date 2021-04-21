@@ -12,6 +12,7 @@
 
 namespace Kansas\Db;
 
+use Exception;
 use System\ArgumentOutOfRangeException;
 use System\NotSupportedException;
 use mysqli;
@@ -46,19 +47,46 @@ class Adapter {
      * Realiza una consulta a la base de datos
      * 
      * @param string $sql Consulta sql a ejecutar
-     * @return array|bool En caso de ser una consulta tipo select, devuelve un array. En consultas insert, update, ... devuelve true. Y false en caso de que la consulta esté mal formulada
+     * @return array|int|bool En caso de ser una consulta tipo select, devuelve un array. En consultas insert, update, ... devuelve el número de filas afectadas. Y false en caso de que la consulta esté mal formulada o se produzca un error
      */
     public function query($sql) {
         if($this->con->real_query($sql)) {
-            if ($this->con->field_count) {
-                $result = $this->con->store_result();
-                try {
-                    return $result->fetch_all(MYSQLI_ASSOC);
-                } finally {
-                    $result->close();
-                }
+            if($this->con->field_count == 0) { // La consulta no es select
+                return ($this->con->errno == 0)
+                    ? $this->con->affected_rows
+                    : false;
             }
-            return true;
+            try {
+                $result = $this->con->store_result();
+                $rows   = $result->fetch_all(MYSQLI_ASSOC);
+            } catch(Exception $ex) {
+                $rows   = false;
+            } finally {
+                $result->close();
+            }
+            return $rows;
+        }
+        return false;
+    }
+
+    /**
+     * Realiza una consulta a la base de datos que solo debe devolver una fila
+     * 
+     * @param string $sql Consulta sql a ejecutar
+     * @return array|bool En caso de ser una consulta devuelva una fila, devuelve un array. Y false en caso de que la consulta esté mal formulada o se produzca un error
+     */
+
+    public function queryRow($sql) {
+        if($this->con->real_query($sql) &&
+           $this->con->errno == 0) {
+            try {
+                $result = $this->con->store_result();
+                if($result->num_rows == 1) { // Devolvemos el resultado en caso de que solo se devuelva una fila
+                    return $result->fetch_assoc();
+                }
+            } finally {
+                $result->close();
+            }
         }
         return false;
     }
