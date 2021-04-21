@@ -13,18 +13,20 @@ namespace Kansas\Plugin;
 use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Loader;
 use Kansas\Plugin\Admin as AdminZone;
-use Kansas\Plugin\PluginInterface;
+use Kansas\Plugin\RouterPluginInterface;
 use Kansas\Router\Auth as AuthRouter;
+use Kansas\Router\RouterInterface;
 use Psr\Http\Message\RequestInterface;
 use System\Configurable;
 use System\Guid;
 use System\NotSupportedException;
 
 require_once 'System/Configurable.php';
-require_once 'Kansas/Plugin/PluginInterface.php';
+require_once 'Kansas/Plugin/RouterPluginInterface.php';
+require_once 'Kansas/Router/RouterInterface.php';
 require_once 'Psr/Http/Message/RequestInterface.php';
 
-class Auth extends Configurable implements PluginInterface {
+class Auth extends Configurable implements RouterPluginInterface {
 
 	/// Constantes
 	// Roles predeterminadas
@@ -91,7 +93,20 @@ class Auth extends Configurable implements PluginInterface {
 	public function getVersion() {
 		global $environment;
 		return $environment->getVersion();
-	}	
+	}
+
+	// Miembros de Kansas\Plugin\RouterPluginInterface
+	public function getRouter() : RouterInterface {
+		if($this->_router == null) {
+			require_once 'Kansas/Router/Auth.php';
+			$this->_router = new AuthRouter($this->options['router']);
+			$this->_router->addActions($this->options['actions']);
+			foreach ($this->_authServices as $authService) {
+				$this->_router->addActions($authService->getActions());
+			}
+		}
+		return $this->_router;
+	}
   
 	/// Eventos de la aplicación
 	public function appPreInit() { // añadir router
@@ -132,14 +147,19 @@ class Auth extends Configurable implements PluginInterface {
 		return $this->_session;
 	}
 
-	public function setIdentity($user, $deviceId, $remember = false, $domain = null) {
+	public function setIdentity($user, $remember = false, $domain = null, $deviceId = null) {
 		// Almacenar usuario en sesión
 		$lifetime =	$remember
 			? $this->options['lifetime']
 			: 0;
-		$device = $this->options['device']
-			? $deviceId
-			: false;
+		if($this->options['device']) {
+			if($deviceId == null) {
+
+			}
+			$device = $deviceId;
+		} else {
+			$device = false;
+		}
 		if($domain == null) {
 			$domain = ''; // TODO: Ver por que no existe: $this->options['domain']
 		}
@@ -194,18 +214,7 @@ class Auth extends Configurable implements PluginInterface {
 	}
   
   
-	public function getRouter() {
-		if($this->_router == null) {
-			require_once 'Kansas/Router/Auth.php';
-			$this->_router = new AuthRouter($this->options['router']);
-			$this->_router->addActions($this->options['actions']);
-			foreach ($this->_authServices as $authService) {
-				$this->_router->addActions($authService->getActions());
-			}
-		}
-		return $this->_router;
-	}
-  
+
 	public function getAuthService($serviceName = 'membership') { // Devuelve un servicio de autenticación por el nombre
 		return isset($this->_authServices[$serviceName])
 			? $this->_authServices[$serviceName]
