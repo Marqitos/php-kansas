@@ -110,7 +110,12 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
     }
 
     public function getToken() {
-        $this->initialize();
+        if(!$this->initialized) {
+            global $application;
+            $localizationPlugin     = $application->getPlugin('Localization');
+            $locale                 = $localizationPlugin->getLocale();
+            $this->initialize($locale['lang'], null, null, $locale['country']);
+        }
         return $this->token;
     }
     
@@ -137,8 +142,14 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
             if($domain == null) {
                 $domain = $this->options['domain'];
             }
-            $tokenPlugin = $application->getPlugin('token');
-            $this->token = $tokenPlugin->parse($tokenString);
+            $tokenPlugin    = $application->getPlugin('token');
+            $tokenProvider  = $application->getProvider('token');
+            $jwt            = $tokenPlugin->parse($tokenString);
+            if($jwt &&
+               $jwt->hasClaim('jti')) {
+                $id = new Guid($jwt->getClaim('jti'));
+                $this->token = $tokenProvider->getToken($id, false);
+            }
             if($this->token && $this->token->hasClaim('sub')) { // Obtener usuario
                 $userId = false;
                 $this->tryParseUser($this->token->getClaim('sub'), $userId);
@@ -148,16 +159,16 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
                     $this->user = $userRow;
                 }
             }
-            if( $this->token && 
-                $this->token->hasClaim('exp') &&
-                $lifetime > 0) { // Renovar token si es necesario
+            if($this->token && 
+               $this->token->hasClaim('exp') &&
+               $lifetime > 0) { // Renovar token si es necesario
                 $updateTime = intval($this->token->getClaim('exp')) - ($lifetime / 2);
                 if($updateTime < time()) {
                     $lifetime += time();
-                    $tokenPlugin = $application->getPlugin('token'); // crear token
                     $this->token = $tokenPlugin->updateToken($this->token, [
                         'exp' => $lifetime
                     ]);
+                    $tokenProvider->saveToken($this->token);
                     setcookie('token', (string) $this->token, $lifetime, '/', $domain); // Establecer cookie
                 }
             }
@@ -186,7 +197,12 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
     }
 
     public function getId() {
-        $this->initialize();
+        if(!$this->initialized) {
+            global $application;
+            $localizationPlugin     = $application->getPlugin('Localization');
+            $locale                 = $localizationPlugin->getLocale();
+            $this->initialize($locale['lang'], null, null, $locale['country']);
+        }
         if($this->token && $this->token->hasClaim('jti')) {
             return $this->token->getClaim('jti');
         }
