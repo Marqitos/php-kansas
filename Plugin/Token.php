@@ -118,9 +118,6 @@ class Token extends Configurable implements PluginInterface {
             unset($data['user']);
         }
         $data = array_merge($tokenData, $data);
-        if(isset($data['exp']) && !$data['exp']) {
-            unset($data['exp']);
-        }
         $token = $this->createToken($data);
         $id = new Guid($token->getClaim('jti'));
 
@@ -131,11 +128,13 @@ class Token extends Configurable implements PluginInterface {
         return $_SERVER['SERVER_NAME'] . '/token/' . $id->getHex();
     }
 
-    public static function authenticate(Guid $userId) {
+    public static function authenticate($userId) {
         global $application;
-        $authPlugin = $application->getPlugin('Auth');
-        $usersProvider = $application->getProvider('users');
-        $user = $usersProvider->getById($userId);
+        $authPlugin         = $application->getPlugin('Auth');
+        $localizationPlugin	= $application->getPlugin('Localization');
+        $usersProvider 		= $application->getProvider('Users');
+        $locale             = $localizationPlugin->getLocale();
+        $user               = $usersProvider->getById($userId, $locale['lang'], $locale['country']);
         $authPlugin->setIdentity($user);
         return $user;
     }
@@ -149,13 +148,14 @@ class Token extends Configurable implements PluginInterface {
             'iat'   => time(),
             'exp'   => time() + $this->options['exp']
         ], $data);
+        if(isset($data['exp']) && !$data['exp']) {
+            unset($data['exp']);
+        }
         $builder = new Builder();
         foreach($data as $claim => $value) {
             $builder->withClaim($claim, $value);
         }
-        if(isset($data['jti'])) { // Establecemos Id
-            $id = new Guid($data['jti']);
-        } else {
+        if(!isset($data['jti'])) { // Establecemos Id
             $id = Guid::newGuid();
             $builder->identifiedBy($id->getHex());
         }
@@ -177,7 +177,7 @@ class Token extends Configurable implements PluginInterface {
             $token = $builder->getToken();
         }
         $provider = $application->getProvider('token');
-        $provider->saveToken($id, $token);
+        $provider->saveToken($token);
         return $token;
     }
 
@@ -209,9 +209,8 @@ class Token extends Configurable implements PluginInterface {
             $token = $builder->getToken();
         }
         if(isset($data['jti'])) { // Establecemos Id
-            $id = new Guid($data['jti']);
             $provider = $application->getProvider('token');
-            $provider->saveToken($id, $token);
+            $provider->saveToken($token);
         }
         return $token;
     }

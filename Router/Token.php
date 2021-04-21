@@ -11,7 +11,7 @@
 namespace Kansas\Router;
 
 use Kansas\Router;
-use Kansas\Plugin\Token as tokenPlugin;
+use Kansas\Plugin\Token as TokenPlugin;
 use System\Guid;
 use System\NotSupportedException;
 
@@ -25,7 +25,7 @@ class Token extends Router {
 
     protected $plugin;
 
-	public function __construct(tokenPlugin $plugin, array $options) {
+	public function __construct(TokenPlugin $plugin, array $options) {
         parent::__construct($options);
         $this->plugin = $plugin;
     }
@@ -64,7 +64,12 @@ class Token extends Router {
                 ];
                 foreach ($token->getClaims() as $claim) {
                     if($claim->getName() == 'sub') {
-                        $this->plugin->authenticate(new Guid($claim->getValue()));
+                        $authPlugin = $application->getPlugin('Auth');
+                        $identity   = $authPlugin->getIdentity();
+                        if($identity !== false || $identity['id'] != $claim->getValue()) { // Iniciamos sesión solo si es necesario
+                            $this->plugin->authenticate($claim->getValue());
+                            // TODO: Registrar inicio de sesión
+                        }
                     } else if(array_search($claim->getName(), ['jti', 'iss', 'exp', 'iat']) === false) {
                         $params[$claim->getName()] = $claim->getValue();
                     }
