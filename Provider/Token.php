@@ -33,8 +33,9 @@ class Token	extends AbstractDb {
 		if($this->cache && $this->cache->test('token-id-' . $id->getHex())) { // Obtiene el token desde cache
 			$payload = $this->cache->load('token-id-' . $id->getHex());
 			$parts = explode('.', $payload);
-			if($signature !== false && (!isset($parts[2]) || $parts[2] != $signature)) // Comprueba la firma
+			if($signature !== false && (!isset($parts[2]) || $parts[2] != $signature)) { // Comprueba la firma
 				return false;
+			}
 			require_once 'Lcobucci/JWT/Parser.php';
 			$parser = new Parser();
 			$token = $parser->parse($payload);
@@ -57,12 +58,14 @@ class Token	extends AbstractDb {
 			$encoder = new Encoder();
 			$payload = $encoder->base64UrlEncode(hex2bin($row['header'])) . '.' . $encoder->base64UrlEncode(hex2bin($row['payload']));
 			if($row['signature'] != null) { // Comprueba la firma
-				if($signature !== false && $encoder->base64UrlEncode(hex2bin($row['signature'])) != $signature)
+				if($signature !== false && $encoder->base64UrlEncode(hex2bin($row['signature'])) != $signature) {
 					return false;
+				}
 				$payload .= '.' . $encoder->base64UrlEncode(hex2bin($row['signature']));
 			}
-			if($this->cache) // Guarda una copia en cache
+			if($this->cache) { // Guarda una copia en cache
 				$this->cache->save($payload, 'token-id-' . $id->getHex());
+			}
 			$parser = new Parser();
 			return $parser->parse($payload);
 		}
@@ -76,8 +79,9 @@ class Token	extends AbstractDb {
 	 * @param jwtToken $token
 	 * @return void
 	 */
-	public function saveToken(Guid $id, jwtToken $token) {
+	public function saveToken(jwtToken $token) {
 		require_once 'Lcobucci/JWT/Parsing/Decoder.php'; // Obtiene información del token
+		$id = new Guid($token->getClaim('jti'));
 		$user = $token->hasClaim('sub')
 			? $token->getClaim('sub')
 			: null;
@@ -159,41 +163,6 @@ class Token	extends AbstractDb {
 		return $result;
 	}
 
-
-	/*
-	public function getToken($token) {
-		$row;
-		if($this->tryGetDeviceToken($token, $row))
-			return $row;
-		else if($this->tryGetActionToken($token, $row))
-			return $row;
-		else
-			return false;
-	}
-
-	public function tryGetDeviceToken($token, &$row) {
-		$sql = 'SELECT HEX(USR.id) as id, USR.name, USR.email, USR.isApproved, USR.isLockedOut, USR.lastLockOutDate, USR.comment, TKS.id, TKS.device as device AS `Token` FROM `Users` AS USR INNER JOIN `DeviceTokens` AS TKS ON USR.Id = TKS.Id WHERE TKS.Id = ?;';
-		$params = [$token];
-		$result = $this->db->fetchOne($sql, $params);
-		exit;
-		if($row == null)
-			return false;
-		return true;
-	}
-
-	public function saveDeviceToken(Guid $userId, $token, Guid $deviceId, $expire) {
-		$sql = 'REPLACE INTO `DeviceTokens` SET Id = ? WHERE User = UNHEX(?) AND Device = UNHEX(?);';
-		$this->db->query($sql, [
-			$token,
-			$userId->getHex(),
-			$deviceId->getHex()
-		]);
-	}
-
-	*/
-
-
-	
 	/**
 	 * Elimina de la base de datos todos los tokens que han expirado
 	 *
