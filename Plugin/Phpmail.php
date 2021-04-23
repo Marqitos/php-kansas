@@ -88,13 +88,19 @@ class Phpmail extends Configurable implements PluginInterface {
         $txtMessage = $template->fetch();
 
         $mail = $this->getSMTP();
-        $mail->addAddress($to);
+        if(is_array($to)) {
+            $mail->addAddress($to[0], $to[1]);
+        } else {
+            $mail->addAddress($to);
+        }
         $mail->Subject = $subject;
         $mail->msgHTML($htmlMessage);
         $mail->AltBody = $txtMessage;
 
         //send the message, check for errors
-        return $mail->send();
+        return $mail->send()
+            ? true
+            : $mail->ErrorInfo;
     }    
   
 }
