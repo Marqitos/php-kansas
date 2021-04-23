@@ -35,8 +35,7 @@ class Javascript extends Configurable implements PluginInterface {
 	public function __construct(array $options = []) {
 		require_once 'Kansas/Controller/Index.php';
 		parent::__construct($options);
-		// Añade una acción al controlador principal
-		Index::addAction('javascript', [$this, 'controllerAction']);
+		Index::addAction('javascript', [self::class, 'controllerAction']); // Añade una acción al controlador principal
 	}
   
 	/// Miembros de Kansas\Plugin\Interface
@@ -46,12 +45,14 @@ class Javascript extends Configurable implements PluginInterface {
 			return [
 				'packages' => [],
 				'minifier' => [
-					'flaggedComments' => false]];
-		case 'development':
+					'flaggedComments' => false],
+				'verifyFiles' => false]; // En producción no comprobamos cambios en los archivos individuales 
+				case 'development':
 		case 'test':
 			return [
 				'packages' => [],
-				'minifier' => false]; // En entorno de desarrollo no minimiza la salida de javascript
+				'minifier' => false, // En entorno de desarrollo no minimiza la salida de javascript
+				'verifyFiles' => true]; 
 		default:
 			require_once 'System/NotSupportedException.php';
 			throw new NotSupportedException("Entorno no soportado [$environment]");
@@ -73,22 +74,26 @@ class Javascript extends Configurable implements PluginInterface {
   
 	public function build($components, &$md5 = null) {
 		global $application;
-		$cache = false;
-		$test = false;
+		$md5 = false;
 		if($cache = $application->hasPlugin('BackendCache')) { // Se puede obtener el resultado javascript de cache
 			if($cache->test('js-' . md5(serialize($components)))) {
 				$data = $cache->load('js-' . md5(serialize($components)));
 				$md5 = md5($data);
-				$dataList = unserialize($data);
-				$test = $dataList['packages'] == $this->options['packages'];
-				foreach($dataList['files'] as $path => $crc) { // Comprueba si alguno de los archivos ha cambiado
-					if(!is_readable($path) || $crc != hash_file("crc32b", $path)) {
-						$test = false;
-						break;
+				if($this->options['verifyFiles']) {
+					$dataList = unserialize($data);
+					if($dataList['packages'] == $this->options['packages']) {
+						foreach($dataList['files'] as $path => $crc) { // Comprueba si alguno de los archivos ha cambiado
+							if(!is_readable($path) || $crc != hash_file("crc32b", $path)) {
+								$md5 = false;
+								break;
+							}
+						}
+					} else {
+						$md5 = false;
 					}
 				}
 			}
-			if($test && $cache->test('js-' . $md5)) { // Si no hay cambios devuelve desde cache
+			if($md5 !== false && $cache->test('js-' . $md5)) { // Si no hay cambios devuelve desde cache
 				return $cache->load('js-' . $md5);
 			}
 		}
@@ -100,7 +105,8 @@ class Javascript extends Configurable implements PluginInterface {
 				'packages'  => $this->options['packages'],
 				'files'     => []];
 			foreach($fileList as $file) {
-				$dataList['files'][$this->getPackager()->get_file_path($file)] = hash_file("crc32b", $this->getPackager()->get_file_path($file));          
+				$filePath = $this->getPackager()->get_file_path($file);
+				$dataList['files'][$filePath] = hash_file("crc32b", $filePath);          
 			}
 			$data = serialize($dataList);
 			$md5 = md5($data);			
@@ -110,7 +116,7 @@ class Javascript extends Configurable implements PluginInterface {
 		return $jsCode;
 	}
 
-	protected function buildCore(array $components, array $exclude, &$md5 = null) {
+	protected function buildFromComponents(array $components, array $exclude, &$md5 = null) {
 		if($md5 !== false) {
 			$files = $this->getPackager()->components_to_files($components);
 			$fileList = $this->getPackager()->complete_files($files);
@@ -129,28 +135,28 @@ class Javascript extends Configurable implements PluginInterface {
   
 	public function javascriptFromComponents($components, $minifier = false) {
 		$jsCode = $this->getPackager()->build_from_components($components);
-		return $this->minifier($jsCode, $minifier);
+		return self::minifier($jsCode, $minifier);
 	}
 
 	public function javascriptFromFiles($files, $minifier = false) {
 		$jsCode = $this->getPackager()->build_from_files($files);
-		return $this->minifier($jsCode, $minifier);
+		return self::minifier($jsCode, $minifier);
 	}
 
 	/**
 	 * Comprime el codigo javascript
 	 */
-	public function minifier($jsCode, $minifier) {
+	public static function minifier($jsCode, $minifier) {
 		if($minifier && !class_exists('Minifier', false) && is_readable('JShrink/Minifier.php')) {
 			require_once 'JShrink/Minifier.php';
 		}
 		if($minifier && class_exists('Minifier')) {
-			return Minifier::minify($jsCode, $minifier); 
+			$jsCode = Minifier::minify($jsCode, $minifier);
 		}
 		return $jsCode;
 	}
 
-	public function controllerAction(ControllerInterface $controller, array $vars) {
+	public static function controllerAction(ControllerInterface $controller, array $vars) {
 		if(isset($vars['component'])) {
 			require_once 'Kansas/View/Result/Javascript.php';
 			return new ViewResultJavascript($vars['component']);
