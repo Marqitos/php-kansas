@@ -8,8 +8,6 @@ use function curl_init;
 use function curl_setopt_array;
 use function file_get_contents;
 use function function_exists;
-use function http_build_query;
-use function strlen;
 use function stream_context_create;
 
 /**
@@ -19,15 +17,12 @@ use function stream_context_create;
  * @param array $post datos a incluir en la petición
  * @return string resultado de la petición
  */
-function post($uri, array $post) {
-    $postData = http_build_query($post); // Crea la cadena de valores
+function get($uri, $userAgent = null) {
     if(function_exists('curl_init')) { // realiza la peticion mediante curl
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_URL => $uri,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $postData
+            CURLOPT_URL => $uri
         ]);
         $result = curl_exec($curl);
         curl_close($curl);
@@ -38,11 +33,10 @@ function post($uri, array $post) {
     // realiza la petición mediante un contexto http/post
     $opts = [
         'http'=> [
-            'method'  => 'POST',
-            'header'  => "Content-Type: application/x-www-form-urlencoded\r\n" .
-                         "Content-Length: " . strlen($postData) . "\r\n",
-            'content' => $postData
-    ]];
+            'method'  => 'GET']];
+    if($userAgent != null) {
+        $opts['http']['header'] = "User-Agent: $userAgent\r\n";
+    }
     $context = stream_context_create($opts);
-    return file_get_contents($uri, false, $context);
+    return @file_get_contents($uri, false, $context);
 }
