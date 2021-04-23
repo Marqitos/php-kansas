@@ -49,12 +49,16 @@ class Adapter {
      * @param string $sql Consulta sql a ejecutar
      * @return array|int|bool En caso de ser una consulta tipo select, devuelve un array. En consultas insert, update, ... devuelve el número de filas afectadas. Y false en caso de que la consulta esté mal formulada o se produzca un error
      */
-    public function query($sql) {
+    public function query($sql, &$id = null) {
         if($this->con->real_query($sql)) {
             if($this->con->field_count == 0) { // La consulta no es select
-                return ($this->con->errno == 0)
-                    ? $this->con->affected_rows
-                    : false;
+                if($this->con->errno == 0) {
+                    if($id != null) {
+                        $id = $this->con->insert_id;
+                    }
+                    return $this->con->affected_rows;
+                } 
+                return false;
             }
             try {
                 $result = $this->con->store_result();
