@@ -28,7 +28,7 @@ interface UsersInterface {
      * @param login bool (Parametro de salida) true en caso de que el usuario exista la contraseña coincida, false en caso contrario
      * @return array|false array con la tupla del usuario en caso de que exista, false en caso contrario
      */
-    public function getByEmail($email, $lang, $password = null, &$login = false, $country = null);
+    public function getByEmail($email, $lang, &$login = false, $password = null, $country = null);
 
     /**
      * Devuelve un usuario por su nombre de usuario o teléfono, comprobando su contraseña
@@ -38,6 +38,6 @@ interface UsersInterface {
      * @param bool $login  (Parametro de salida) true en caso de que el usuario exista la contraseña coincida, false en caso contrario
      * @return array|false array con la tupla del usuario en caso de que exista, false en caso contrario
      */
-    public function searchUser($username, $lang, $password = null, &$login = false, $country = null);
+    public function searchUser($username, $lang, &$login = false, $password = null, $country = null);
 
 }
