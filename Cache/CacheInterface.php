@@ -6,6 +6,16 @@
 namespace Kansas\Cache;
 
 interface CacheInterface {
+
+  /**
+   * Consts for clean() method
+   */
+  const CLEANING_MODE_ALL              = 'all';
+  const CLEANING_MODE_OLD              = 'old';
+  const CLEANING_MODE_MATCHING_TAG     = 'matchingTag';
+  const CLEANING_MODE_NOT_MATCHING_TAG = 'notMatchingTag';
+  const CLEANING_MODE_MATCHING_ANY_TAG = 'matchingAnyTag';
+
   /**
     * Set the frontend directives
     *
@@ -71,6 +81,6 @@ interface CacheInterface {
     * @param  array  $tags Array of tags
     * @return boolean true if no problem
     */
-  public function clean($mode = Kansas_Cache::CLEANING_MODE_ALL, array $tags = []);
+  public function clean($mode = self::CLEANING_MODE_ALL, array $tags = []);
 
 }

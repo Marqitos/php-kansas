@@ -301,7 +301,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @param tags array $tags array of tags
      * @return boolean true if no problem
      */
-    public function clean($mode = Cache::CLEANING_MODE_ALL, array $tags = []) {
+    public function clean($mode = CacheInterface::CLEANING_MODE_ALL, array $tags = []) {
         // We use this protected method to hide the recursive stuff
         clearstatcache();
         return $this->_clean($this->getCacheDir(), $mode, $tags);
@@ -607,7 +607,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @throws System_ArgumentOutOfRangeException
      * @return boolean True if no problem
      */
-    protected function _clean($dir, $mode = Cache::CLEANING_MODE_ALL, $tags = array()) {
+    protected function _clean($dir, $mode = CacheInterface::CLEANING_MODE_ALL, $tags = array()) {
         if (!is_dir($dir)) {
             return false;
         }
@@ -619,11 +619,8 @@ class File extends Cache implements ExtendedCacheInterface {
         foreach ($glob as $file)  {
             if (is_file($file)) {
                 $fileName = basename($file);
-                if ($this->_isMetadatasFile($fileName)) {
-                    // in CLEANING_MODE_ALL, we drop anything, even remainings old metadatas files
-                    if ($mode != Cache::CLEANING_MODE_ALL) {
-                        continue;
-                    }
+                if ($this->_isMetadatasFile($fileName) && $mode != CacheInterface::CLEANING_MODE_ALL) { // in CLEANING_MODE_ALL, we drop anything, even remainings old metadatas files
+                    continue;
                 }
                 $id = $this->_fileNameToId($fileName);
                 $metadatas = $this->_getMetadatas($id);
@@ -631,19 +628,19 @@ class File extends Cache implements ExtendedCacheInterface {
                     $metadatas = array('expire' => 1, 'tags' => array());
                 }
                 switch ($mode) {
-                    case Cache::CLEANING_MODE_ALL:
+                    case CacheInterface::CLEANING_MODE_ALL:
                         $res = $this->remove($id);
                         if (!$res) { // in this case only, we accept a problem with the metadatas file drop
                             $res = $this->_remove($file);
                         }
                         $result = $result && $res;
                         break;
-                    case Cache::CLEANING_MODE_OLD:
+                    case CacheInterface::CLEANING_MODE_OLD:
                         if (time() > $metadatas['expire']) {
                             $result = $this->remove($id) && $result;
                         }
                         break;
-                    case Cache::CLEANING_MODE_MATCHING_TAG:
+                    case CacheInterface::CLEANING_MODE_MATCHING_TAG:
                         $matching = true;
                         foreach ($tags as $tag) {
                             if (!in_array($tag, $metadatas['tags'])) {
@@ -655,7 +652,7 @@ class File extends Cache implements ExtendedCacheInterface {
                             $result = $this->remove($id) && $result;
                         }
                         break;
-                    case Cache::CLEANING_MODE_NOT_MATCHING_TAG:
+                    case CacheInterface::CLEANING_MODE_NOT_MATCHING_TAG:
                         $matching = false;
                         foreach ($tags as $tag) {
                             if (in_array($tag, $metadatas['tags'])) {
@@ -667,7 +664,7 @@ class File extends Cache implements ExtendedCacheInterface {
                             $result = $this->remove($id) && $result;
                         }
                         break;
-                    case Cache::CLEANING_MODE_MATCHING_ANY_TAG:
+                    case CacheInterface::CLEANING_MODE_MATCHING_ANY_TAG:
                         $matching = false;
                         foreach ($tags as $tag) {
                             if (in_array($tag, $metadatas['tags'])) {
@@ -685,7 +682,7 @@ class File extends Cache implements ExtendedCacheInterface {
                         break;
                 }
             }
-            if ((is_dir($file)) and ($this->options['hashed_directory_level']>0)) {
+            if ((is_dir($file)) && ($this->options['hashed_directory_level']>0)) {
                 // Recursive call
                 $result = $this->_clean($file . DIRECTORY_SEPARATOR, $mode, $tags) && $result;
                 if ($mode=='all') { // if mode=='all', we try to drop the structure too
@@ -765,7 +762,7 @@ class File extends Cache implements ExtendedCacheInterface {
                         break;
                 }
             }
-            if ((is_dir($file)) and ($this->options['hashed_directory_level']>0)) {
+            if ((is_dir($file)) && ($this->options['hashed_directory_level']>0)) {
                 // Recursive call
                 $recursiveRs =  $this->_get($file . DIRECTORY_SEPARATOR, $mode, $tags);
                 if ($recursiveRs === false) {
