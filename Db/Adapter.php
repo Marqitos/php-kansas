@@ -12,10 +12,11 @@
 
 namespace Kansas\Db;
 
-use Exception;
+use mysqli;
 use System\ArgumentOutOfRangeException;
 use System\NotSupportedException;
-use mysqli;
+use Kansas\Db\MysqliConnectionException;
+use Kansas\Db\MysqliException;
 
 class Adapter {
 
@@ -27,12 +28,18 @@ class Adapter {
             throw new ArgumentOutOfRangeException('options', 'El array options debe contener la clave driver');
         }
         if($options['driver'] == 'mysqli') { // Conexión a la BBDD mediante mysqli
+            if(!isset($options['hostname']) ||
+               !isset($options['username']) ||
+               !isset($options['password']) ||
+               !isset($options['database'])) {
+                require_once 'System/ArgumentOutOfRangeException.php';
+                throw new ArgumentOutOfRangeException('options', 'El controlador mysqli require las claves de configuracion hostname, username, password y database');
+            }
             $this->con = new mysqli($options['hostname'], $options['username'], $options['password'], $options['database']);
 
-            if($this->con == null) {
-                die('Error de Conexión con la base de datos.');
-            } elseif ($this->con->connect_error) {
-                die('Error de Conexión (' . $this->con->connect_errno . ') ' . $this->con->connect_error);
+            if($this->con == null || $this->con->connect_error) {
+                include_once 'Kansas/Db/MysqliConnectionException.php';
+                throw new MysqliConnectionException($this->con);
             }
             if(isset($options['charset'])) {
                 $this->con->set_charset($options['charset']);
@@ -47,28 +54,30 @@ class Adapter {
      * Realiza una consulta a la base de datos
      * 
      * @param string $sql Consulta sql a ejecutar
-     * @return array|int|bool En caso de ser una consulta tipo select, devuelve un array. En consultas insert, update, ... devuelve el número de filas afectadas. Y false en caso de que la consulta esté mal formulada o se produzca un error
+     * @return array|int En caso de ser una consulta tipo select, devuelve un array. En consultas insert, update, ... devuelve el número de filas afectadas. Y false en caso de que la consulta esté mal formulada o se produzca un error
      */
     public function query($sql, &$id = null) {
-        if($this->con->real_query($sql)) {
+        if($this->con->real_query($sql) &&
+           $this->con->errno == 0) {
             if($this->con->field_count == 0) { // La consulta no es select
-                if($this->con->errno == 0) {
-                    if($id != null) {
-                        $id = $this->con->insert_id;
+                if($id != null) {
+                    $id = $this->con->insert_id;
+                }
+                return $this->con->affected_rows;
+            } else {
+                try {
+                    $result = $this->con->store_result();
+                    if($this->con->errno == 0) {
+                        return $result->fetch_all(MYSQLI_ASSOC);
                     }
-                    return $this->con->affected_rows;
-                } 
-                return false;
-            }
-            try {
-                $result = $this->con->store_result();
-                $rows   = $result->fetch_all(MYSQLI_ASSOC);
-            } catch(Exception $ex) {
-                $rows   = false;
-            } finally {
-                $result->close();
-            }
-            return $rows;
+                } finally {
+                    $result->close();
+                }
+            } 
+        }
+        if($this->con->errno != 0) {
+            require_once 'Kansas/Db/MysqliException.php';
+            throw new MysqliException($this->con);
         }
         return false;
     }
@@ -91,6 +100,10 @@ class Adapter {
             } finally {
                 $result->close();
             }
+        }
+        if($this->con->errno != 0) {
+            require_once 'Kansas/Db/MysqliException.php';
+            throw new MysqliException($this->con);
         }
         return false;
     }
