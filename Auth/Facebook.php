@@ -43,7 +43,7 @@ class Kansas_Auth_Facebook
 	
 	public static function getRedirectLoginHelper($ru) {
 		global $application;
-		return new FacebookRedirectLoginHelper('http://' . $_SERVER['HTTP_HOST'] . $application->getModule('Auth')->getRouter()->assemble(['action' => 'fb-signin']) . http_build_query(['ru' => $ru]));
+		return new FacebookRedirectLoginHelper('http://' . $_SERVER['HTTP_HOST'] . $application->getPlugin('Auth')->getRouter()->assemble(['action' => 'fb-signin']) . http_build_query(['ru' => $ru]));
 	}
 		
 	public static function getSessionFromRedirect($ru) {
