@@ -1,4 +1,12 @@
-<?php
+<?php declare(strict_types = 1 );
+/**
+ * Representa un complemento que se hace cargo de una ruta de la aplicación
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright 2021, Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Plugin\Zone;
 
@@ -15,5 +23,10 @@ interface ZoneInterface extends PluginInterface {
      *
      * @return string con la ruta inicial
      */
-    public function getBasePath();
+    public function getBasePath() : string;
+
+    /**
+     * Realiza la configuración especifica de la zona
+     */
+    public function setUp() : void;
 }

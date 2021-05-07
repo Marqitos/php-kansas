@@ -1,4 +1,13 @@
-<?php
+<?php declare(strict_types = 1 );
+/**
+ * Proporciona las funcionalidades básicas de un plugin de zona
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright 2021, Marcos Porto
+ * @since v0.4
+ */
+
 namespace Kansas\Plugin;
 
 use System\Configurable;
@@ -25,15 +34,7 @@ abstract class AbstractZone extends Configurable implements ZoneInterface {
     global $application;
     $this->zones = $application->getPlugin('zones');
     $this->zones->addZone($this);
-    $application->registerCallback('preinit', [$this, 'appPreInit']);
   }
-  
-  public function appPreInit() { // añadir router
-    $zone = $this->zones->getZone();
-    $this->onAppPreInit($zone);
-  }
-
-  protected abstract function onAppPreInit($zone);
   
   /// Miembros de ZoneInterface
   /**
@@ -41,7 +42,7 @@ abstract class AbstractZone extends Configurable implements ZoneInterface {
    *
    * @return string con la ruta inicial
    */  
-  public function getBasePath() {
+  public function getBasePath() : string {
     return $this->options['base_path'];
   }
     

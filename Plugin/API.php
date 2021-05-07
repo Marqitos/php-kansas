@@ -2,12 +2,11 @@
 
 namespace Kansas\Plugin;
 
-use System\NotSupportedException;
 use System\Localization\Resources as SystemResources;
+use System\NotSupportedException;
+use System\Version;
 use Kansas\Plugin\AbstractZone;
 use Kansas\Router\API as RouterAPI;
-
-use function Kansas\API\APICore;
 
 require_once 'System/Localization/Resources.php';
 require_once 'Kansas/Plugin/AbstractZone.php';
@@ -28,8 +27,9 @@ class API extends AbstractZone {
             case 'development':
             case 'test':
                 return [
-                'base_path' => 'api',
-                'params' => []
+                    'base_path' => 'api',
+                    'params'    => [],
+                    'plugins'   => []
                 ];
             default:
                 require_once 'System/NotSupportedException.php';
@@ -37,17 +37,18 @@ class API extends AbstractZone {
         }
     }
 
-    public function getVersion() {
+    public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
 	}
 
-	public function onAppPreInit($zone) { // añadir router
+	public function setUp() : void { // añadir router
+        require_once 'Kansas/API/Core.php';
         global $application;
-        if($zone instanceof API) {
-            require_once 'Kansas/API/Core.php';
-            $this->getRouter()->registerCallback('Kansas\API\APICore');
-            $application->addRouter($this->router);
+        $this->getRouter()->registerCallback('Kansas\API\core');
+        $application->addRouter($this->router);
+        foreach($this->options['plugins'] as $pluginName => $options) {
+            $application->setPlugin($pluginName, $options);
         }
     }
   

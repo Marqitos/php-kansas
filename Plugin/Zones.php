@@ -11,8 +11,9 @@
 namespace Kansas\Plugin;
 
 use System\Configurable;
-use Kansas\Plugin\PluginInterface;
 use System\NotSupportedException;
+use System\Version;
+use Kansas\Plugin\PluginInterface;
 use Kansas\Plugin\Zone\ZoneInterface;
 
 use function System\String\startWith;
@@ -27,6 +28,17 @@ class Zones extends Configurable implements PluginInterface {
 	private $zones = [];
 	private $zone;
 
+	/**
+	 * Establece la contiguración e inicializa la clase
+	 *
+	 * @param array $options
+	 */
+	public function __construct(array $options) {
+		parent::__construct($options);
+		global $application;
+		$application->registerCallback('preinit', [$this, 'appPreInit']);
+	}
+
 	// Miembros de System\Configurable\ConfigurableInterface
 	public function getDefaultOptions($environment) : array {
 		switch ($environment) {
@@ -40,14 +52,19 @@ class Zones extends Configurable implements PluginInterface {
 		}
 	}
 
-	public function getVersion() {
+	public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
 	}
 	
+	public function appPreInit() {
+		$this->getZone();
+	}
+	
 	/// Metodos publicos
 	/**
-	 * Obtiene la zona actual
+	 * Obtiene la zona actual,
+	 * y realiza la configuración si hay una zona
 	 *
 	 * @return mixed Kansas\Plugin\Zone\ZoneInterface o false
 	 */
@@ -59,8 +76,9 @@ class Zones extends Configurable implements PluginInterface {
 			require_once 'System/String/startWith.php';
 			foreach($this->zones as $basePath => $zone) {
 				if(startWith($path, $basePath)) {
-				$this->zone = $zone;
-				break;
+					$this->zone = $zone;
+					$this->zone->setUp();
+					break;
 				}
 			}
 		}
@@ -75,8 +93,10 @@ class Zones extends Configurable implements PluginInterface {
 	 */
 	public function addZone(ZoneInterface $zone) {
 		$this->zones[$zone->getBasePath()] = $zone;
-		if($this->zone === false) // resetea la zona actual
+		if($this->zone === false) { // resetea la zona actual
 			unset($this->zone);
+			$this->getZone();
+		}
 	}
 
 }

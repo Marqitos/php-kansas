@@ -10,10 +10,11 @@
 
 namespace Kansas\Plugin;
 
+use System\NotSupportedException;
+use System\Version;
 use Kansas\Plugin\AbstractZone;
 use Kansas\Plugin\Zone\ZoneInterface;
 use Kansas\Router\RouterInterface;
-use System\NotSupportedException;
 
 use function System\String\startWith;
 
@@ -32,7 +33,6 @@ class Admin extends AbstractZone implements RouterInterface {
 	/// Constructor
 	public function __construct(array $options) {
 		parent::__construct($options);
-		global $application;
 	}
 	
 	// Miembros de System\Configurable\ConfigurableInterface
@@ -51,7 +51,7 @@ class Admin extends AbstractZone implements RouterInterface {
 		}
 	}
 
-	public function getVersion() {
+	public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
 	}
@@ -159,12 +159,10 @@ class Admin extends AbstractZone implements RouterInterface {
 		return $this->getBasePath();
 	}
 	
-	/// Eventos de la aplicación
-	public function onAppPreInit($zone) { // añadir router
+	/// Configuración de la zona
+	public function setUp() : void { // añadir router
 		global $application;
-		if($zone instanceof Admin) {
-			$application->addRouter($this);
-		}
+		$application->addRouter($this);
 	}
 	
 	/// Registro de eventos
