@@ -1,10 +1,17 @@
-<?php
+<?php declare(strict_types = 1 );
+/**
+ * Función que devuelve la petición realizada al servidor actual
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright 2021, Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Http;
 
 use Kansas\Http\ServerRequest;
 use function array_key_exists;
-use function is_callable;
 use function Kansas\Http\marshalHeadersFromSapi;
 use function Kansas\Http\marshalMethodFromSapi;
 use function Kansas\Http\marshalProtocolVersionFromSapi;
@@ -13,7 +20,18 @@ use function Kansas\Http\normalizeServer;
 use function Kansas\Http\normalizeUploadedFiles;
 use function Kansas\Http\parseCookieHeader;
 
-function currentServerRequest(array $server = null, array $query = null, array $body = null, array $cookies = null, array $files = null, $apacheRequestHeaders = null) {
+/**
+ * Devuelve la petición realizada al servidor actual
+ *
+ * @param  array $server (Opcional) Datos de $_SERVER o similares
+ * @param  array $query (Opcional) Datos de $_GET o similares
+ * @param  array $body (Opcional) Datos de $_POST o similares
+ * @param  array $cookies (Opcional) Datos de $_COOKIE o similares
+ * @param  array $files (Opcional) Datos de $_FILES o similares
+ * @param  callable $apacheRequestHeaders
+ * @return ServerRequest Petición realizada al servidor actual
+ */
+function currentServerRequest(array $server = null, array $query = null, array $body = null, array $cookies = null, array $files = null, callable $apacheRequestHeaders = null) : ServerRequest {
 		require_once 'Kansas/Http/marshalHeadersFromSapi.php';
 		require_once 'Kansas/Http/marshalMethodFromSapi.php';
 		require_once 'Kansas/Http/marshalProtocolVersionFromSapi.php';
@@ -23,16 +41,16 @@ function currentServerRequest(array $server = null, array $query = null, array $
 
 		$server = normalizeServer(
 			$server ?: $_SERVER,
-			is_callable($apacheRequestHeaders) ? $apacheRequestHeaders : null
+			$apacheRequestHeaders
 		);
 		$files   = normalizeUploadedFiles($files ?: $_FILES);
 		$headers = marshalHeadersFromSapi($server);
 
-		if (null === $cookies && array_key_exists('cookie', $headers)) {
+		if(null === $cookies &&
+		   array_key_exists('cookie', $headers)) {
 			require_once 'Kansas/Http/parseCookieHeader.php';
 			$cookies = parseCookieHeader($headers['cookie']);
 		}
-
 
 		return new ServerRequest(
 				$server,
