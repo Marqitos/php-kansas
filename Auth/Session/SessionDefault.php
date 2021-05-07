@@ -44,7 +44,7 @@ class SessionDefault implements SessionInterface {
      *
      * @return void
      */
-    public function clearIdentity() {
+    public function clearIdentity() : bool {
         unset($_SESSION['auth']);
         $res = session_destroy();
         session_regenerate_id();

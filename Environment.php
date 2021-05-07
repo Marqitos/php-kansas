@@ -89,14 +89,14 @@ class Environment {
         self::SF_TRACK      => '/log/hints',
         self::SF_ERRORS     => '/log/errors'];
 
-    protected function __construct($status, array $specialFolders) {
+    protected function __construct(string $status, array $specialFolders) {
         $this->t_inicio = microtime(true);
         $this->status = $status;
         $this->specialFolders = $specialFolders;
         $this->version = new Version('0.4');
     }
   
-    public static function getInstance($status = null, array $specialFolders = []) {
+    public static function getInstance(string $status = null, array $specialFolders = []) : self {
         if(self::$instance == null) {
             global $environment;
             if(empty($status)) {
@@ -127,7 +127,7 @@ class Environment {
         return $this->requestTime;
     }
 
-    public function getExecutionTime() {
+    public function getExecutionTime() : float {
         return microtime(true) - $this->getRequestTime();
     }
   
@@ -290,7 +290,7 @@ class Environment {
         return Config::ParseIni($filename, $iniOptions, $this->getStatus());
     }
 
-    public function getVersion() {
+    public function getVersion() : Version {
         return $this->version;
     }
 

@@ -1,4 +1,12 @@
-<?php
+<?php declare(strict_types = 1 );
+/**
+ * Representa el manejo de los datos de sesión que identifican un usuario
+ *
+ * @package System
+ * @author Marcos Porto
+ * @copyright 2021, Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Auth\Session;
 
@@ -17,7 +25,7 @@ interface SessionInterface {
     /**
      * Elimina la información del usuario
      */
-    public function clearIdentity();
+    public function clearIdentity() : bool;
     /**
      * Obtiene el identificador del usuario actual
      */

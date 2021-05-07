@@ -5,6 +5,7 @@ namespace Kansas\Auth\Session;
 use System\Configurable;
 use System\Guid;
 use System\NotSupportedException;
+use System\Version;
 use Kansas\Auth\Session\SessionInterface;
 use Kansas\Plugin\Token AS TokenPlugin;
 
@@ -31,7 +32,8 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
             case 'test':
                 return [
                     'lifetime'  => 0,
-                    'domain'    => ''
+                    'domain'    => '',
+                    'iss'       => $_SERVER['SERVER_NAME']
                 ];
             default:
                 require_once 'System/NotSupportedException.php';
@@ -42,7 +44,7 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
     /**
      *  @see System\Configurable\getVersion()
      */
-    public function getVersion() {
+    public function getVersion() : Version {
         global $environment;
         return $environment->getVersion();
     }	
@@ -65,7 +67,7 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
     }
 
     public function setIdentity(array $user, $lifetime = null, $domain = null) {
-        global $application, $environment;
+        global $application;
         $this->user = $user;
         if($lifetime == null) {
             $lifetime = $this->options['lifetime'];
@@ -75,10 +77,16 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
         }
         $tokenPlugin = $application->getPlugin('token'); // crear token
         $data = [
-            'iss'   => $_SERVER['SERVER_NAME'],
-            'iat'   => time(),
-            'sub'   => $user['id']
+            'iss'   => $this->options['iss'],
+            'iat'   => time()
         ];
+        if(isset($user['id'])) {
+            if(is_object($user['id'])) {
+                $data['sub'] = (string) $user['id'];
+            } else {
+                $data['sub'] = $user['id'];
+            }
+        }
         if($lifetime > 0) {
             $lifetime += time();
             $data['exp'] = $lifetime;
@@ -97,7 +105,7 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
         return $this->token->getClaim('jti');
     }
 
-    public function clearIdentity() {
+    public function clearIdentity() : bool {
         if($this->token) {
             require_once 'Kansas/Plugin/Token.php';
             TokenPlugin::deleteToken($this->token);
@@ -126,13 +134,15 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
         global $application, $environment;
         $request = $environment->getRequest();
         if($request->hasHeader('Authorization')) { // Obtener sessión de headers
-            $authHeader = $request->getHeader('Authorization')[0];
             require_once 'System/String/startWith.php';
-            if(startWith($authHeader, 'Bearer ')) {
-                $tokenString = substr($authHeader, 7);
+            foreach($request->getHeader('Authorization') as $authHeader) {
+                if(startWith($authHeader, 'Bearer ')) {
+                    $tokenString = substr($authHeader, 7);
+                    break;
+                }
             }
         }
-        if (isset($_COOKIE['token'])) { // Obtener sessión de cookies
+        if (isset($_COOKIE['token'])) { // Obtener sesión de cookies
             $tokenString = $_COOKIE['token'];
         }
         if(isset($tokenString)) {
