@@ -58,7 +58,7 @@ class Application extends Configurable {
 		set_error_handler([$this, 'errorHandler']);
 		set_exception_handler([$this, 'exceptionHandler']);
 		$this->_routers = new SplPriorityQueue();
-		$this->registerOptionChanged([$this, 'onOptionChanged']);
+		$this->registerEvent(self::EVENT_CHANGED, [$this, 'onOptionChanged']);
 		parent::__construct($options);
 	}
 
