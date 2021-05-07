@@ -8,7 +8,7 @@ use function substr;
 use function trim;
 use function System\String\startWith;
 
-function APICore($path, $method) {
+function core($path, $method) {
     require_once 'Psr/Http/Message/RequestMethodInterface.php';
     global $application, $environment;
     $authError = [

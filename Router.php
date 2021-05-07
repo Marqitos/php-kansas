@@ -56,11 +56,10 @@ abstract class Router extends Configurable implements RouterInterface {
 		if(!startWith($path, $basePath)) {
 			return false;
 		}
-		if(!substr($path, strlen($basePath))) {
-			return '';
-		}
-		return substr($path, strlen($basePath));
+		$result = substr($path, strlen($basePath));
+		return $result === false
+			? ''
+			: $result;
 	}
-	
 
 }
