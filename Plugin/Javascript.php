@@ -12,6 +12,7 @@ namespace Kansas\Plugin;
 
 use System\Configurable;
 use System\NotSupportedException;
+use System\Version;
 use Kansas\Controller\ControllerInterface;
 use Kansas\Controller\Index;
 use Kansas\Plugin\PluginInterface;
@@ -59,7 +60,7 @@ class Javascript extends Configurable implements PluginInterface {
 		}
 	}
 
-	public function getVersion() {
+	public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
 	}

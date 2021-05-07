@@ -10,11 +10,12 @@
 
 namespace Kansas\Plugin;
 
-use Kansas\Plugin\PluginInterface;
-use Kansas\Router\Token as router;
 use System\Configurable;
 use System\Guid;
 use System\NotSupportedException;
+use System\Version;
+use Kansas\Plugin\PluginInterface;
+use Kansas\Router\Token as Router;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
@@ -55,7 +56,7 @@ class Token extends Configurable implements PluginInterface {
         }
     }
 
-    public function getVersion() {
+    public function getVersion() : Version {
         global $environment;
         return $environment->getVersion();
     }
@@ -226,7 +227,7 @@ class Token extends Configurable implements PluginInterface {
     public function getRouter() {
         if(!isset($this->router)) {
             require_once 'Kansas/Router/Token.php';
-            $this->router = new router($this, $this->options);
+            $this->router = new Router($this, $this->options);
         }
         return $this->router;
     }

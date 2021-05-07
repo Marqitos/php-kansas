@@ -8,6 +8,8 @@
  * @since v0.4
  */
 
+use System\Version;
+
 require_once 'Kansas/Plugin/Abstract.php';
 require_once 'Kansas/Controller/Index.php';
 
@@ -35,7 +37,7 @@ class Kansas_Module_Sass
     }
   }
 
-  public function getVersion() {
+  public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
 	}	

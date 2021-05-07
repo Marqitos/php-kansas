@@ -8,13 +8,16 @@
  * @since v0.4
  */
 
- namespace Kansas\Plugin;
+namespace Kansas\Plugin;
 
+use Exception;
 use System\Configurable;
 use System\NotSupportedException;
+use System\Version;
 use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Auth\AuthException;
+use Kansas\View\Result\StringInterface;
 
 use function header;
 use function preg_match_all;
@@ -61,7 +64,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
         }
     }
     
-    public function getVersion() {
+    public function getVersion() : Version {
         global $environment;
         return $environment->getVersion();
     }	
@@ -118,19 +121,20 @@ class Digest extends Configurable implements PluginInterface, AuthService {
             }
                 // Based on all the info we gathered we can figure out what the response should be
             // $A1 = md5("{$validUser}:{$realm}:{$validPass}");
-            $A1 = $digestParts['username'] == $this->_adminUsername ? $this->_adminA1 :
-                                                                                                                                $this->_digest->getA1($this->_realm, $digestParts['username']); 
-            if(!$A1)
+            $A1 = $digestParts['username'] == $this->_adminUsername 
+                ? $this->_adminA1 
+                : $this->_digest->getA1($this->_realm, $digestParts['username']); 
+            if(!$A1) {
                 throw new AuthException(AuthException::FAILURE_CREDENTIAL_INVALID);
-            else {
+            } else {
                 
                 $A2 = md5("{$_SERVER['REQUEST_METHOD']}:{$digestParts['uri']}");
                 
                 $validResponse = md5("{$A1}:{$digestParts['nonce']}:{$digestParts['nc']}:{$digestParts['cnonce']}:{$digestParts['qop']}:{$A2}");
                 
-                if ($digestParts['response']!=$validResponse)
-                throw new AuthException(AuthException::FAILURE_CREDENTIAL_INVALID);
-                else {
+                if ($digestParts['response']!=$validResponse) {
+                    throw new AuthException(AuthException::FAILURE_CREDENTIAL_INVALID);
+                } else {
                     try {
                         $user = $this->_users->getByEmail($digestParts['username']);
                     } catch(Exception $exception) {
@@ -144,22 +148,23 @@ class Digest extends Configurable implements PluginInterface, AuthService {
     }
 
     // This function forces a login prompt
-    public function requireLogin(Kansas_View_Result_String_Interface $cancelResult) {
+    public function requireLogin(StringInterface $cancelResult) {
         header('WWW-Authenticate: Digest realm="' . $this->_realm . '",qop="auth",nonce="' . $this->nonce . '",opaque="' . md5($this->_realm) . '"');
         header('HTTP/1.0 401 Unauthorized');
-        echo $cancelResult->getResult();
+        $cache = false;
+        echo $cancelResult->getResult($cache);
         die();
     }
 
     // This function returns the digest string
     public static function getDigest() {
-        if (isset($_SERVER['PHP_AUTH_DIGEST'])) // mod_php
+        if (isset($_SERVER['PHP_AUTH_DIGEST'])) { // mod_php
             return $_SERVER['PHP_AUTH_DIGEST'];
-        elseif (isset($_SERVER['HTTP_AUTHENTICATION']) &&
-            strpos(strtolower($_SERVER['HTTP_AUTHENTICATION']), 'digest')===0) // most other servers
+        } elseif(isset($_SERVER['HTTP_AUTHENTICATION']) &&
+                 strpos(strtolower($_SERVER['HTTP_AUTHENTICATION']), 'digest') === 0) { // most other servers
             return substr($_SERVER['HTTP_AUTHORIZATION'], 7);
-        else
-            return false;
+        }
+        return false;
     }
 
     // This function extracts the separate values from the digest string

@@ -1,5 +1,6 @@
 <?php
 
+use System\Version;
 use Facebook\FacebookSession;
 use Facebook\FacebookRequest;
 
@@ -51,17 +52,17 @@ class Kansas_Module_Facebook
 	
 	public function getLoginUrl(array $params) {
 		$result = [
-			'link' => Kansas_Auth_Facebook::getRedirectLoginHelper($params['ru'])
-			->getLoginUrl(['public_profile', 'email']),
-			'text' => 'Conectar con Facebook'
+			'link' => Kansas_Auth_Facebook::getRedirectLoginHelper($params['ru'])->getLoginUrl(['public_profile', 'email']),
+      'text' => 'Conectar con Facebook'
 		];
-		if(isset($params['fb-error']))
+		if(isset($params['fb-error'])) {
 			$result['error'] = $params['fb-error'];
+    }
 		
 		return $result;
 	}
 	
-  public function getVersion() {
+  public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
 	}

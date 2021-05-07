@@ -1,5 +1,7 @@
 <?php
 
+use System\Version;
+
 class Kansas_Module_Google
   extends Kansas_Module_Abstract {
 		
@@ -56,7 +58,7 @@ class Kansas_Module_Google
 		return $this->_client;
 	}
   
-  public function getVersion() {
+  public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
 	}	

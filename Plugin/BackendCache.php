@@ -10,13 +10,14 @@
 
 namespace Kansas\Plugin;
 
+use Exception;
 use System\Configurable;
+use System\NotSupportedException;
+use System\Version;
 use Kansas\Cache;
 use Kansas\Cache\CacheInterface;
 use Kansas\Plugin\Admin as AdminPlugin;
 use Kansas\Plugin\PluginInterface;
-use System\NotSupportedException;
-use Exception;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
@@ -58,7 +59,7 @@ class BackendCache extends Configurable implements PluginInterface {
 	}
   
     /// Miembros de PluginInterface
-    public function getVersion() {
+    public function getVersion() : Version {
         global $environment;
         return $environment->getVersion();
     }

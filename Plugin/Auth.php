@@ -20,6 +20,7 @@ use Psr\Http\Message\RequestInterface;
 use System\Configurable;
 use System\Guid;
 use System\NotSupportedException;
+use System\Version;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/RouterPluginInterface.php';
@@ -90,7 +91,7 @@ class Auth extends Configurable implements RouterPluginInterface {
 		}
 	}
 
-	public function getVersion() {
+	public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
 	}

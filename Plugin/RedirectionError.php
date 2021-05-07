@@ -13,6 +13,7 @@ namespace Kansas\Plugin;
 use Exception;
 use System\Configurable;
 use System\NotSupportedException;
+use System\Version;
 use Kansas\Plugin\PluginInterface;
 use Kansas\View\Result\Redirect;
 
@@ -49,7 +50,7 @@ class RedirectionError extends Configurable implements PluginInterface {
 		}
 	}
   
-	public function getVersion() {
+	public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
 	}

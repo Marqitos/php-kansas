@@ -12,10 +12,11 @@ namespace Kansas\Plugin;
 
 use Exception;
 use System\Configurable;
-use Kansas\Plugin\PluginInterface;
-use Kansas\Auth\ServiceInterface as AuthService;
 use System\NotSupportedException;
+use System\Version;
+use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Auth\AuthException;
+use Kansas\Plugin\PluginInterface;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
@@ -68,7 +69,7 @@ class Membership extends Configurable implements PluginInterface, AuthService {
     }
   }
 
-  public function getVersion() {
+  public function getVersion() : Version {
     global $environment;
     return $environment->getVersion();
   }

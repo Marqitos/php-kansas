@@ -1,5 +1,7 @@
 <?php
 
+use System\Version;
+
 class Kansas_Module_Messages
 	implements Kansas_Module_Interface {
 
@@ -45,7 +47,7 @@ class Kansas_Module_Messages
 		return $apiRouter->match();
 	}
   
-  public function getVersion() {
+  public function getVersion() : Version {
     global $environment;
     return $environment->getVersion();    
   }

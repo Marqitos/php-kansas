@@ -1,11 +1,16 @@
 <?php
 namespace Kansas\Plugin;
 
+use Psr\Http\Message\ServerRequestInterface;
 use System\Configurable;
+use System\Version;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Router\Cache as RouterCache;
 use System\NotSupportedException;
-use Exception;
+
+require_once 'Psr/Http/Message/ServerRequestInterface.php';
+require_once 'System/Configurable.php';
+require_once 'Kansas/Plugin/PluginInterface.php';
 
 class CacheRouter extends Configurable implements PluginInterface {
   
@@ -18,12 +23,13 @@ class CacheRouter extends Configurable implements PluginInterface {
         global $application;
         parent::__construct($options);
         $application->registerCallback('preinit', [$this, 'appPreInit']);
-        if($this->options['cacheRouting']) // Cache de rutas
+        if($this->options['cacheRouting']) { // Cache de rutas
             $application->registerCallback('route', [$this, "appRoute"]);
+        }
     }
   
     /// Miembros de ConfigurableInterface
-    public function getDefaultOptions($environment) {
+    public function getDefaultOptions($environment) : array {
         switch ($environment) {
         case 'production':
         case 'development':
@@ -39,7 +45,7 @@ class CacheRouter extends Configurable implements PluginInterface {
     }
   
     /// Miembros de PluginInterface
-    public function getVersion() {
+    public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
     }
@@ -62,15 +68,14 @@ class CacheRouter extends Configurable implements PluginInterface {
         $application->addRouter($this->getRouter(), 10);
     }
 
-    public function appRoute(Kansas_Request $request, $params) { // Guardar ruta en cache
+    public function appRoute(ServerRequestInterface $request, $params) { // Guardar ruta en cache
         if(!isset($params['cache']) && !isset($params['error'])) {
-            $cache = $this->getCache();
-            $cache->save(serialize($params), self::getCacheId($request));
+            $this->getCache()->save(serialize($params), self::getCacheId($request));
         }
         return [];
     }
       
-    public static function getCacheId(Kansas_Request $request) {
+    public static function getCacheId(ServerRequestInterface $request) {
         global $application;
         $roles = $application->getPlugin('Auth')->getCurrentRoles();
         $permsId = md5(serialize($roles));
@@ -80,9 +85,8 @@ class CacheRouter extends Configurable implements PluginInterface {
     
     public function getRouter() {
         if(!isset($this->router)) {
-            $cache = $this->getCache();
             require_once 'Kansas/Router/Cache.php';
-            $this->router = new RouterCache($cache);
+            $this->router = new RouterCache($this->getCache());
         }
         return $this->router;
     }

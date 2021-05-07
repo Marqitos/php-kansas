@@ -12,6 +12,7 @@ namespace Kansas\Plugin;
 
 use System\Configurable;
 use System\NotSupportedException;
+use System\Version;
 use Kansas\Environment;
 use Kansas\View\Template;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -29,7 +30,7 @@ class Phpmail extends Configurable implements PluginInterface {
 		parent::__construct($options);
     }
   
-	// Miembros de System\Configurable\ConfigurableInterface
+	// Miembros de System\Configurable\ConfigurableInterface    
     public function getDefaultOptions($environment) : array {
         switch ($environment) {
         case 'production':
@@ -58,7 +59,7 @@ class Phpmail extends Configurable implements PluginInterface {
         }
     }
 
-    public function getVersion() {
+    public function getVersion() : Version {
         global $environment;
         return $environment->getVersion();
     }
@@ -79,7 +80,18 @@ class Phpmail extends Configurable implements PluginInterface {
         return $mail;
     }
 
-    public function serverSend($to, $subject, $htmlTemplate, $textTemplate, array $templateData) {
+    /**
+     * Envía un mensaje mediante el servidor smtp
+     * 
+     * @param array|string $to Destinatario del mensaje: array con el correo y el nombre; o string con el correo
+     * @param string $subject Asunto del mensaje
+     * @param string $htmlTemplate Nombre del archivo de la plantilla para el mensaje en formato html
+     * @param string $textTemplate Nombre del archivo de la plantilla para el mensaje en formato texto
+     * @param array $templateData Contexto para las plantillas
+     * @param array $options (Opcional) Opciones adicionales ['replyTo' => responder a]
+     * @return bool|string true en caso de exito, o un texto descriptivo en caso de error
+     */
+    public function serverSend($to, $subject, $htmlTemplate, $textTemplate, array $templateData, array $options = []) {
         require_once 'Kansas/View/Template.php';
         global $environment;
         $template = new Template($environment->getSpecialFolder(Environment::SF_LAYOUT) . $htmlTemplate, $templateData);
@@ -93,11 +105,20 @@ class Phpmail extends Configurable implements PluginInterface {
         } else {
             $mail->addAddress($to);
         }
-        $mail->Subject = $subject;
-        $mail->msgHTML($htmlMessage);
-        $mail->AltBody = $txtMessage;
+        foreach($options as $key => $value) {
+            if($key == 'replyTo') {
+                if(is_array($value)) {
+                    $mail->addReplyTo($value[0], $value[1]);
+                } else {
+                    $mail->addReplyTo($value);
+                }
+            }
+        }
+        $mail->Subject  = $subject;
+        $mail->Body     = $htmlMessage;
+        $mail->AltBody  = $txtMessage;
 
-        //send the message, check for errors
+        //Envía el mensaje y comprueba si hay errores
         return $mail->send()
             ? true
             : $mail->ErrorInfo;

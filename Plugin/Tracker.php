@@ -10,12 +10,13 @@
 
 namespace Kansas\Plugin;
 
+use Psr\Http\Message\RequestInterface;
 use System\Configurable;
 use System\NotSupportedException;
+use System\Version;
 use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Router\TrailResources;
-use Psr\Http\Message\RequestInterface;
 
 use function Kansas\Request\getTrailData;
 use function Kansas\Request\getUserAgentData;
@@ -68,7 +69,7 @@ class Tracker extends Configurable implements PluginInterface {
 		}
 	}
 
-    public function getVersion() {
+    public function getVersion() : Version {
         global $environment;
         return $environment->getVersion();
     }
