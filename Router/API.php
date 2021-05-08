@@ -10,8 +10,13 @@
 
 namespace Kansas\Router;
 
-use Kansas\Router;
 use System\NotSupportedException;
+use Kansas\Router;
+use Kansas\Plugin\API as APIPlugin;
+use function array_merge;
+use function call_user_func;
+use function is_array;
+use function trim;
 
 require_once 'Kansas/Router.php';
 
@@ -27,8 +32,8 @@ class API extends Router {
 			case 'test':
 				return [
 					'base_path'	=> 'api',
-					'params'	=> []
-				];
+					'params'	=> [
+						'cors'	=> true]];
 			default:
 				require_once 'System/NotSupportedException.php';
 				throw new NotSupportedException("Entorno no soportado [$environment]");
@@ -39,24 +44,32 @@ class API extends Router {
 	public function match() {
 		global $environment;
 		$path = static::getPath($this);
-        if($path === false)
+        if($path === false) {
 			return false;
-		$path = trim($path, '/');
+		}
+		$params	= false;
+		$path 	= trim($path, '/');
 		$method = $environment->getRequest()->getMethod();
 		foreach($this->callbacks as $callback) {
 			$result = call_user_func($callback, $path, $method);
-			if(is_array($result))
-				return array_merge($result, [
+			if(is_array($result)) {
+				$params = array_merge($result, [
 					'controller'	=> 'index',
 					'action'		=> 'API'
 				]);
+				break;
+			}
 		}
-		return [
-			'controller'	=> 'index',
-			'action'		=> 'API',
-			'error'			=> 'No encontrado',
-			'code'			=> 404
-		];
+		if($params === false) {
+			require_once 'Kansas/Plugin/API.php';
+			$params = array_merge(APIPlugin::ERROR_NOT_FOUND, [
+				'controller'	=> 'index',
+				'action'		=> 'API']);
+		}
+		if($this->options['params']['cors']) {
+			header('Access-Control-Allow-Origin: *');
+		}
+		return $params;
 	}
 
 	public function registerCallback(callable $callback) {

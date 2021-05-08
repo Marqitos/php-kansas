@@ -28,7 +28,8 @@ class API extends AbstractZone {
             case 'test':
                 return [
                     'base_path' => 'api',
-                    'params'    => [],
+                    'params'    => [
+                        'cors'      => true],
                     'plugins'   => []
                 ];
             default:
@@ -65,14 +66,22 @@ class API extends AbstractZone {
 	}
 
     public const ERROR_AUTH = [
-        'error' => SystemResources::WebException401Message,
-        'code'  => 401,
-        'scheme'=> 'Bearer'
+        'code'      => 401,
+        'status'    => 'error',
+        'message'   => SystemResources::WebException401Message,
+        'scheme'    => 'Bearer'
     ];
 
     public const ERROR_REQUEST = [
-        'error' => SystemResources::WebException412Message,
-        'code'  => 412
+        'code'      => 412,
+        'status'    => 'error',
+        'message'   => SystemResources::WebException412Message,
+    ];
+
+    public const ERROR_NOT_FOUND = [
+        'code'      => 404,
+        'status'    => 'error',
+        'message'   => SystemResources::WebException404Message,
     ];
 
 }
