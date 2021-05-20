@@ -21,17 +21,33 @@ use Kansas\Router\RouterInterface;
 use Kansas\View\Result\ViewResultInterface;
 use Kansas\Db\Adapter as DbAdapter;
 
+use function Kansas\Request\getRequestType;
 use function array_merge;
 use function is_string;
 use function is_array;
 use function set_error_handler;
 use function set_exception_handler;
-use function Kansas\Request\getRequestType;
 use function ucfirst;
 use function get_class;
 
 class Application extends Configurable {
 	
+	public const EVENT_PREINIT		= 'preinit';
+	public const EVENT_ROUTE		= 'route';
+	public const EVENT_RENDER		= 'render';
+	public const EVENT_DISPATCH 	= 'dispatch';
+	public const EVENT_C_PROVIDER	= 'createProvider';
+	public const EVENT_C_PLUGIN		= 'createPlugin';
+	public const EVENT_C_VIEW		= 'createView';
+	public const EVENT_ERROR		= 'error';
+	public const EVENT_LOG			= 'log';
+
+	public const STATUS_START		= 0x00;
+	public const STATUS_INIT		= 0x01;
+	public const STATUS_ROUTE		= 0x02;
+	public const STATUS_DISPATCH	= 0x04;
+	public const STATUS_ERROR		= 0x10;
+
 	private $_providers = [];
 	private $db;
 
@@ -44,15 +60,18 @@ class Application extends Configurable {
 	
 	// Eventos
 	private $_callbacks = [
-		'preinit' 			=> [],
-		'route'   			=> [],
-		'render'  			=> [],
-		'dispatch' 			=> [],
-		'createProvider' 	=> [],
-		'createView' 		=> []
+		self::EVENT_PREINIT 	=> [],
+		self::EVENT_ROUTE   	=> [],
+		self::EVENT_RENDER  	=> [],
+		self::EVENT_DISPATCH 	=> [],
+		self::EVENT_C_PROVIDER 	=> [],
+		self::EVENT_C_PLUGIN	=> [],
+		self::EVENT_C_VIEW		=> [],
+		self::EVENT_ERROR		=> [],
+		self::EVENT_LOG			=> []
 	];
 	
-	protected static $_instance;
+	protected static $instance;
 
 	public function __construct(array $options) {
 		set_error_handler([$this, 'errorHandler']);
@@ -87,7 +106,7 @@ class Application extends Configurable {
 				];
 			default:
 				require_once 'System/NotSupportedException.php';
-				throw new NotSupportedException("Entorno no soportado [$environment]");
+				NotSupportedException::NotValidEnvironment($environment);
 		}
 	}
 
@@ -187,6 +206,7 @@ class Application extends Configurable {
 		global $environment;
         try {
 			$plugin = $environment->createPlugin($pluginName, $options);
+
         } catch(Throwable $e) {
             $this->log(E_USER_NOTICE, $e);
             $plugin = false;
@@ -238,7 +258,7 @@ class Application extends Configurable {
 		}
 		if($params) {
 		  $params = array_merge($params, self::getDefaultParams());
-		  $params = $this->raiseRoute($params); // Route event
+		  $this->raiseRoute($params); // Route event
 		  $result = $this->dispatch($params);
 		}
 		if(!isset($result) || $result === null) {
@@ -270,39 +290,33 @@ class Application extends Configurable {
 	}
 
 	protected function raisePreInit() {
-		foreach ($this->_callbacks['preinit'] as $callback) {
+		foreach ($this->_callbacks[self::EVENT_PREINIT] as $callback) {
 			call_user_func($callback);
 		}
 	}
-	protected function raiseRoute($params = []) {
+	protected function raiseRoute(&$params = []) {
 		global $environment;
 		$request	= $environment->getRequest();
-		foreach ($this->_callbacks['route'] as $callback) {
+		foreach ($this->_callbacks[self::EVENT_ROUTE] as $callback) {
 			$params = array_merge($params, call_user_func($callback, $request, $params));
 		}
-		return $params;
 	}
 	protected function raiseRender(ViewResultInterface $result) {
-		foreach ($this->_callbacks['render'] as $callback) {
+		foreach ($this->_callbacks[self::EVENT_RENDER] as $callback) {
 			call_user_func($callback, $result);
 		}
 	}
 	protected function raiseDispatch($params = []) {
 		global $environment;
 		$request	= $environment->getRequest();
-		foreach ($this->_callbacks['dispatch'] as $callback) {
+		foreach ($this->_callbacks[self::EVENT_DISPATCH] as $callback) {
 			$params = array_merge($params, call_user_func($callback, $request, $params));
 		}
 		return $params;
 	}
 	protected function raiseCreateProvider($provider, $providerName) {
-		foreach ($this->_callbacks['createProvider'] as $callback) {
+		foreach ($this->_callbacks[self::EVENT_C_PROVIDER] as $callback) {
 			call_user_func($callback, $provider, $providerName);
-		}
-	}
-	protected function raiseCreateView($view) {
-		foreach ($this->_callbacks['createView'] as $callback) {
-			call_user_func($callback, $view);
 		}
 	}
 
@@ -323,7 +337,10 @@ class Application extends Configurable {
 	public static function getInstance($options) {
 		global $application;
 		if($application == null) {
-			$application = self::$_instance = new self($options);	
+			if(self::$instance == null) {
+				self::$instance = new self($options);
+			}
+			$application = self::$instance;
 		}
 		return $application;
 	}
@@ -337,7 +354,9 @@ class Application extends Configurable {
 			if($this->_view->getCaching()) {
 				$this->_view->setCacheId($environment->getRequest()->getUri());
 			}
-			$this->raiseCreateView($this->_view);
+			foreach ($this->_callbacks[self::EVENT_C_VIEW] as $callback) {
+				call_user_func($callback, $this->_view);
+			}
 		}
 		return $this->_view;
 	}
