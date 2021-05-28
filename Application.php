@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1 );
 /**
  * Clase principal de ejecución de la aplicación
  *
@@ -23,12 +23,13 @@ use Kansas\Db\Adapter as DbAdapter;
 
 use function Kansas\Request\getRequestType;
 use function array_merge;
-use function is_string;
 use function is_array;
-use function set_error_handler;
-use function set_exception_handler;
+//use function set_error_handler;
+//use function set_exception_handler;
 use function ucfirst;
 use function get_class;
+
+require_once 'System/Configurable.php';
 
 class Application extends Configurable {
 	
@@ -48,7 +49,8 @@ class Application extends Configurable {
 	public const STATUS_DISPATCH	= 0x04;
 	public const STATUS_ERROR		= 0x10;
 
-	private $_providers = [];
+	private $status					= self::STATUS_START;
+	private $providers 				= [];
 	private $db;
 
     private $plugins;
@@ -74,8 +76,8 @@ class Application extends Configurable {
 	protected static $instance;
 
 	public function __construct(array $options) {
-		set_error_handler([$this, 'errorHandler']);
-		set_exception_handler([$this, 'exceptionHandler']);
+		//set_error_handler([$this, 'errorHandler']);
+		//set_exception_handler([$this, 'exceptionHandler']);
 		$this->_routers = new SplPriorityQueue();
 		$this->registerEvent(self::EVENT_CHANGED, [$this, 'onOptionChanged']);
 		parent::__construct($options);
@@ -127,13 +129,8 @@ class Application extends Configurable {
 		}
 	}
 
-    public function getPlugin($pluginName) { // Obtiene el modulo seleccionado, lo carga si es necesario
-        if(!is_string($pluginName)) { // Comprobar parametros
-            require_once 'System/ArgumentOutOfRangeException.php';
-            throw new ArgumentOutOfRangeException('pluginName', 'Se esperaba una cadena', $pluginName);
-		}
+    public function getPlugin(string $pluginName) { // Obtiene el modulo seleccionado, lo carga si es necesario
         $pluginName = ucfirst($pluginName);
-        // Devolver plugin
 		$this->loadPlugins();
 		$options = (isset($this->options['plugin'][$pluginName]) && is_array($this->options['plugin'][$pluginName]))
 			? $this->options['plugin'][$pluginName]
@@ -143,11 +140,7 @@ class Application extends Configurable {
             : $this->loadPlugin($pluginName, $options);
     }
 
-    public function setPlugin($pluginName, array $options = []) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
-        if(!is_string($pluginName)) {
-            require_once 'System/ArgumentOutOfRangeException.php';
-            throw new ArgumentOutOfRangeException('pluginName', 'Se esperaba una cadena', $pluginName);
-        }
+    public function setPlugin(string $pluginName, array $options = []) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
         $pluginName = ucfirst($pluginName);
         if(!is_array($options)) {
 			$options = [];
@@ -166,13 +159,9 @@ class Application extends Configurable {
 		return false;
     }
 
-    public function hasPlugin($pluginName) { // Obtiene el modulo seleccionado si está cargado o false en caso contrario
-        if(!is_string($pluginName)) {
-            require_once 'System/ArgumentOutOfRangeException.php';
-            throw new ArgumentOutOfRangeException('pluginName', 'Se esperaba una cadena', $pluginName);
-        }
+    public function hasPlugin(string $pluginName) { // Obtiene el modulo seleccionado si está cargado o false en caso contrario
         $pluginName = ucfirst($pluginName);
-        return  (is_array($this->plugins) && isset($this->plugins[$pluginName]))
+        return (is_array($this->plugins) && isset($this->plugins[$pluginName]))
             ? $this->plugins[$pluginName]
             : false;
     }
@@ -215,24 +204,25 @@ class Application extends Configurable {
 		return $plugin;
     }
 
-	public function getProvider($providerName) {
-		if(!is_string($providerName)) {
-			require_once 'System/ArgumentOutOfRangeException.php';
-			throw new ArgumentOutOfRangeException('providerName', 'Se esperaba una cadena', $providerName);
-		}
+	public function getProvider(string $providerName) {
 		global $environment;
 		$providerName = ucfirst($providerName);
-		if(!isset($this->_providers[$providerName])) {
+		if(!isset($this->providers[$providerName])) {
 			$provider = $environment->createProvider($providerName);
-			$this->_providers[$providerName] = $provider;
-			$this->raiseCreateProvider($provider, $providerName);
+			$this->providers[$providerName] = $provider;
+			foreach ($this->_callbacks[self::EVENT_C_PROVIDER] as $callback) {
+				call_user_func($callback, $provider, $providerName);
+			}
 		}
-		return $this->_providers[$providerName];
+		return $this->providers[$providerName];
 	}
 	
-	public function dispatch($params) {
+	public function dispatch(array $params) : ViewResultInterface {
 		global $environment;
-		$params         = $this->raiseDispatch($params);
+		$request		= $environment->getRequest();
+		foreach ($this->_callbacks[self::EVENT_DISPATCH] as $callback) { // Dispatch event
+			$params 	= array_merge($params, call_user_func($callback, $request, $params));
+		}
 		$controllerName = isset($params['controller'])
 						? ucfirst($params['controller'])
 						: 'Index';
@@ -246,32 +236,47 @@ class Application extends Configurable {
 		return $controller->callAction($action, $params);
 	}
 	
-	public function run() {
-		$this->loadPlugins();
-		$params = false;
-		$this->raisePreInit(); // PreInit event
-		foreach($this->_routers as $router) {
-			if($params = $router->match()) {
-				$params['router'] = get_class($router);
-				break;
+	public function run() : void {
+		global $environment;
+		try {
+			$this->loadPlugins();
+			foreach ($this->_callbacks[self::EVENT_PREINIT] as $callback) { // PreInit event
+				call_user_func($callback);
 			}
+			$params 		= false;
+			foreach($this->_routers as $router) {
+				if($params 	= $router->match()) {
+					$params['router'] = get_class($router);
+					break;
+				}
+			}
+			if($params) {
+				$params 	= array_merge($params, self::getDefaultParams());
+				$request	= $environment->getRequest();
+				foreach ($this->_callbacks[self::EVENT_ROUTE] as $callback) { // Route event
+					$params = array_merge($params, call_user_func($callback, $request, $params));
+				}
+				$result 	= $this->dispatch($params);
+			}
+			if(!isset($result) || $result === null) {
+				require_once 'System/Net/WebException.php';
+				$ex = new WebException(404);
+				$this->raiseError($ex);
+				return;
+			}
+			foreach ($this->_callbacks[self::EVENT_RENDER] as $callback) { // Render event
+				call_user_func($callback, $result);
+			}
+			$result->executeResult();
+		} catch(Throwable $ex) {
+			$this->raiseError($ex);
 		}
-		if($params) {
-		  $params = array_merge($params, self::getDefaultParams());
-		  $this->raiseRoute($params); // Route event
-		  $result = $this->dispatch($params);
-		}
-		if(!isset($result) || $result === null) {
-			require_once 'System/Net/WebException.php';
-			throw new WebException(404);
-		}
-		// Render
-		$this->raiseRender($result);
-		$result->executeResult();
 	}
 	
-	// Asocia los parametros indicados y los básicos a la petición actual
-	public static function getDefaultParams() {
+	/**
+	 * Devuelve los parametros básicos de la petición actual
+	 */
+	public static function getDefaultParams() : array {
 		require_once 'Kansas/Request/getRequestType.php';
 		global $environment;
 		$request = $environment->getRequest();
@@ -283,44 +288,27 @@ class Application extends Configurable {
 	}
 	
 	/* Eventos */
-	public function registerCallback($hook, callable $callback) {
+	public function registerCallback(string $hook, callable $callback) : void {
 		if(isset($this->_callbacks[$hook])) {
 			$this->_callbacks[$hook][] = $callback;
 		}
 	}
-
-	protected function raisePreInit() {
-		foreach ($this->_callbacks[self::EVENT_PREINIT] as $callback) {
-			call_user_func($callback);
-		}
-	}
-	protected function raiseRoute(&$params = []) {
-		global $environment;
-		$request	= $environment->getRequest();
-		foreach ($this->_callbacks[self::EVENT_ROUTE] as $callback) {
-			$params = array_merge($params, call_user_func($callback, $request, $params));
-		}
-	}
-	protected function raiseRender(ViewResultInterface $result) {
-		foreach ($this->_callbacks[self::EVENT_RENDER] as $callback) {
-			call_user_func($callback, $result);
-		}
-	}
-	protected function raiseDispatch($params = []) {
-		global $environment;
-		$request	= $environment->getRequest();
-		foreach ($this->_callbacks[self::EVENT_DISPATCH] as $callback) {
-			$params = array_merge($params, call_user_func($callback, $request, $params));
-		}
-		return $params;
-	}
-	protected function raiseCreateProvider($provider, $providerName) {
-		foreach ($this->_callbacks[self::EVENT_C_PROVIDER] as $callback) {
-			call_user_func($callback, $provider, $providerName);
+	protected function raiseError(Throwable $exception) : void {
+		$errData = self::getErrorData($exception);
+		foreach ($this->_callbacks[self::EVENT_ERROR] as $callback) {
+			call_user_func($callback, $errData);
 		}
 	}
 
-	public function getDb() {
+	protected function raiseLog(int $level, $message) : void {
+		if($message instanceof Throwable) {
+			$message = self::getErrorData($message);
+		}
+		@call_user_func($this->options['log'], $level, $message);
+	}
+
+
+	public function getDb() : DbAdapter {
 		require_once 'Kansas/Db/Adapter.php';
 		if($this->db == NULL) {
 			if($this->options['db'] instanceof DbAdapter) {
@@ -334,7 +322,7 @@ class Application extends Configurable {
 	}
 
 	/* Miembros de singleton */
-	public static function getInstance($options) {
+	public static function getInstance(array $options) : self {
 		global $application;
 		if($application == null) {
 			if(self::$instance == null) {
@@ -372,10 +360,6 @@ class Application extends Configurable {
 		return $this->_title;
 	}
 
-	public function getConfig() {
-		return $this->_config;
-	}
-	
 	/* Gestion de errores */
 	public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 		if (!(error_reporting() & $errno)) { // Este código de error no está incluido en error_reporting
@@ -405,14 +389,14 @@ class Application extends Configurable {
 	
 	public function exceptionHandler(Throwable $ex) {
 		$errData = self::getErrorData($ex);
-		if(error_reporting() != 0) {
-			@call_user_func($this->options['log'], E_USER_ERROR, $errData);
+		if((error_reporting() & E_USER_ERROR) != 0) {
+			$this->raiseLog(E_USER_ERROR, $errData);
 		}
-		@call_user_func($this->options['error'], $errData);
+		$this->raiseError($ex);
 		exit(1);
 	}
 	
-	public function log($level, $message) {
+	public function log(int $level, $message) {
 		if($message instanceof Throwable) {
 			$message = self::getErrorData($message);
 		}
@@ -427,7 +411,7 @@ class Application extends Configurable {
 		$result->executeResult();
 	}
 	
-	public static function getErrorData(Throwable $ex) {
+	public static function getErrorData(Throwable $ex) : array {
 		require_once 'System/Net/WebException.php';
 		return [
 			'exception'     => get_class($ex),
@@ -441,7 +425,7 @@ class Application extends Configurable {
 	}
 	
 	/* Enrutamiento */
-	public function addRouter(RouterInterface $router, $priority = 0) {
+	public function addRouter(RouterInterface $router, $priority = 0) : void {
 		$this->_routers->insert($router, $priority);
 	}
   

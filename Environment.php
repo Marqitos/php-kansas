@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1 );
 /**
  * Proporciona información relacionada con las carpetas, tiempo de ejecución, la petición actual e idiomas
  *
@@ -8,29 +8,38 @@
  * @since v0.1
  */
 
- namespace Kansas;
+namespace Kansas;
 
-use Exception;
+use Generator;
+use Throwable;
+use Psr\Http\Message\ServerRequestInterface;
 use System\ArgumentOutOfRangeException;
 use System\Collections\KeyNotFoundException;
 use System\IO\File;
 use System\IO\IOException;
+use System\Localization\Resources as SysResources;
 use System\Version;
 use Kansas\Config;
 use Kansas\PluginLoader;
 use Kansas\Controller\ControllerInterface;
-use Kansas\Loader\NotCastException;
+use Kansas\Http\ServerRequest;
+use Kansas\Localization\Resources;
 use Kansas\Plugin\PluginInterface;
-use Psr\Http\Message\ServerRequestInterface;
+
 use function microtime;
 use function ini_get;
 use function array_merge;
 use function is_string;
 use function realpath;
+use function rand;
 use function Kansas\Http\currentServerRequest;
 
-require_once 'System/Version.php';
 require_once 'Psr/Http/Message/ServerRequestInterface.php';
+require_once 'System/Version.php';
+require_once 'Kansas/PluginLoader.php';
+require_once 'Kansas/Controller/ControllerInterface.php';
+require_once 'Kansas/Http/ServerRequest.php';
+require_once 'Kansas/Plugin/PluginInterface.php';
 
 /**
  * Objeto singleton con valores de entorno.
@@ -58,36 +67,36 @@ class Environment {
     const SF_TRACK 	    = 0x0410;
     const SF_ERRORS 	= 0x0510;
 
+    protected static $instance;
     private $status;
     private $request;
     private $requestTime;
     private $t_inicio;
     private $version;
     private $phpVersion;
-    private $theme = ['shared'];
-    private static $apacheRequestHeaders = 'apache_request_headers';
-    protected static $instance;
-    private $fileClass = 'System\IO\File\FileSystem';
     private $specialFolders;
-    private $loaders = [
-        'controller' => ['Kansas\\Controller\\' => 'Kansas/Controller/'],
-        'plugin'     => ['Kansas\\Plugin\\'	    => 'Kansas/Plugin/'],
-        'provider'	 => []
-    ];
+    private $theme          = ['shared'];
+    private $fileClass      = 'System\IO\File\FileSystem';
+    private $loaders        = [
+        'controller'        => ['Kansas\\Controller\\'  => 'Kansas/Controller/'],
+        'plugin'            => ['Kansas\\Plugin\\'	    => 'Kansas/Plugin/'],
+        'provider'	        => []];
     private $specialFolderParts = [
-        self::SF_PUBLIC => '/../../public',
-        self::SF_HOME   => '/../../..',
-        self::SF_LIBS   => '/..',
-        self::SF_LAYOUT => '/../../layout',
-        self::SF_TEMP   => '/../../../tmp',
-        self::SF_THEMES => '/../../themes',
-        self::SF_FILES  => '/../../../private'];
+        self::SF_PUBLIC     => '/../../public',
+        self::SF_HOME       => '/../../..',
+        self::SF_LIBS       => '/..',
+        self::SF_LAYOUT     => '/../../layout',
+        self::SF_TEMP       => '/../../../tmp',
+        self::SF_THEMES     => '/../../themes',
+        self::SF_FILES      => '/../../../private'];
     private $tempFolderParts = [
         self::SF_CACHE      => '/cache',
         self::SF_COMPILE    => '/view-compile',
         self::SF_SESSIONS   => '/sessions',
         self::SF_TRACK      => '/log/hints',
         self::SF_ERRORS     => '/log/errors'];
+    private static $apacheRequestHeaders = 'apache_request_headers';
+    
 
     protected function __construct(string $status, array $specialFolders) {
         $this->t_inicio = microtime(true);
@@ -131,7 +140,7 @@ class Environment {
         return microtime(true) - $this->getRequestTime();
     }
   
-    public function getRequest(array $server = null, array $query = null, array $body = null, array $cookies = null, array $files = null) {
+    public function getRequest(array $server = null, array $query = null, array $body = null, array $cookies = null, array $files = null) : ServerRequest {
         if(!isset($this->request)) {
             require_once 'Kansas/Http/currentServerRequest.php';
             $this->request = currentServerRequest($server, $query, $body, $cookies, $files, self::$apacheRequestHeaders);
@@ -139,24 +148,25 @@ class Environment {
         return $this->request;
     }
 
-    public function setRequest(ServerRequestInterface $request) {
+    public function setRequest(ServerRequestInterface $request) : void {
         $this->request = $request;
     }
   
-    public function setTheme($theme, $add = false) {
+    public function setTheme($theme, $add = false) : void {
         if(is_string($theme)) {
             $theme = [$theme];
         }
         if(!is_array($theme)) {
             require_once 'System/ArgumentOutOfRangeException.php';
-            throw new ArgumentOutOfRangeException('theme');
+            require_once 'Kansas/Localization/Resources.php';
+            throw new ArgumentOutOfRangeException('theme', Resources::ARGUMENT_OUT_OF_RANGE_ARRAY_STRING_EXPECTED_MESSAGE, $theme);
         }
         $this->theme = $add
             ? array_merge($this->theme, $theme)
             : $theme;
     }
   
-    public function getThemePaths() {
+    public function getThemePaths() : Generator {
         $themeFolder = $this->getSpecialFolder(self::SF_THEMES);
         foreach($this->theme as $theme) {
             $dir = realpath($themeFolder . DIRECTORY_SEPARATOR . $theme);
@@ -179,7 +189,7 @@ class Environment {
     public static function log($level, $message) {
         $time = self::$instance->getExecutionTime();
         
-        if($message instanceof Exception) {
+        if($message instanceof Throwable) {
             $fileError = $message->getFile();
             $lineError = $message->getLine();
             $message = $message->getMessage();
@@ -206,11 +216,7 @@ class Environment {
         echo " -->\n";
     }
   
-    public function getSpecialFolder($specialFolder) {
-        if(!is_int($specialFolder)) {
-            require_once 'System/ArgumentOutOfRangeException.php';
-            throw new ArgumentOutOfRangeException('Se esperaba un entero');
-        }
+    public function getSpecialFolder(int $specialFolder) {
         if(isset($this->specialFolders[$specialFolder])) {
             $dir = realpath($this->specialFolders[$specialFolder]);
         } elseif(isset($this->specialFolderParts[$specialFolder])) {
@@ -219,7 +225,8 @@ class Environment {
             $tmpPart = $this->tempFolderParts[$specialFolder];
         } else {
             require_once 'System/ArgumentOutOfRangeException.php';
-            throw new ArgumentOutOfRangeException('specialFolder', 'El valor especificado no es válido');
+            require_once 'System/Localization/Resources.php';
+            throw new ArgumentOutOfRangeException('specialFolder', SysResources::ARGUMENT_OUT_OF_RANGE_EXCEPTION_DEFAULT_MESSAGE, $specialFolder);
         }
         if($specialFolder == self::SF_TEMP || 
             isset($tmpPart)) {
@@ -236,15 +243,19 @@ class Environment {
         return false;
     }
 
-    private function getTempDir($default) {
+    private function getTempDir($default) : string {
         require_once 'System/IO/File.php';
+        if(File::IsGoodTmpDir($default)) {
+            return realpath($default);
+        }
         foreach(self::tmpDirGenerator(__DIR__ . '/../../../tmp') as $dir) {
-            if (File::IsGoodTmpDir($dir)) {
+            if(File::IsGoodTmpDir($dir)) {
                 return realpath($dir);
             }
         }
         require_once 'System/IO/IOException.php';
-        throw new IOException('No se puede determinar un directorio temporal, especifique uno manualmente.');
+        require_once 'Kansas/Localization/Resources.php';
+        throw new IOException(Resources::IO_EXCEPTION_NO_TEMP_DIR_MESSAGE);
     }
 
     // Devuelve posibles valores para una carpeta temporal
@@ -255,11 +266,9 @@ class Environment {
         foreach ([$_ENV, $_SERVER] as $tab) {
             foreach (['TMPDIR', 'TEMP', 'TMP', 'windir', 'SystemRoot'] as $key) {
                 if (isset($tab[$key])) {
-                    if (($key == 'windir') || ($key == 'SystemRoot')) {
-                        yield realpath($tab[$key] . DIRECTORY_SEPARATOR . 'temp');
-                    } else {
-                        yield realpath($tab[$key]);
-                    }
+                    yield (($key == 'windir') || ($key == 'SystemRoot'))
+                        ? realpath($tab[$key] . DIRECTORY_SEPARATOR . 'temp')
+                        : realpath($tab[$key]);
                 }
             }
         }
@@ -273,7 +282,7 @@ class Environment {
         }
 
         // Attemp to detect by creating a temporary file
-        $tempFile = tempnam(md5(uniqid(rand(), TRUE)), '');
+        $tempFile = tempnam(md5(uniqid((string)rand(), TRUE)), '');
         if ($tempFile) {
             $dir = realpath(dirname($tempFile));
             unlink($tempFile);
@@ -301,38 +310,25 @@ class Environment {
         return $this->phpVersion;
     }
 
-    protected function getLoader($loaderName) {
+    protected function getLoader($loaderName) : PluginLoader {
         if(!isset($this->loaders[$loaderName])) {
             require_once 'System/Collections/KeyNotFoundException.php';
             throw new KeyNotFoundException();
         }
         if(is_array($this->loaders[$loaderName])) {
-            require_once 'Kansas/PluginLoader.php';
             $this->loaders[$loaderName] = new PluginLoader($this->loaders[$loaderName]);
         }
         return $this->loaders[$loaderName];
     }
 
-    public function createController($controllerName) {
+    public function createController($controllerName) : ControllerInterface {
         $controllerClass = $this->getLoader('controller')->load($controllerName);
-        $class           = new $controllerClass();
-        require_once 'Kansas/Controller/ControllerInterface.php';
-        if(!$class instanceof ControllerInterface) {
-            require_once 'Kansas/Loader/NotCastException.php';
-            throw new NotCastException($controllerName, 'ControllerInterface');
-        }
-        return $class;
+        return new $controllerClass();
     }
 
-    public function createPlugin($pluginName, array $options) {
+    public function createPlugin($pluginName, array $options) : PluginInterface {
         $pluginClass = $this->getLoader('plugin')->load($pluginName);
-        $class       = new $pluginClass($options);
-        require_once 'Kansas/Plugin/PluginInterface.php';
-        if(!$class instanceof PluginInterface) {
-            require_once 'Kansas/Loader/NotCastException.php';
-            throw new NotCastException($pluginName, 'PluginInterface');
-        }
-        return $class;
+        return new $pluginClass($options);
     }
 
     public function createProvider($providerName) { 
@@ -340,12 +336,11 @@ class Environment {
         return new $providerClass();
     }
 
-    public function addLoaderPaths($loaderName, $options) {
+    public function addLoaderPaths($loaderName, $options) : void {
         if(!isset($this->loaders[$loaderName])) {
             require_once 'System/Collections/KeyNotFoundException.php';
             throw new KeyNotFoundException();
         }
-        require_once 'Kansas/PluginLoader.php';
         if($this->loaders[$loaderName] instanceof PluginLoader) {
             foreach($options as $prefix => $path) {
                 $this->loaders[$loaderName]->addPrefixPath($prefix, realpath($path));

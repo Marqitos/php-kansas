@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1 );
 /**
  * Controlador principal en una aplicación con patrón MVC
  *
@@ -9,28 +9,35 @@
  */
 
 namespace Kansas\Controller;
+
+use System\NotImplementedException;
+use System\ArgumentNullException;
 use Kansas\Controller\AbstractController;
-use Kansas\View\Result\Redirect;
+use Kansas\Localization\Resources;
+use Kansas\View\Result\Content;
+use Kansas\View\Result\Css;
 use Kansas\View\Result\File;
 use Kansas\View\Result\Json;
-use System\NotImplementedException;
-use System\ArgumentOutOfRangeException;
-use System\ArgumentNullException;
+use Kansas\View\Result\Redirect;
+use Kansas\View\Result\Template;
+use Kansas\View\Result\ViewResultInterface;
 
 use function call_user_func;
 use function get_class;
 use function header;
 use function http_response_code;
 use function is_callable;
-use function is_string;
 
 require_once 'Kansas/Controller/AbstractController.php';
+require_once 'Kansas/Localization/Resources.php';
+require_once 'Kansas/View/Result/Template.php';
+require_once 'Kansas/View/Result/ViewResultInterface.php';
 
 class Index	extends AbstractController {
 	
 	private static $actions = [];
 
-	public function callAction ($action, array $vars) {
+	public function callAction(string $action, array $vars) : ViewResultInterface {
 		if(is_callable([$this, $action])) {
 			return $this->$action($vars);
 		}
@@ -38,20 +45,16 @@ class Index	extends AbstractController {
 			return call_user_func(self::$actions[$action], $this, $vars);
 		}
 		require_once 'System/NotImplementedException.php';
-		throw new NotImplementedException('No se ha implementado ' . $action . ' en el controlador ' . get_class($this));
+		throw new NotImplementedException(sprintf(Resources::NOT_ACTION_IMPLEMENTED_EXCEPTION_FORMAT, $action, get_class($this)));
 	}
 
-	public static function addAction($actionName, callable $callback) {
-		if(!is_string($actionName)) {
-			require_once 'System/ArgumentOutOfRangeException.php';
-			throw new ArgumentOutOfRangeException('actionName');
-		}
+	public static function addAction(string $actionName, callable $callback) : void {
 		self::$actions[$actionName] = $callback;
 	}
 
-	public function template(array $vars = []) {
+	public function template(array $vars) : Template {
 		if(!isset($vars['template'])) {
-			require_once 'System/ArgumentOutOfRangeException.php';
+			require_once 'System/ArgumentNullException.php';
 			throw new ArgumentNullException('vars["template"]');
 		}
 		$template = $vars['template'];
@@ -59,12 +62,11 @@ class Index	extends AbstractController {
 		return $this->createViewResult($template, $vars);
 	}
 	
-	public function redirection(array $vars = []) {
+	public function redirection(array $vars) {
 		if(!isset($vars['gotoUrl'])) {
-			require_once 'System/ArgumentOutOfRangeException.php';
+			require_once 'System/ArgumentNullException.php';
 			throw new ArgumentNullException('vars["gotoUrl"]');
 		}
-		
 		return Redirect::gotoUrl($vars['gotoUrl']);
 	}
 	
@@ -72,21 +74,19 @@ class Index	extends AbstractController {
 		require_once 'Kansas/View/Result/Css.php';
 		global $application;
 		$files = $vars['files'];
-		$cssResult = new Kansas_View_Result_Css($files);
-		$backendCache = $application->hasPlugin('BackendCache');
-		if($backendCache) {
+		$cssResult = new Css($files);
+		if($backendCache = $application->hasPlugin('BackendCache')) {
+			require_once 'Kansas/View/Result/Content.php';
 			$cacheId = $cssResult->getCacheId();
 			if($backendCache->test($cacheId)) {
 				$content = $backendCache->load($cacheId);
 			} else {
-				$content = $cssResult->getResult();
+				$content = $cssResult->getResult(null);
 				$backendCache->save($content, $cacheId);
 			}
-			$contentResult = new Kansas_View_Result_Content($content);
-			$contentResult->setMimeType('text/css');
-			return $contentResult;
-		} else
-			return $cssResult;
+			return new Content($content, 'text/css');
+		}
+		return $cssResult;
 	}
 	
 	public function file(array $vars) {
@@ -102,41 +102,43 @@ class Index	extends AbstractController {
 		return Redirect::gotoUrl($this->getParam('ru', '/'));
 	}
 	
-	public function phpInclude(array $vars) {
-		return new Kansas_View_Result_Include($vars['file']);
-	}
-
 	public function API(array $vars) {
+		require_once 'Kansas/View/Result/Json.php';
 		if(isset($vars['error'])) {
 			if(isset($vars['code'])) {
 				$code = $vars['code'];
 				unset($vars['code']);
-				switch ($code) {
-					case 401: // Unauthorized
-					if(isset($vars['scheme'])) {
-						header('WWW-Authenticate: ' . $vars['scheme']);
-						unset($vars['scheme']);
-					}
-					break;
+				if($code == 401 && 
+				   isset($vars['scheme'])) {
+					header('WWW-Authenticate: ' . $vars['scheme']);
+					unset($vars['scheme']);
 				}
-			} else
+			} else {
 				$code = 500;
+			}
 		} elseif(isset($vars['code'])) {
 			$code = $vars['code'];
 			unset($vars['code']);
-		} else 
+		} else {
 			$code = 200;
-		http_response_code($code);
-		if(isset($vars['identity']) && isset($vars['identity']['id'])) {
-			$identityId = $vars['identity']['id'];
-			$vars['identity'] = $identityId;
 		}
-		unset($vars['uri']);
-		unset($vars['url']);
-		unset($vars['router']);
-		unset($vars['trail']);
-		unset($vars['requestType']);
-		require_once 'Kansas/View/Result/Json.php';
+		http_response_code($code);
+		if(isset($vars['cors']) &&
+		   $vars['cors'] !== false) {
+			header('Access-Control-Allow-Origin: ' . $vars['cors']);
+		}
+
+		if(isset($vars['identity']) && isset($vars['identity']['id'])) {
+			$vars['identity'] = $vars['identity']['id'];
+		}
+		foreach(['cors',
+				 'uri',
+				 'url',
+				 'router',
+				 'trail',
+				 'requestType'] as $key) {
+			unset($vars[$key]);
+		}
 		return new Json($vars);
 	}
 	

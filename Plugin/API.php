@@ -1,4 +1,12 @@
-<?php
+<?php declare(strict_types = 1 );
+/**
+ * Plugin que representa la API de una aplicación web
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Plugin;
 
@@ -7,11 +15,13 @@ use System\NotSupportedException;
 use System\Version;
 use Kansas\Plugin\AbstractZone;
 use Kansas\Router\API as RouterAPI;
+use Kansas\Router\RouterInterface;
 
 require_once 'System/Localization/Resources.php';
 require_once 'Kansas/Plugin/AbstractZone.php';
+require_once 'Kansas/Plugin/RouterPluginInterface.php';
 
-class API extends AbstractZone {
+class API extends AbstractZone implements RouterPluginInterface {
     
     private $router;
 
@@ -29,12 +39,12 @@ class API extends AbstractZone {
                 return [
                     'base_path' => 'api',
                     'params'    => [
-                        'cors'      => true],
+                        'cors'      => '*'],
                     'plugins'   => []
                 ];
             default:
                 require_once 'System/NotSupportedException.php';
-                throw new NotSupportedException("Entorno no soportado [$environment]");
+                NotSupportedException::NotValidEnvironment($environment);
         }
     }
 
@@ -53,35 +63,36 @@ class API extends AbstractZone {
         }
     }
   
-    public function registerAPICallback(callable $callback) {
+    public function registerAPICallback(callable $callback) : void {
         $this->getRouter()->registerCallback($callback);
     }
 
-	public function getRouter() {
+	public function getRouter() : RouterInterface {
 		if($this->router == null) {
 			require_once 'Kansas/Router/API.php';
 			$this->router = new RouterAPI($this->options);
+            $this->registerAPICallback = $this->router->registerAPICallback;
 		}
 		return $this->router;
 	}
 
-    public const ERROR_AUTH = [
+    public const ERROR_AUTH_BEARER = [
         'code'      => 401,
         'status'    => 'error',
-        'message'   => SystemResources::WebException401Message,
+        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[401],
         'scheme'    => 'Bearer'
     ];
 
     public const ERROR_REQUEST = [
         'code'      => 412,
         'status'    => 'error',
-        'message'   => SystemResources::WebException412Message,
+        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[412],
     ];
 
     public const ERROR_NOT_FOUND = [
         'code'      => 404,
         'status'    => 'error',
-        'message'   => SystemResources::WebException404Message,
+        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[404],
     ];
 
 }

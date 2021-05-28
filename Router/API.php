@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types = 1 );
 /**
- * Plugin que representa la API de una aplicación web
+ * Router que controla las llamadas a la API
  *
  * @package Kansas
  * @author Marcos Porto
@@ -13,14 +13,13 @@ namespace Kansas\Router;
 use System\NotSupportedException;
 use Kansas\Router;
 use Kansas\Plugin\API as APIPlugin;
-use function array_merge;
 use function call_user_func;
 use function is_array;
 use function trim;
 
 require_once 'Kansas/Router.php';
 
-class API extends Router {
+class API extends Router implements RouterInterface {
 
 	private $callbacks = [];
 
@@ -33,46 +32,35 @@ class API extends Router {
 				return [
 					'base_path'	=> 'api',
 					'params'	=> [
-						'cors'	=> true]];
+						'cors'			=> '*',
+						'controller'	=> 'index',
+						'action'		=> 'API']];
 			default:
 				require_once 'System/NotSupportedException.php';
-				throw new NotSupportedException("Entorno no soportado [$environment]");
+				NotSupportedException::NotValidEnvironment($environment);
 		}
 	}
 
     /// Miembros de Kansas_Router_Interface
-	public function match() {
+	public function match() : array {
 		global $environment;
 		$path = static::getPath($this);
         if($path === false) {
 			return false;
 		}
-		$params	= false;
 		$path 	= trim($path, '/');
 		$method = $environment->getRequest()->getMethod();
 		foreach($this->callbacks as $callback) {
 			$result = call_user_func($callback, $path, $method);
 			if(is_array($result)) {
-				$params = array_merge($result, [
-					'controller'	=> 'index',
-					'action'		=> 'API'
-				]);
-				break;
+				return parent::getParams($result);
 			}
 		}
-		if($params === false) {
-			require_once 'Kansas/Plugin/API.php';
-			$params = array_merge(APIPlugin::ERROR_NOT_FOUND, [
-				'controller'	=> 'index',
-				'action'		=> 'API']);
-		}
-		if($this->options['params']['cors']) {
-			header('Access-Control-Allow-Origin: *');
-		}
-		return $params;
+		require_once 'Kansas/Plugin/API.php';
+		return parent::getParams(APIPlugin::ERROR_NOT_FOUND);
 	}
 
-	public function registerCallback(callable $callback) {
+	public function registerCallback(callable $callback) : void {
 	    $this->callbacks[] = $callback;
 	}
 	
