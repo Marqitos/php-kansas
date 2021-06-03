@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1 );
+<?php declare(strict_types = 1);
 /**
  * Clase principal de ejecución de la aplicación
  *
@@ -76,8 +76,6 @@ class Application extends Configurable {
 	protected static $instance;
 
 	public function __construct(array $options) {
-		//set_error_handler([$this, 'errorHandler']);
-		//set_exception_handler([$this, 'exceptionHandler']);
 		$this->_routers = new SplPriorityQueue();
 		$this->registerEvent(self::EVENT_CHANGED, [$this, 'onOptionChanged']);
 		parent::__construct($options);
@@ -315,7 +313,14 @@ class Application extends Configurable {
 				$this->db = $this->options['db'];
 			}
 			if(is_array($this->options['db'])) {
-				$this->db = new DbAdapter($this->options['db']);
+				if(isset($this->options['db']['driver'])) {
+					$driver = $this->options['db']['driver'];
+					unset($this->options['db']['driver']);
+					$this->db = DbAdapter::Create($driver, $this->options['db']);
+				} else {
+					require_once 'System/NotSupportedException.php';
+					throw new NotSupportedException();
+				}
 			}
 		}
 		return $this->db;

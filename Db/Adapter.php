@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types = 1);
 /**
- * Maneja una conexión a la base de datos usando mysqli
+ * Representa y crea una conexión a la base de datos
  *
  * Description. Representa una capa de acceso a datos MySQL
  *
@@ -12,42 +12,44 @@
 
 namespace Kansas\Db;
 
-use mysqli;
 use System\ArgumentOutOfRangeException;
 use System\NotSupportedException;
-use Kansas\Db\MysqliConnectionException;
-use Kansas\Db\MysqliException;
+use Kansas\Db\MysqliAdapter;
+use Kansas\Localization\Resources;
 
-class Adapter {
+use function sprintf;
 
-    private $con; 
+abstract class Adapter {
 
-    public function __construct(array $options) {
-        if(!isset($options['driver'])) {
-            require_once 'System/ArgumentOutOfRangeException.php';
-            throw new ArgumentOutOfRangeException('options', 'El array options debe contener la clave driver');
+    public const DRIVER_MYSQLI = 'mysqli'; // Improved MySQL
+    
+    private const DRIVER_OPTIONS    = [
+        self::DRIVER_MYSQLI         => [
+            'hostname',
+            'username',
+            'password',
+            'database']];
+
+    public static function Create(string $driver, array $options) : self {
+        if($driver == self::DRIVER_MYSQLI) {
+            foreach(self::DRIVER_OPTIONS[self::DRIVER_MYSQLI] as $key) {
+                if(!isset($options[$key])) {
+                    require_once 'System/ArgumentOutOfRangeException.php';
+                    require_once 'Kansas/Localization/Resources.php'; // TODO: Localizar mensaje de error
+                    throw new ArgumentOutOfRangeException('options', sprintf(Resources::ARGUMENT_OUT_OF_RANGE_EXCEPTION_ADAPTER_OPTIONS_CONTAINS_FORMAT, $driver, $key));
+                }
+            }
+            $hostname   = (string) $options['hostname'];
+            $username   = (string) $options['username'];
+            $password   = (string) $options['password'];
+            $database   = (string) $options['database'];
+            $charset    = isset($options['charset'])
+                        ? (string) $options['charset']
+                        : null;
+            return new MysqliAdapter($hostname, $username, $password, $database, $charset);
         }
-        if($options['driver'] == 'mysqli') { // Conexión a la BBDD mediante mysqli
-            if(!isset($options['hostname']) ||
-               !isset($options['username']) ||
-               !isset($options['password']) ||
-               !isset($options['database'])) {
-                require_once 'System/ArgumentOutOfRangeException.php';
-                throw new ArgumentOutOfRangeException('options', 'El controlador mysqli require las claves de configuracion hostname, username, password y database');
-            }
-            $this->con = new mysqli($options['hostname'], $options['username'], $options['password'], $options['database']);
-
-            if($this->con == null || $this->con->connect_error) {
-                include_once 'Kansas/Db/MysqliConnectionException.php';
-                throw new MysqliConnectionException($this->con);
-            }
-            if(isset($options['charset'])) {
-                $this->con->set_charset($options['charset']);
-            }
-        } else {
-            require_once 'System/NotSupportedException.php';
-            throw new NotSupportedException();
-        }
+        require_once 'System/NotSupportedException.php';
+        throw new NotSupportedException();
     }
 
     /**
@@ -56,31 +58,7 @@ class Adapter {
      * @param string $sql Consulta sql a ejecutar
      * @return array|int En caso de ser una consulta tipo select, devuelve un array. En consultas insert, update, ... devuelve el número de filas afectadas. Y false en caso de que la consulta esté mal formulada o se produzca un error
      */
-    public function query($sql, &$id = null) {
-        if($this->con->real_query($sql) &&
-           $this->con->errno == 0) {
-            if($this->con->field_count == 0) { // La consulta no es select
-                if($id != null) {
-                    $id = $this->con->insert_id;
-                }
-                return $this->con->affected_rows;
-            } else {
-                try {
-                    $result = $this->con->store_result();
-                    if($this->con->errno == 0) {
-                        return $result->fetch_all(MYSQLI_ASSOC);
-                    }
-                } finally {
-                    $result->close();
-                }
-            } 
-        }
-        if($this->con->errno != 0) {
-            require_once 'Kansas/Db/MysqliException.php';
-            throw new MysqliException($this->con);
-        }
-        return false;
-    }
+    public abstract function query(string $sql, &$id = null);
 
     /**
      * Realiza una consulta a la base de datos que solo debe devolver una fila
@@ -89,24 +67,7 @@ class Adapter {
      * @return array|bool En caso de ser una consulta devuelva una fila, devuelve un array. Y false en caso de que la consulta esté mal formulada o se produzca un error
      */
 
-    public function queryRow($sql) {
-        if($this->con->real_query($sql) &&
-           $this->con->errno == 0) {
-            try {
-                $result = $this->con->store_result();
-                if($result->num_rows == 1) { // Devolvemos el resultado en caso de que solo se devuelva una fila
-                    return $result->fetch_assoc();
-                }
-            } finally {
-                $result->close();
-            }
-        }
-        if($this->con->errno != 0) {
-            require_once 'Kansas/Db/MysqliException.php';
-            throw new MysqliException($this->con);
-        }
-        return false;
-    }
+    public abstract function queryRow(string $sql);
 
     /**
      * Remplaza los caracteres especiales en una cadena para usarla en una consulta, teniendo en cuenta el juego de caracteres utilizado
@@ -114,8 +75,6 @@ class Adapter {
      * @param string $escapestr Cadena a verificar
      * @return string Cadena segura para la consulta
      */
-    public function escape($escapestr) {
-        return $this->con->real_escape_string($escapestr);
-    }
+    public abstract function escape(string $escapestr) : string;
 
 }
