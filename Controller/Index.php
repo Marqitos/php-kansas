@@ -45,7 +45,7 @@ class Index	extends AbstractController {
 			return call_user_func(self::$actions[$action], $this, $vars);
 		}
 		require_once 'System/NotImplementedException.php';
-		throw new NotImplementedException(sprintf(Resources::NOT_ACTION_IMPLEMENTED_EXCEPTION_FORMAT, $action, get_class($this)));
+		throw new NotImplementedException(sprintf(Resources::NOT_IMPLEMENTED_EXCEPTION_ACTION_FORMAT, $action, get_class($this)));
 	}
 
 	public static function addAction(string $actionName, callable $callback) : void {

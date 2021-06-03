@@ -11,9 +11,9 @@
 namespace Kansas\Localization;
 
 class Resources {
-    public const ARGUMENT_OUT_OF_RANGE_ARRAY_STRING_EXPECTED_MESSAGE = 'Se esperaba una cadena o un array.';
+    public const ARGUMENT_OUT_OF_RANGE_EXCEPTION_ARRAY_STRING_EXPECTED_MESSAGE = 'Se esperaba una cadena o un array.';
     public const IO_EXCEPTION_NO_TEMP_DIR_MESSAGE = 'No se puede determinar un directorio temporal, especifique uno manualmente.';
-    public const NOT_ACTION_IMPLEMENTED_EXCEPTION_FORMAT = 'No se ha implementado %s en el controlador %s.';
+    public const NOT_IMPLEMENTED_EXCEPTION_ACTION_FORMAT = 'No se ha implementado %s en el controlador %s.';
 
 }
 

@@ -29,7 +29,7 @@ abstract class AbstractController implements ControllerInterface {
 	public function callAction(string $action, array $vars) : ViewResultInterface {
 		if(!is_callable([$this, $action])) {
 			require_once 'System/NotImplementedException.php';
-			throw new NotImplementedException(sprintf(Resources::NOT_ACTION_IMPLEMENTED_EXCEPTION_FORMAT, $action, get_class($this)));
+			throw new NotImplementedException(sprintf(Resources::NOT_IMPLEMENTED_EXCEPTION_ACTION_FORMAT, $action, get_class($this)));
 		}
 		return $this->$action($vars);
 	}
