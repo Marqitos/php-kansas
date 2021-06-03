@@ -26,12 +26,13 @@ use Kansas\Http\ServerRequest;
 use Kansas\Localization\Resources;
 use Kansas\Plugin\PluginInterface;
 
+use function array_merge;
+use function constant;
 use function microtime;
 use function ini_get;
-use function array_merge;
 use function is_string;
-use function realpath;
 use function rand;
+use function realpath;
 use function Kansas\Http\currentServerRequest;
 
 require_once 'Psr/Http/Message/ServerRequestInterface.php';
@@ -110,7 +111,7 @@ class Environment {
             global $environment;
             if(empty($status)) {
                 $status = defined('APP_ENVIRONMENT')
-                    ? APP_ENVIRONMENT
+                    ? constant("APP_ENVIRONMENT")
                     : self::ENV_PRODUCTION;
             }
             $environment = self::$instance = new self($status, $specialFolders);
@@ -159,7 +160,7 @@ class Environment {
         if(!is_array($theme)) {
             require_once 'System/ArgumentOutOfRangeException.php';
             require_once 'Kansas/Localization/Resources.php';
-            throw new ArgumentOutOfRangeException('theme', Resources::ARGUMENT_OUT_OF_RANGE_ARRAY_STRING_EXPECTED_MESSAGE, $theme);
+            throw new ArgumentOutOfRangeException('theme', Resources::ARGUMENT_OUT_OF_RANGE_EXCEPTION_ARRAY_STRING_EXPECTED_MESSAGE, $theme);
         }
         $this->theme = $add
             ? array_merge($this->theme, $theme)
