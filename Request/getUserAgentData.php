@@ -1,14 +1,18 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * Devuelve el robot o navegador y sistema operativo, a partir de USER_AGENT
+ * 
+ * Contiene porciones de código de bbClone
  *
  * @package Kansas
  * @author Marcos Porto
  * @copyright Marcos Porto
  * @since v0.4
+ * PHP 7 >= 7.2
  */
 
 namespace Kansas\Request;
+
 use function Kansas\Request\bbcParseUserAgent;
 
 /**
@@ -17,7 +21,7 @@ use function Kansas\Request\bbcParseUserAgent;
  * @param string $userAgent Cadena USER_AGENT a analizar
  * @return array Datos del robot, o navegador y sistema operativo detectado
  */
-function getUserAgentData($userAgent) {
+function getUserAgentData(string $userAgent) : array {
 	global $robot, $os, $browser;
 	require_once 'bbClone/robot.php';
 	require_once 'Kansas/Request/bbcParseUserAgent.php';

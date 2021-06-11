@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * Devuelve un elemento que cumple unas reglas de USER_AGENT
  *
@@ -6,6 +6,7 @@
  * @author Marcos Porto
  * @copyright Marcos Porto
  * @since v0.4
+ * PHP 7 >= 7.2
  */
 
 namespace Kansas\Request;
@@ -21,13 +22,13 @@ use function substr;
  * @param array $items Valores user agent de bbclone
  * @return mixed array en caso de encontrar una coincidencia, false en caso contrario
  */
-function bbcParseUserAgent($userAgent, array $items) {
+function bbcParseUserAgent(string $userAgent, array $items) {
     foreach($items as $id => $item) {
         foreach($item['rule'] as $pattern => $note) {
-            if (preg_match('~'.$pattern.'~i', $userAgent, $regs)) {
+            if (preg_match('~' . $pattern . '~i', $userAgent, $regs)) {
                 $result = $item;
                 $result['id'] = $id;
-                if (preg_match(":\\\\[0-9]{1}:" ,$note)) {
+                if (preg_match(":\\\\[0-9]{1}:", $note)) {
                     $str = preg_replace(":\\\\([0-9]{1}):", "\$regs[\\1]", $note);
                     eval("\$str = \"$str\";");
                     $result['note'] = $str;
