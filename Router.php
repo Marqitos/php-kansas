@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * Proporciona la funcionalidad basica de un router (MVC)
  *
@@ -13,8 +13,9 @@ namespace Kansas;
 use System\Configurable;
 use Kansas\Router\RouterInterface;
 use function array_merge;
+use function mb_strlen;
+use function mb_substr;
 use function trim;
-use function substr;
 use function System\String\startWith;
 
 require_once 'System/Configurable.php';
@@ -27,7 +28,7 @@ abstract class Router extends Configurable implements RouterInterface {
 	}
 	
 	// Miembros de System\Configurable\ConfigurableInterface
-	public function getDefaultOptions($environment) : array {
+	public function getDefaultOptions(string $environment) : array {
 		return [
 			'base_path'	=> '',
   			'params'	=> []
@@ -53,10 +54,13 @@ abstract class Router extends Configurable implements RouterInterface {
 		require_once 'System/String/startWith.php';
 		$path = trim($environment->getRequest()->getUri()->getPath(), '/');
 		$basePath = $router->getBasePath();
-		if(!startWith($path, $basePath)) {
+		if(mb_strlen($basePath) == 0) {
+			$result = $path;
+		} elseif(!startWith($path, $basePath)) {
 			return false;
+		} else {
+			$result = trim(mb_substr($path, mb_strlen($basePath)), '/');
 		}
-		$result = substr($path, strlen($basePath));
 		return $result === false
 			? ''
 			: $result;
