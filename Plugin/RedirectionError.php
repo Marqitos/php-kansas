@@ -36,7 +36,7 @@ class RedirectionError extends Configurable implements PluginInterface {
 	}
   
 	/// Miembros de Kansas_Module_Interface
-	public function getDefaultOptions($environment) : array {
+	public function getDefaultOptions(string $environment) : array {
 		switch ($environment) {
 		case 'production':
 		case 'development':

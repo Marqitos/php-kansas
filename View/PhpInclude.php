@@ -23,7 +23,7 @@ class PhpInclude extends Configurable implements ViewInterface {
     }
 
     // Miembros de System\Configurable\ConfigurableInterface
-	public function getDefaultOptions($environment) : array {
+	public function getDefaultOptions(string $environment) : array {
 		return [];
     }
     

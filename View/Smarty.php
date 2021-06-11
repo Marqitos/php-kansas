@@ -22,7 +22,7 @@ class Smarty extends Configurable implements ViewInterface {
   private $_cacheId = null;
   
 	// Miembros de System\Configurable\ConfigurableInterface
-  public function getDefaultOptions($environmentStatus) : array {
+  public function getDefaultOptions(string $environmentStatus) : array {
     global $environment;
     switch ($environmentStatus) {
       case 'production':

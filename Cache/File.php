@@ -85,7 +85,7 @@ class File extends Cache implements ExtendedCacheInterface {
     protected $_metadatasArray = [];
 
     /// Miembros de System_Configurable_Interface
-    public function getDefaultOptions($enviromentStatus) : array {
+    public function getDefaultOptions(string $enviromentStatus) : array {
         global $environment;
         switch ($enviromentStatus) {
             case 'production':

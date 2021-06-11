@@ -24,7 +24,7 @@ class Kansas_Module_Sass
 	}
 
   /// Miembros de Kansas_Module_Interface
-  public function getDefaultOptions($environment) {
+  public function getDefaultOptions(string $environment) {
     switch ($environment) {
       case 'production':
         return [ 'cache' => TRUE ];

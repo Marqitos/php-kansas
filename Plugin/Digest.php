@@ -50,7 +50,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
 	}
 
 	// Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions($environment) : array {
+    public function getDefaultOptions(string $environment) : array {
         switch ($environment) {
         case 'production':
         case 'development':

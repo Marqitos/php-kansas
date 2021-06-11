@@ -37,7 +37,7 @@ class Localization extends Configurable implements PluginInterface {
 	}
 
 	/// Miembros de System\Configurable\Interface
-	public function getDefaultOptions($environment) : array {
+	public function getDefaultOptions(string $environment) : array {
 		switch ($environment) {
 		case 'production':
 		case 'development':

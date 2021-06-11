@@ -5,6 +5,8 @@
 
 namespace Kansas;
 
+use Traversable;
+use System\ArgumentOutOfRangeException;
 use System\Configurable;
 use Kansas\Loader\SplInterface;
 
@@ -45,12 +47,11 @@ class Autoloader extends Configurable implements SplInterface {
     }
 
 	// Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions($environment) : array {
+    public function getDefaultOptions(string $environment) : array {
         return [
             self::LOAD_NS         => [],
             self::LOAD_PREFIX     => [],
-            self::ACT_AS_FALLBACK => FALSE
-        ];
+            self::ACT_AS_FALLBACK => false];
         
     }
     /**
@@ -65,12 +66,12 @@ class Autoloader extends Configurable implements SplInterface {
     public function setOption($key, $value) : void {
         switch ($key) {
             case self::LOAD_NS:
-                if (is_array($value) || $pairs instanceof \Traversable) {
+                if (is_array($value) || $value instanceof Traversable) {
                     $this->registerNamespaces($value);
                 }
                 break;
             case self::LOAD_PREFIX:
-                if (is_array($value) || $value instanceof \Traversable) {
+                if (is_array($value) || $value instanceof Traversable) {
                     $this->registerPrefixes($value);
                 }
                 break;
@@ -86,8 +87,8 @@ class Autoloader extends Configurable implements SplInterface {
      * @param  bool $flag
      * @return StandardAutoloader
      */
-    public function setFallbackAutoloader($flag) {
-        $this->options[self::ACT_AS_FALLBACK] = (bool) $flag;
+    public function setFallbackAutoloader(bool $flag) {
+        $this->options[self::ACT_AS_FALLBACK] = $flag;
         return $this;
     }
 
@@ -96,7 +97,7 @@ class Autoloader extends Configurable implements SplInterface {
      *
      * @return bool
      */
-    public function isFallbackAutoloader() {
+    public function isFallbackAutoloader() : bool {
         return $this->options[self::ACT_AS_FALLBACK];
     }
 
@@ -107,7 +108,7 @@ class Autoloader extends Configurable implements SplInterface {
      * @param  string $directory
      * @return StandardAutoloader
      */
-    public function registerNamespace($namespace, $directory) {
+    public function registerNamespace(string $namespace, string $directory) : self {
         $namespace = rtrim($namespace, self::NS_SEPARATOR) . self::NS_SEPARATOR;
         $this->namespaces[$namespace] = $this->normalizeDirectory($directory);
         return $this;
@@ -121,7 +122,7 @@ class Autoloader extends Configurable implements SplInterface {
      * @return Autoloader
      */
     public function registerNamespaces($namespaces) {
-        if (! is_array($namespaces) && ! $namespaces instanceof \Traversable) {
+        if (!is_array($namespaces) && !$namespaces instanceof Traversable) {
             require_once "System/ArgumentOutOfRangeException.php";
             throw new ArgumentOutOfRangeException('callback', 'Se esperaba un iterable', $namespaces);
         }
@@ -153,7 +154,7 @@ class Autoloader extends Configurable implements SplInterface {
      * @return Autoloader
      */
     public function registerPrefixes($prefixes) {
-        if (! is_array($prefixes) && ! $prefixes instanceof \Traversable) {
+        if (!is_array($prefixes) && !$prefixes instanceof Traversable) {
             require_once "System/ArgumentOutOfRangeException.php";
             throw new ArgumentOutOfRangeException('callback', 'Se esperaba un iterable', $namespaces);
         }
@@ -234,9 +235,9 @@ class Autoloader extends Configurable implements SplInterface {
      * @throws Exception\InvalidArgumentException
      */
     protected function loadClass($class, $type) {
-        if (! in_array($type, [self::LOAD_NS, self::LOAD_PREFIX, self::ACT_AS_FALLBACK])) {
+        if (!in_array($type, [self::LOAD_NS, self::LOAD_PREFIX, self::ACT_AS_FALLBACK])) {
             require_once "System/ArgumentOutOfRangeException.php";
-            throw new ArgumentOutOfRangeException();
+            throw new ArgumentOutOfRangeException('type');
         }
 
         // Fallback autoloading
@@ -295,19 +296,24 @@ class Autoloader extends Configurable implements SplInterface {
      * @param string   $filename
      * @return boolean
      */
-    public static function isReadable($filename) {
-        if (is_readable($filename)) // Return early if the filename is readable without needing the
+    public static function isReadable(string $filename) : bool {
+        if(is_readable($filename)) { // Return early if the filename is readable without needing the
             return true;            // include_path
+        }
 
-        if (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN'
-            && preg_match('/^[a-z]:/i', $filename)  // If on windows, and path provided is clearly an absolute path,
-        ) return false;                             // return false immediately
+        if(strtoupper(substr(PHP_OS, 0, 3)) == 'WIN' &&
+           preg_match('/^[a-z]:/i', $filename)) { // If on windows, and path provided is clearly an absolute path,
+            return false;                         // return false immediately
+        }
 
         foreach (self::explodeIncludePath() as $path) {
-            if ($path == '.') continue;
+            if($path == '.') {
+                continue;
+            }
             $file = $path . '/' . $filename;
-            if (is_readable($file))
+            if (is_readable($file)) {
                 return true;
+            }
         }
         return false;
     }
@@ -321,15 +327,14 @@ class Autoloader extends Configurable implements SplInterface {
      * @param  string|null $path
      * @return array
      */
-    public static function explodeIncludePath($path = null) {
-        if (null === $path)
+    public static function explodeIncludePath(string $path = null) {
+        if(null === $path) {
             $path = get_include_path();
+        }
 
-        if (PATH_SEPARATOR == ':') // On *nix systems, include_paths which include paths with a stream schema cannot be safely explode'd, so we have to be a bit more intelligent in the approach.
-            $paths = preg_split('#:(?!//)#', $path);
-        else
-            $paths = explode(PATH_SEPARATOR, $path);
-        return $paths;
+        return (PATH_SEPARATOR == ':') // On *nix systems, include_paths which include paths with a stream schema cannot be safely explode'd, so we have to be a bit more intelligent in the approach.
+            ? preg_split('#:(?!//)#', $path)
+            : explode(PATH_SEPARATOR, $path);
     }
 
 }
