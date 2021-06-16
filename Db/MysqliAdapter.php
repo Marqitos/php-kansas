@@ -45,9 +45,7 @@ class MysqliAdapter extends Adapter {
         if($this->con->real_query($sql) &&
            $this->con->errno == 0) {
             if($this->con->field_count == 0) { // La consulta no es select
-                if($id != null) {
-                    $id = $this->con->insert_id;
-                }
+                $id = $this->con->insert_id;
                 return $this->con->affected_rows;
             } else {
                 try {

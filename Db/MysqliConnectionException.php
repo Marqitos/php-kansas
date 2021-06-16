@@ -1,6 +1,6 @@
 <?php
 /**
- * Representa un error producido durante una consulta MySQL mediante mysqli;
+ * Representa un error producido durante la conexión a la base de datos, mediante mysqli;
  */
 
 
@@ -8,16 +8,18 @@ namespace Kansas\Db;
 
 use Exception;
 use mysqli;
+use Kansas\Localization\Resources;
+use function sprintf;
 
 class MysqliConnectionException extends Exception {
 		
 	public function __construct(mysqli $link = null) {
+        require_once 'Kansas/Localization/Resources.php';
         if($link == null) {
-            parent::__construct('Error de Conexión con la base de datos.');
+            parent::__construct(Resources::DB_CONNECTION_ERROR_MESSAGE);
         } else {
-            parent::__construct('Error de Conexión (' . $link->connect_errno . ') ' . $link->connect_error);
+            parent::__construct(sprintf(Resources::DB_CONNECTION_ERROR_FORMAT, $link->connect_errno, $link->connect_error), $link->connect_errno);
         }
 	}
-		
 
 }
