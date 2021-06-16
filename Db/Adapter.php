@@ -35,7 +35,7 @@ abstract class Adapter {
             foreach(self::DRIVER_OPTIONS[self::DRIVER_MYSQLI] as $key) {
                 if(!isset($options[$key])) {
                     require_once 'System/ArgumentOutOfRangeException.php';
-                    require_once 'Kansas/Localization/Resources.php'; // TODO: Localizar mensaje de error
+                    require_once 'Kansas/Localization/Resources.php';
                     throw new ArgumentOutOfRangeException('options', sprintf(Resources::ARGUMENT_OUT_OF_RANGE_EXCEPTION_ADAPTER_OPTIONS_CONTAINS_FORMAT, $driver, $key));
                 }
             }
