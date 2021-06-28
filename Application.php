@@ -16,16 +16,17 @@ use System\ArgumentOutOfRangeException;
 use System\Configurable;
 use System\NotSupportedException;
 use System\Net\WebException;
+use Kansas\Db\Adapter as DbAdapter;
 use Kansas\Environment;
+use Kansas\Plugin\DefaultValueInterface;
+use Kansas\Plugin\RouterPluginInterface;
 use Kansas\Router\RouterInterface;
 use Kansas\View\Result\ViewResultInterface;
-use Kansas\Db\Adapter as DbAdapter;
 
-use function Kansas\Request\getRequestType;
+use function Kansas\Exceptions\getErrorData as GetErrorData;
+use function Kansas\Request\getRequestType as GetRequestType;
 use function array_merge;
 use function is_array;
-//use function set_error_handler;
-//use function set_exception_handler;
 use function ucfirst;
 use function get_class;
 
@@ -54,6 +55,8 @@ class Application extends Configurable {
 	private $db;
 
     private $plugins;
+	private $pluginsRouter;
+	private $pluginsDefault;
 
 	private $_routers;
 	
@@ -90,7 +93,6 @@ class Application extends Configurable {
 				return [
 					'db' => false,
 					'default_domain' => '',
-					'error' => [$this, 'errorManager'],
 					'loader' => [
 						'controller' => [],
 						'plugin'     => [],
@@ -183,7 +185,9 @@ class Application extends Configurable {
         if(is_array($this->plugins)) {
 			return;
 		}
-        $this->plugins = [];
+        $this->plugins 			= [];
+		$this->pluginsRouter	= [];
+		$this->pluginsDefault	= [];
         foreach(array_keys($this->options['plugin']) as $pluginName) {
 			$this->getPlugin($pluginName);
 		}
@@ -191,14 +195,21 @@ class Application extends Configurable {
 
     protected function loadPlugin($pluginName, array $options) {
 		global $environment;
+		require_once 'Kansas/Plugin/DefaultValueInterface.php';
+		require_once 'Kansas/Plugin/RouterPluginInterface.php';
         try {
 			$plugin = $environment->createPlugin($pluginName, $options);
-
         } catch(Throwable $e) {
-            $this->log(E_USER_NOTICE, $e);
+			$this->raiseError($e);
             $plugin = false;
         }
         $this->plugins[$pluginName] = $plugin;
+		if($plugin instanceof RouterPluginInterface) {
+			$this->pluginsRouter[$pluginName] = $plugin;
+		}
+		if($plugin instanceof DefaultValueInterface) {
+			$this->pluginsDefault[$pluginName] = $plugin;
+		}
 		return $plugin;
     }
 
@@ -256,11 +267,9 @@ class Application extends Configurable {
 				}
 				$result 	= $this->dispatch($params);
 			}
-			if(!isset($result) || $result === null) {
+			if(!isset($result)) {
 				require_once 'System/Net/WebException.php';
-				$ex = new WebException(404);
-				$this->raiseError($ex);
-				return;
+				throw new WebException(404);
 			}
 			foreach ($this->_callbacks[self::EVENT_RENDER] as $callback) { // Render event
 				call_user_func($callback, $result);
@@ -272,16 +281,16 @@ class Application extends Configurable {
 	}
 	
 	/**
-	 * Devuelve los parametros básicos de la petición actual
+	 * Devuelve los parámetros básicos de la petición actual
 	 */
 	public static function getDefaultParams() : array {
-		require_once 'Kansas/Request/getRequestType.php';
 		global $environment;
+		require_once 'Kansas/Request/getRequestType.php';
 		$request = $environment->getRequest();
 		return [
 			'url'         => trim($request->getUri()->getPath(), '/'),
 			'uri'         => $request->getRequestTarget(),
-			'requestType' => getRequestType($request)
+			'requestType' => GetRequestType($request)
 		];
 	}
 	
@@ -291,20 +300,33 @@ class Application extends Configurable {
 			$this->_callbacks[$hook][] = $callback;
 		}
 	}
+	
 	protected function raiseError(Throwable $exception) : void {
-		$errData = self::getErrorData($exception);
+		require_once 'Kansas/Exceptions/getErrorData.php';
+		$errData = GetErrorData($exception);
+		$this->raiseMessage($errData);
+	}
+
+	public function raiseMessage(array $message) {
 		foreach ($this->_callbacks[self::EVENT_ERROR] as $callback) {
-			call_user_func($callback, $errData);
+			call_user_func($callback, $message);
 		}
+		$errorLevel = $message['errorLevel'] ?? E_USER_ERROR;
+		unset($message['errorLevel']);
+		if(error_reporting() & $errorLevel != 0) {
+			$this->raiseLog($errorLevel, $message);
+		} 
 	}
 
 	protected function raiseLog(int $level, $message) : void {
 		if($message instanceof Throwable) {
-			$message = self::getErrorData($message);
+			require_once 'Kansas/Exceptions/getErrorData.php';
+			$message = GetErrorData($message);
 		}
-		@call_user_func($this->options['log'], $level, $message);
+		foreach ($this->_callbacks[self::EVENT_LOG] as $callback) {
+			call_user_func($callback, $level, $message);
+		}
 	}
-
 
 	public function getDb() : DbAdapter {
 		require_once 'Kansas/Db/Adapter.php';
@@ -365,70 +387,6 @@ class Application extends Configurable {
 		return $this->_title;
 	}
 
-	/* Gestion de errores */
-	public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
-		if (!(error_reporting() & $errno)) { // Este código de error no está incluido en error_reporting
-			return false; 
-		}
-		$trace = debug_backtrace();
-		array_shift($trace);
-		
-		$errData = [
-			'exception'   	=> null,
-			'errorLevel'	=> $errno,
-			'code'			=> 500,
-			'message'		=> $errstr,
-			'trace'			=> $trace,
-			'line'			=> $errline,
-			'file'			=> $errfile,
-			'context'		=> $errcontext
-		];
-		if(error_reporting() != 0) {
-			@call_user_func($this->options['log'], $errno, $errData);
-		} 
-		if($errno == E_USER_ERROR) {
-			@call_user_func($this->options['error'], $errData);
-		}
-		return true; // No ejecutar el gestor de errores interno de PHP
-	}
-	
-	public function exceptionHandler(Throwable $ex) {
-		$errData = self::getErrorData($ex);
-		if((error_reporting() & E_USER_ERROR) != 0) {
-			$this->raiseLog(E_USER_ERROR, $errData);
-		}
-		$this->raiseError($ex);
-		exit(1);
-	}
-	
-	public function log(int $level, $message) {
-		if($message instanceof Throwable) {
-			$message = self::getErrorData($message);
-		}
-		call_user_func($this->options['log'], $level, $message);
-	}
-	
-	public function errorManager($params) {
-		$result = $this->dispatch(array_merge($params, [
-			'controller'	=> 'Error',
-			'action'		=> 'Index'
-			], $this->getDefaultParams()));
-		$result->executeResult();
-	}
-	
-	public static function getErrorData(Throwable $ex) : array {
-		require_once 'System/Net/WebException.php';
-		return [
-			'exception'     => get_class($ex),
-			'errorLevel'	=> E_USER_ERROR,
-			'code'			=> ($ex instanceof WebException ? $ex->getStatus() : 500),
-			'message'		=> $ex->getMessage(),
-			'trace'			=> $ex->getTrace(),
-			'line'			=> $ex->getLine(),
-			'file'			=> $ex->getFile()
-		];
-	}
-	
 	/* Enrutamiento */
 	public function addRouter(RouterInterface $router, $priority = 0) : void {
 		$this->_routers->insert($router, $priority);
