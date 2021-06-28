@@ -71,7 +71,7 @@ class API extends AbstractZone implements RouterPluginInterface {
 		if($this->router == null) {
 			require_once 'Kansas/Router/API.php';
 			$this->router = new RouterAPI($this->options);
-            $this->registerAPICallback = $this->router->registerAPICallback;
+//            $this->registerAPICallback = $this->router->registerAPICallback;
 		}
 		return $this->router;
 	}
