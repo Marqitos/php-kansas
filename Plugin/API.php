@@ -10,6 +10,7 @@
 
 namespace Kansas\Plugin;
 
+use Psr\Http\Message\RequestMethodInterface;
 use System\Localization\Resources as SystemResources;
 use System\NotSupportedException;
 use System\Version;
@@ -24,6 +25,10 @@ require_once 'Kansas/Plugin/RouterPluginInterface.php';
 class API extends AbstractZone implements RouterPluginInterface {
     
     private $router;
+
+    const PARAM_REQUIRE     = 'require';
+    const PARAM_FUNCTION    = 'function';
+    const METHOD_ALL        = 'ALL';
 
     /// Constructor
 	public function __construct(array $options) {
@@ -67,11 +72,18 @@ class API extends AbstractZone implements RouterPluginInterface {
         $this->getRouter()->registerCallback($callback);
     }
 
+    public function registerPath(string $path, $dispatch, string $method = self::METHOD_ALL) {
+        $this->getRouter()->registerPath($path, $dispatch, $method);
+        if(!isset($this->paths[$method])) {
+            $this->paths[$method] = [];
+        }
+        $this->paths[$method][$path] = $dispatch;
+    }
+
 	public function getRouter() : RouterInterface {
 		if($this->router == null) {
 			require_once 'Kansas/Router/API.php';
 			$this->router = new RouterAPI($this->options);
-//            $this->registerAPICallback = $this->router->registerAPICallback;
 		}
 		return $this->router;
 	}
