@@ -16,6 +16,8 @@ class Resources {
     public const DB_CONNECTION_ERROR_MESSAGE = 'Error de conexión con la base de datos.';
     public const DB_CONNECTION_ERROR_FORMAT = 'Error de conexión (%d: %s).';
     public const IO_EXCEPTION_NO_TEMP_DIR_MESSAGE = 'No se puede determinar un directorio temporal, especifique uno manualmente.';
+    public const LOADER_NOT_CAST_EXCEPTION_FORMAT = 'El Plugin de nombre "%s" no es del tipo esperado, se esperaba: "%s"';
+    public const LOADER_NOT_FOUNT_EXCEPTION_FORMAT = 'El Plugin de nombre "%s" no se encuentra en el registro, usando las rutas:';
     public const NOT_IMPLEMENTED_EXCEPTION_ACTION_FORMAT = 'No se ha implementado %s en el controlador %s.';
 
 }
