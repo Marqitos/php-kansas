@@ -10,15 +10,15 @@
 
 namespace Kansas\Plugin;
 
+use Exception;
 use System\Configurable;
 use System\Guid;
-use System\NotSupportedException;
 use System\Version;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Router\Token as Router;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
-use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Signer\Hmac\Sha256 as HS256;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Token as JWToken;
 
@@ -41,19 +41,13 @@ class Token extends Configurable implements PluginInterface {
 
 	// Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
-        switch ($environment) {
-            case 'production':
-            case 'development':
-            case 'test':
-                return [
-                    'device'    => false,
-                    'exp'       => 10 * 24 * 60 * 60, // 10 días
-                    'secret'    => false
-                ];
-            default:
-                require_once 'System/NotSupportedException.php';
-                throw new NotSupportedException("Entorno no soportado [$environment]");
-        }
+        return [
+            'device'    => false,
+            'exp'       => 15 * 24 * 60 * 60, // 15 días
+            'secret'    => false,
+            'domain'    => '',
+            'iss'       => $_SERVER['SERVER_NAME'],
+            'session'   => null];
     }
 
     public function getVersion() : Version {
@@ -63,6 +57,16 @@ class Token extends Configurable implements PluginInterface {
 
     public function appPreInit() {
         global $application;
+        /*
+        if($this->options['session'] === null &&
+           $application->hasPlugin('Auth') &&
+           is_a($application->getPlugin('Auth')->getOptions()['session'], 'Kansas\\Auth\\Session\\AbstractToken', true)) {
+            $this->options['session'] = true;
+        }
+        if($this->options['session']) {
+
+        }
+        */
         $application->addRouter($this->getRouter(), 100);
     }
     
@@ -73,30 +77,33 @@ class Token extends Configurable implements PluginInterface {
      * @param string $tokenString
      * @return mixed Lcobucci\JWT\Token, o false
      */
-    public function parse($tokenString) {
-        global $environment;
+    public function parse(string $tokenString) {
         require_once 'Lcobucci/JWT/Parser.php';
         $parser = new Parser();
         $token = $parser->parse($tokenString);
         if($this->options['secret']) { // Comprobar firma mediante Hmac/Sha256
             require_once 'Lcobucci/JWT/Signer/Hmac/Sha256.php';
-            $signer = new Sha256();
+            $signer = new HS256();
             if(!$token->verify($signer, $this->options['secret'])) {
                 return false;
             }
         }
-        if($this->options['device'] === true) { // Comprobar dispositivo
-            if(!$token->hasClaim('dev')) {
-                return false;
-            }
-            require_once 'Kansas/Request/getTrailData.php';
-			$request = $environment->getRequest();
-            $userAgent = getTrailData($request)['userAgent'];
-            if(md5($userAgent, true) != hex2bin($token->getClaim('dev'))) {
+        if($this->options['device'] === true &&
+           $token->hasClaim('dev')) { // Comprobar dispositivo
+            $hexDevice = $this->getDevice();
+            if(hex2bin($hexDevice) != hex2bin($token->getClaim('dev'))) {
                 return false;
             }
         }
         return $token;
+    }
+
+    public function getDevice() {
+        global $environment;
+        require_once 'Kansas/Request/getTrailData.php';
+        $request    = $environment->getRequest();
+        $userAgent  = getTrailData($request)['userAgent'];
+        return md5($userAgent, false);
     }
 
     /**
@@ -108,7 +115,7 @@ class Token extends Configurable implements PluginInterface {
     public function createLink(array $data) {
         require_once 'System/Guid.php';
         $tokenData = [
-            'iss'   => $_SERVER['SERVER_NAME'],
+            'iss'   => $this->options['iss'],
             'iat'   => time(),
             'exp'   => time() + $this->options['exp']
         ];
@@ -171,7 +178,7 @@ class Token extends Configurable implements PluginInterface {
         }
         if($this->options['secret']) { // Firma el token mediante Hmac/Sha256
             require_once 'Lcobucci/JWT/Signer/Hmac/Sha256.php';
-            $signer = new Sha256();
+            $signer = new HS256();
             $key = new Key($this->options['secret']);
             $token = $builder->getToken($signer, $key); // creates a signature
         } else {
@@ -203,7 +210,7 @@ class Token extends Configurable implements PluginInterface {
         }
         if($this->options['secret']) { // Firma el token mediante Hmac/Sha256
             require_once 'Lcobucci/JWT/Signer/Hmac/Sha256.php';
-            $signer = new Sha256();
+            $signer = new HS256();
             $key = new Key($this->options['secret']);
             $token = $builder->getToken($signer, $key); // creates a signature
         } else {
@@ -230,6 +237,18 @@ class Token extends Configurable implements PluginInterface {
             $this->router = new Router($this, $this->options);
         }
         return $this->router;
+    }
+
+    public function getISS() {
+        return $this->options['iss'];
+    }
+
+    public function getEXP() {
+        return $this->options['exp'];
+    }
+
+    public function getSessionDomain() {
+        return $this->options['domain'];
     }
 
 }

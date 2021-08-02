@@ -28,7 +28,7 @@ class Auth extends AbstractController {
 
     
     $identity = $application->getPlugin('Auth')->getIdentity();
-		if($identity == FALSE) {
+		if(!$identity) {
       $router = $application->getPlugin('Auth')->getRouter();
       $vars['ru'] = $router->assemble([
         'action' => 'sessionInfo'

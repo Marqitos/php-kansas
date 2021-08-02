@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * Plugin de localización de la aplicación
  * 
@@ -11,8 +11,8 @@
 namespace Kansas\Plugin;
 
 use System\Configurable;
-use System\NotSupportedException;
 use System\Version;
+use Kansas\Plugin\LocalizationInterface;
 use Kansas\Plugin\PluginInterface;
 
 use function strcasecmp;
@@ -24,7 +24,7 @@ use function uasort;
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
-class Localization extends Configurable implements PluginInterface {
+class Localization extends Configurable implements PluginInterface, LocalizationInterface {
 
 	private $appLangs;
 	private $userLangs;
@@ -33,22 +33,13 @@ class Localization extends Configurable implements PluginInterface {
 		parent::__construct($options);
 		global $application;
 		$application->registerCallback('preinit', [$this, 'appPreInit']);
-		$this->options['q'] = false;
 	}
 
 	/// Miembros de System\Configurable\Interface
 	public function getDefaultOptions(string $environment) : array {
-		switch ($environment) {
-		case 'production':
-		case 'development':
-		case 'test':
-			return [
-				'lang' 		=> 'es',
-				'country'	=> null];
-		default:
-			require_once 'System/NotSupportedException.php';
-			throw new NotSupportedException("Entorno no soportado [$environment]");
-		}
+        return [
+            'lang' 		=> 'es',
+            'country'	=> null];
 	}
 	
 	public function getVersion() : Version {
@@ -57,12 +48,13 @@ class Localization extends Configurable implements PluginInterface {
 	}	  
 
 	public function appPreInit() { // obtener idioma del cliente
-		if(!isset($this->options['q'])) {
-			$this->init();
-		}
-	}
+        $this->init();
+    }
 
 	public function init() {
+        if(isset($this->options['q'])) {
+            return;
+        }
 		global $environment, $lang;
 		$request	= $environment->getRequest();
 		$uri		= $request->getUri();
@@ -132,6 +124,11 @@ class Localization extends Configurable implements PluginInterface {
 		return $this->appLangs;
 	}
 
+    /**
+     * Obtiene los idiomas del navegador del usuario, ordenados por preferencia
+     * 
+     * @return array Lista de idiomas con los valores 'lang', 'country' y 'q', para cada idioma
+     */
 	public function getUserLangs() {
 		if(!isset($this->userLangs)) {
 			$locales = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
@@ -152,20 +149,18 @@ class Localization extends Configurable implements PluginInterface {
 		return $this->userLangs;
 	}
 
-	public function getLocale() {
-		if(!isset($this->options['q'])) {
-			$this->init();
-		}
+	public function getLocale() : array {
+        $this->init();
 		return $this->options;
 	}
 
-	public function setLocale($lang, $country, $q = true) {
+	public function setLocale(string $lang, string $country = null, $q = true) {
 		$this->options['lang'] 		= $lang;
 		$this->options['country'] 	= $country;
 		$this->options['q'] 		= $q;
 	}
 	
-	public function __toString() {
+	public function __toString() : string {
 		$lang = strtolower($this->options['lang']);
 		if($this->options['country'] != null) {
 			$lang .= '-' . strtoupper($this->options['country']);

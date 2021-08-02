@@ -1,54 +1,32 @@
-<?php
+<?php declare(strict_types = 1);
+/**
+ * Proporciona un manejo de la sesión de usuario mediante un token jwt
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright 2021, Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\Auth\Session;
 
-use System\Configurable;
 use System\Guid;
-use System\NotSupportedException;
-use System\Version;
 use Kansas\Auth\Session\SessionInterface;
 use Kansas\Plugin\Token AS TokenPlugin;
 
 use function intval;
 use function System\String\startWith;
 
-require_once 'System/Configurable.php';
 require_once 'Kansas/Auth/Session/SessionInterface.php';
 
 /**
  * Autenticación mediante javascript web token
  */
-abstract class AbstractToken extends Configurable implements SessionInterface {
+abstract class AbstractToken implements SessionInterface {
 
     private $initialized = false;
     private $token = false;
     private $user = false;
-
-    // Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions(string $environment) : array {
-        switch ($environment) {
-            case 'production':
-            case 'development':
-            case 'test':
-                return [
-                    'lifetime'  => 0,
-                    'domain'    => '',
-                    'iss'       => $_SERVER['SERVER_NAME']
-                ];
-            default:
-                require_once 'System/NotSupportedException.php';
-                throw new NotSupportedException("Entorno no soportado [$environment]");
-        }
-    }
-
-    /**
-     *  @see System\Configurable\getVersion()
-     */
-    public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
-    }	
-    
 
     /// Miembros de SessionInterface
     /**
@@ -57,27 +35,22 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
      * @return mixed Devuelve un array con los datos de usuario, o false para sesiones no autenticadas
      */
     public function getIdentity() {
-        if(!$this->initialized) {
-            global $application;
-            $localizationPlugin     = $application->getPlugin('Localization');
-            $locale                 = $localizationPlugin->getLocale();
-            $this->initialize($locale['lang'], null, null, $locale['country']);
-        }
+        $this->initialize();
         return $this->user;
     }
 
-    public function setIdentity(array $user, $lifetime = null, $domain = null) {
+    public function setIdentity(array $user, int $lifetime = 0, string $domain = null) {
         global $application;
-        $this->user = $user;
-        if($lifetime == null) {
-            $lifetime = $this->options['lifetime'];
+        $tokenPlugin    = $application->getPlugin('Token');
+        $this->user     = $user;
+        if($lifetime == 0) {
+            $lifetime = $tokenPlugin->getEXP();
         }
         if($domain == null) {
-            $domain = $this->options['domain'];
+            $domain = $tokenPlugin->getSessionDomain();
         }
-        $tokenPlugin = $application->getPlugin('token'); // crear token
         $data = [
-            'iss'   => $this->options['iss'],
+            'iss'   => $tokenPlugin->getISS(),
             'iat'   => time()
         ];
         if(isset($user['id'])) {
@@ -91,7 +64,7 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
             $lifetime += time();
             $data['exp'] = $lifetime;
         }
-        if($domain !== null) {
+        if(!empty($domain)) {
             $data['aud'] = $domain;
         }
         $this->token = $tokenPlugin->createToken($data);
@@ -118,20 +91,17 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
     }
 
     public function getToken() {
-        if(!$this->initialized) {
-            global $application;
-            $localizationPlugin     = $application->getPlugin('Localization');
-            $locale                 = $localizationPlugin->getLocale();
-            $this->initialize($locale['lang'], null, null, $locale['country']);
-        }
+        $this->initialize();
         return $this->token;
     }
     
-    public function initialize($lang, $lifetime = null, $domain = null, $country = null) {
+    public function initialize(int $lifetime = null, string $domain = null) {
         if($this->initialized) {
             return;
         }
         global $application, $environment;
+        $localizationPlugin     = $application->getPlugin('Localization');
+        $locale                 = $localizationPlugin->getLocale();
         $request = $environment->getRequest();
         if($request->hasHeader('Authorization')) { // Obtener sessión de headers
             require_once 'System/String/startWith.php';
@@ -142,15 +112,17 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
                 }
             }
         }
-        if (isset($_COOKIE['token'])) { // Obtener sesión de cookies
+        if(!isset($tokenString) &&
+           isset($_COOKIE['token'])) { // Obtener sesión de cookies
             $tokenString = $_COOKIE['token'];
         }
         if(isset($tokenString)) {
+            $tokenPlugin = $application->getPlugin('Token');
             if($lifetime == null) {
-                $lifetime = $this->options['lifetime'];
+                $lifetime = $tokenPlugin->getEXP();
             }
             if($domain == null) {
-                $domain = $this->options['domain'];
+                $domain = $tokenPlugin->getSessionDomain();
             }
             $tokenPlugin    = $application->getPlugin('token');
             $tokenProvider  = $application->getProvider('token');
@@ -158,13 +130,14 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
             if($jwt &&
                $jwt->hasClaim('jti')) {
                 $id = new Guid($jwt->getClaim('jti'));
-                $this->token = $tokenProvider->getToken($id, false);
+                $this->token = $tokenProvider->getToken($id, null);
             }
-            if($this->token && $this->token->hasClaim('sub')) { // Obtener usuario
+            if($this->token &&
+               $this->token->hasClaim('sub')) { // Obtener usuario
                 $userId = false;
                 $this->tryParseUser($this->token->getClaim('sub'), $userId);
-                $usersProvider = $application->getProvider('users');
-                $userRow = $usersProvider->getById($userId, $lang, $country);
+                $usersProvider = $application->getProvider('Users');
+                $userRow = $usersProvider->getById($userId, $locale['lang'], $locale['country']);
                 if($userRow && $userRow['isEnabled']) {
                     $this->user = $userRow;
                 }
@@ -207,17 +180,12 @@ abstract class AbstractToken extends Configurable implements SessionInterface {
     }
 
     public function getId() {
-        if(!$this->initialized) {
-            global $application;
-            $localizationPlugin     = $application->getPlugin('Localization');
-            $locale                 = $localizationPlugin->getLocale();
-            $this->initialize($locale['lang'], null, null, $locale['country']);
-        }
-        if($this->token && $this->token->hasClaim('jti')) {
+        $this->initialize();
+        if($this->token &&
+           $this->token->hasClaim('jti')) {
             return $this->token->getClaim('jti');
         }
         return false;
     }
-
 
 }
