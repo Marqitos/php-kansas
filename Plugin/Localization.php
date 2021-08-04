@@ -86,7 +86,8 @@ class Localization extends Configurable implements PluginInterface, Localization
 				}
 			}
 		}
-		if($this->options['q'] === true) { // Si el idioma estaba incrustado en la url, modificamos la url
+		if(isset($this->options['q']) &&
+		   $this->options['q'] === true) { // Si el idioma estaba incrustado en la url, modificamos la url
 			$request = $request->withUri($uri);
 			$environment->setRequest($request);
 		} else {
@@ -131,7 +132,9 @@ class Localization extends Configurable implements PluginInterface, Localization
      */
 	public function getUserLangs() {
 		if(!isset($this->userLangs)) {
-			$locales = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+			$locales = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])
+			         ? explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE'])
+					 : [];
 			$this->userLangs = [];
 			foreach($locales as $locale) {
 				list($l, $q) = array_merge(explode(';q=', $locale), [1]);
