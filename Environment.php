@@ -103,6 +103,11 @@ class Environment {
         $this->t_inicio = microtime(true);
         $this->status = $status;
         $this->specialFolders = $specialFolders;
+        foreach($specialFolders as $key => $value) {
+            if($value === false) {
+                unset($this->specialFolders[$key]);
+            }
+        }
         $this->version = new Version('0.4');
     }
   
