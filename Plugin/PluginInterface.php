@@ -1,7 +1,9 @@
-<?php declare(strict_types = 1 );
+<?php declare(strict_types = 1);
 /**
  * Representa un complemento de la aplicación
- *
+ * 
+ * Depende de la librería System
+ * 
  * @package Kansas
  * @author Marcos Porto
  * @copyright 2021, Marcos Porto
@@ -22,7 +24,7 @@ require_once 'System/Version.php';
  */
 interface PluginInterface extends ConfigurableInterface {
 	/**
-	 * Obtiene la versión del modulo cargado
+	 * Obtiene la versión del complemento
 	 * 
 	 * @return System\Version Versión del complemento 
 	 */

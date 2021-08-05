@@ -37,7 +37,7 @@ class File extends FileAbstract {
     // Obtiene o establece el tipo de contenido de archivo	
     public function getMimeType() {
         if(empty($this->_mimeType)) {
-            if(class_exists("MIME_Type")) {
+            if(class_exists("MIME_Type", false)) {
                 return MIME_Type::autoDetect($this->_filename);
             }
             if(function_exists("finfo_open")) {
@@ -52,8 +52,8 @@ class File extends FileAbstract {
         return $this->_mimeType;
     }  
   
-  /* (non-PHPdoc)
-   * @see Kansas_View_Result_Interface::executeResult()
+  /**
+   * @inheritdoc
    */
   public function executeResult () {
     parent::sendHeaders();

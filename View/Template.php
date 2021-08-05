@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * Representa una plantilla
  *
@@ -10,14 +10,17 @@
 
 namespace Kansas\View;
 
+use Kansas\TitleBuilder\TitleBuilderInterface;
+
 use function htmlentities;
 use function is_array;
-use function is_string;
 use function nl2br;
 use function ob_end_clean;
 use function ob_get_contents;
 use function ob_start;
 use function strip_tags;
+
+require_once 'Kansas/TitleBuilder/TitleBuilderInterface.php';
 
 /**
  * Representa una plantilla
@@ -31,7 +34,7 @@ class Template {
     /**
      * Crea una instancia del objeto, indicando el script a ejecutar y los datos con los que debe rellenar la plantilla
      */
-    public function __construct($script, array $data) {
+    public function __construct(string $script, array $data) {
         $this->script   = $script;
         $this->data     = $data;
     }
@@ -55,7 +58,7 @@ class Template {
      * @param $index string Indice opcional, si se especifica se devolverá el dato guardado con esa clave, si existe o false si no existe. Si no se especifica devuelve el array con todos los valores.
      * @return array|false|mixed Un array si no se especifica $index, y false o un valor si se especifica $index.
      */
-    public static function getDatacontext($index = null, $default = false) {
+    public static function getDatacontext(string $index = null, $default = false) {
         if($index == null) {
             return self::$datacontext;
         } else if(isset(self::$datacontext[$index])) {
@@ -70,14 +73,14 @@ class Template {
     /**
      * Establece un valor en el contexto de la plantilla.
      */
-    public static function setDatacontext($index, $value) {
+    public static function setDatacontext(string $index, $value) {
         self::$datacontext[$index] = $value;
     }
 
     /**
      * Obtiene un objeto Kansas\TitleBuilder\TitleBuilderInterface, con el titulo en contexto de la plantilla
      */
-    public static function getTitle() {
+    public static function getTitle() : TitleBuilderInterface {
         global $application;
         $title = $application->createTitle();
         if(isset(self::$datacontext['title'])) {
@@ -86,7 +89,7 @@ class Template {
         return $title;     
     }
 
-    public static function parse($input, $outFormat, $inFormat = 'txt') {
+    public static function parse($input, string $outFormat, string $inFormat = 'txt') {
         if(is_array($input)) { // procesamos si input es un array ['format', 'value']
             if(isset($input['format'])) {
                 $inFormat = $input['format'];
