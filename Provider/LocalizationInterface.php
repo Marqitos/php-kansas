@@ -23,4 +23,11 @@ interface LocalizationInterface {
 	 */
 	public function localize(array &$row, string $type, string $key, string $lang, string $country = null) : void;
 
+	/**
+	 * Devuelve los idiomas disponibles para localización
+	 * 
+	 * @return array Elementos con las claves 'lang' y 'country'
+	 */
+	public function getLanguages() : array;
+
 }

@@ -94,6 +94,7 @@ class Localization extends Configurable implements PluginInterface, Localization
 			foreach($this->getUserLangs() as $userLang){
 				foreach($this->getAppLangs() as $appLang) {
 					if(strcasecmp($userLang['lang'], $appLang['lang']) == 0 &&
+						$appLang['country'] != null &&
 						strcasecmp($userLang['country'], $appLang['country']) == 0) { // obtenemos el idioma de las preferencias del navegador del usuario
 						$this->options['lang'] 		= $appLang['lang'];
 						$this->options['country'] 	= $appLang['country'];
