@@ -104,6 +104,9 @@ class Index	extends AbstractController {
 	
 	public function API(array $vars) {
 		require_once 'Kansas/View/Result/Json.php';
+		if(connection_aborted() == 1) {
+			die;
+		}
 		if(isset($vars['error'])) {
 			if(isset($vars['code'])) {
 				$code = $vars['code'];
