@@ -59,6 +59,8 @@ class API extends Router implements RouterInterface {
 			$dispatch = $this->paths[APIPlugin::METHOD_ALL][$path];
 		}
 		if($dispatch) {
+			ignore_user_abort(true);
+			set_time_limit(0);
 			if(is_array($dispatch) &&
 			   isset($dispatch[APIPlugin::PARAM_FUNCTION])) {
 				$function = $dispatch[APIPlugin::PARAM_FUNCTION];
