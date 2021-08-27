@@ -66,12 +66,13 @@ class PluginLoader {
      * @return string
      */
     protected function _formatPrefix(string $prefix) : string {
+        require_once 'Kansas/Autoloader.php';
         if($prefix == "") {
             return $prefix;
         }
 
         $last = strlen($prefix) - 1;
-        if ($prefix[$last] == '\\') {
+        if ($prefix[$last] == Autoloader::NS_SEPARATOR) {
             return $prefix;
         }
 
@@ -87,7 +88,7 @@ class PluginLoader {
      */
     public function addPrefixPath(string $prefix, string $path) {
         $prefix = $this->_formatPrefix($prefix);
-        $path   = strtr(rtrim($path, '/\\') . '\\', '/\\', DIRECTORY_SEPARATOR);
+        $path   = strtr(rtrim($path, '/\\') . DIRECTORY_SEPARATOR, '/\\', DIRECTORY_SEPARATOR);
 
         if (!isset($this->prefixToPaths[$prefix])) {
             $this->prefixToPaths[$prefix] = [];

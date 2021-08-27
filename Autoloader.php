@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * @see       https://github.com/zendframework/zend-loader for the canonical source repository
  */
@@ -6,9 +6,23 @@
 namespace Kansas;
 
 use Traversable;
+use Kansas\Loader\SplInterface;
 use System\ArgumentOutOfRangeException;
 use System\Configurable;
-use Kansas\Loader\SplInterface;
+use function explode;
+use function get_include_path;
+use function is_readable;
+use function is_array;
+use function preg_match;
+use function preg_split;
+use function rtrim;
+use function spl_autoload_register;
+use function str_replace;
+use function stream_resolve_include_path;
+use function strpos;
+use function substr;
+use const DIRECTORY_SEPARATOR;
+use const PATH_SEPARATOR;
 
 require_once "System/Configurable.php";
 require_once "Kansas/Loader/SplInterface.php";
@@ -52,7 +66,6 @@ class Autoloader extends Configurable implements SplInterface {
             self::LOAD_NS         => [],
             self::LOAD_PREFIX     => [],
             self::ACT_AS_FALLBACK => false];
-        
     }
     /**
      * Configure autoloader
@@ -87,7 +100,7 @@ class Autoloader extends Configurable implements SplInterface {
      * @param  bool $flag
      * @return StandardAutoloader
      */
-    public function setFallbackAutoloader(bool $flag) {
+    public function setFallbackAutoloader(bool $flag) : self {
         $this->options[self::ACT_AS_FALLBACK] = $flag;
         return $this;
     }
@@ -310,8 +323,8 @@ class Autoloader extends Configurable implements SplInterface {
             if($path == '.') {
                 continue;
             }
-            $file = $path . '/' . $filename;
-            if (is_readable($file)) {
+            $file = rtrim($path, '/') . '/' . $filename;
+            if(@is_readable($file)) {
                 return true;
             }
         }
