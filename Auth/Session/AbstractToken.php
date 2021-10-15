@@ -130,7 +130,7 @@ abstract class AbstractToken implements SessionInterface {
             if($jwt &&
                $jwt->hasClaim('jti')) {
                 $id = new Guid($jwt->getClaim('jti'));
-                $this->token = $tokenProvider->getToken($id, null);
+                $this->token = $tokenProvider->getToken($id);
             }
             if($this->token &&
                $this->token->hasClaim('sub')) { // Obtener usuario

@@ -73,7 +73,7 @@ class Auth extends Configurable implements RouterPluginInterface {
                 'base_path'             => 'cuenta',
                 'pages'		            => []],
             'session'	            => 'Kansas\Auth\Session\SessionDefault',
-            'users_provider'        => null];
+            'users_provider'        => 'Users'];
 	}
 
 	public function getVersion() : Version {

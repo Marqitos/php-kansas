@@ -29,7 +29,8 @@ class Hash {
     /**
      * Prefijo hexadecimal para hash BCRYPT
      */
-    const HEX_BCRYPT = '00db'; //sprintf('%04s', bin2hex(base64_decode(PASSWORD_BCRYPT)))
+    const HEX_BCRYPT        = '00db'; //sprintf('%04s', bin2hex(base64_decode(PASSWORD_BCRYPT)))
+    const PASSWORD_BCRYPT   = '2y';
 
     /**
      * Devuelve una cadena hash hexadecimal, usando encriptación con Blowfish.
@@ -72,7 +73,7 @@ class Hash {
         $salt 		= hex2bin(substr($hash, 2, 32) . 'e0');
         $passHash 	= hex2bin(substr($hash, 34));
         // comprobamos que equivale a la contraseña
-        $cryptHash 	= '$' . PASSWORD_BCRYPT .
+        $cryptHash 	= '$' . self::PASSWORD_BCRYPT .
                       '$' . sprintf('%02d', $cost) .
                       '$' . substr(strtr(base64_encode($salt), '+', '.'), 0, 22);
         $bcrypt 	= crypt($password, $cryptHash);
