@@ -88,6 +88,12 @@ class API extends AbstractZone implements RouterPluginInterface {
 		return $this->router;
 	}
 
+    public const ERROR_NO_AUTH = [
+        'code'      => 403,
+        'status'    => 'error',
+        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[403]
+    ];
+
     public const ERROR_AUTH_BEARER = [
         'code'      => 401,
         'status'    => 'error',
