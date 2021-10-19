@@ -229,6 +229,10 @@ class UploadedFile implements UploadedFileInterface {
         return $this->clientMediaType;
     }
 
+    public function getTmpFilename() : ?string {
+        return $this->file;
+    }
+
     /**
      * Write internal stream to given path
      *
