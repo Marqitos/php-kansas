@@ -12,16 +12,28 @@
 
 namespace Kansas\Db;
 
+use mysqli;
 use Kansas\Db\Adapter;
 use Kansas\Db\MysqliConnectionException;
 use Kansas\Db\MysqliException;
-use mysqli;
+use System\ArgumentOutOfRangeException;
 
+use function is_a;
+use function is_int;
+use function is_object;
+use function is_string;
+use function strval;
 use const MYSQLI_ASSOC;
 
 class MysqliAdapter extends Adapter {
 
     private $con;
+    public const TYPE_DATE = 'DATE';
+    public const TYPE_TIME = 'TIME';
+    public const TYPE_NOT_NULL = 'NOTNULL';
+    private const FORMAT_DATE = 'Y-m-d'; //YYYY-MM-DD
+    private const FORMAT_TIME = 'H:i'; //HH:MM
+    private const FORMAT_DATETIME = 'Y-m-d H:i'; //YYYY-MM-DD HH:MM
 
     public function __construct(string $hostname, string $username, string $password, string $database, string $charset = null) {
         $this->con = new mysqli($hostname, $username, $password, $database);
@@ -99,6 +111,40 @@ class MysqliAdapter extends Adapter {
      */
     public function escape(string $escapestr) : string {
         return $this->con->real_escape_string($escapestr);
+    }
+
+    /**
+     * Devuelve una cadena a partir de un objeto, para poder almacenarlo en la base de datos
+     * 
+     * @param mixed $object Objeto a verificar
+     * @param string $type (Opcional) Tipo de dato que se desea guardar
+     * @return string Cadena segura para la consulta
+     * @throws ArgumentOutOfRangeException Si el objeto no se puede procesar;
+     */
+    public function format($object, string $type = null) : string {
+        if($object === null) {
+            if($type == self::TYPE_NOT_NULL) {
+                return "''";
+            } else {
+                return 'NULL';
+            }
+        } elseif(is_a($object, 'DateTime')) {
+            if($type == self::TYPE_DATE) {
+                return "'" . $object->format(self::FORMAT_DATE) . "'"; 
+            } elseif ($type == self::TYPE_TIME) {
+                return "'" . $object->format(self::FORMAT_TIME) . "'";
+            } else {
+                return "'" . $object->format(self::FORMAT_DATETIME) . "'";
+            }
+        } elseif(is_int($object)) {
+            return strval($object);
+        } elseif(is_string($object)) {
+            return "'" . $this->con->real_escape_string($object) . "'";
+        } elseif(is_object($object)) {
+            return "'" . $this->con->real_escape_string($object->__toString()) . "'";
+        }
+        require_once 'System/ArgumentOutOfRangeException.php';
+        throw new ArgumentOutOfRangeException('object');
     }
 
 }
