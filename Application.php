@@ -25,10 +25,14 @@ use Kansas\View\Result\ViewResultInterface;
 
 use function Kansas\Exceptions\getErrorData as GetErrorData;
 use function Kansas\Request\getRequestType as GetRequestType;
+use function array_keys;
 use function array_merge;
+use function call_user_func;
+use function error_reporting;
+use function get_class;
 use function is_array;
 use function ucfirst;
-use function get_class;
+use const E_USER_ERROR;
 
 require_once 'System/Configurable.php';
 
@@ -58,13 +62,13 @@ class Application extends Configurable {
 	private $pluginsRouter;
 	private $pluginsDefault;
 
-	private $_routers;
+	private $routers;
 	
-	private $_view;
-	private $_title;
+	private $view;
+	private $title;
 	
 	// Eventos
-	private $_callbacks = [
+	private $callbacks = [
 		self::EVENT_PREINIT 	=> [],
 		self::EVENT_ROUTE   	=> [],
 		self::EVENT_RENDER  	=> [],
@@ -79,7 +83,7 @@ class Application extends Configurable {
 	protected static $instance;
 
 	public function __construct(array $options) {
-		$this->_routers = new SplPriorityQueue();
+		$this->routers = new SplPriorityQueue();
 		$this->registerEvent(self::EVENT_CHANGED, [$this, 'onOptionChanged']);
 		parent::__construct($options);
 	}
@@ -219,7 +223,7 @@ class Application extends Configurable {
 		if(!isset($this->providers[$providerName])) {
 			$provider = $environment->createProvider($providerName);
 			$this->providers[$providerName] = $provider;
-			foreach ($this->_callbacks[self::EVENT_C_PROVIDER] as $callback) {
+			foreach ($this->callbacks[self::EVENT_C_PROVIDER] as $callback) {
 				call_user_func($callback, $provider, $providerName);
 			}
 		}
@@ -229,7 +233,7 @@ class Application extends Configurable {
 	public function dispatch(array $params) : ViewResultInterface {
 		global $environment;
 		$request		= $environment->getRequest();
-		foreach ($this->_callbacks[self::EVENT_DISPATCH] as $callback) { // Dispatch event
+		foreach ($this->callbacks[self::EVENT_DISPATCH] as $callback) { // Dispatch event
 			$params 	= array_merge($params, call_user_func($callback, $request, $params));
 		}
 		$controllerName = isset($params['controller'])
@@ -249,11 +253,11 @@ class Application extends Configurable {
 		global $environment;
 		try {
 			$this->loadPlugins();
-			foreach ($this->_callbacks[self::EVENT_PREINIT] as $callback) { // PreInit event
+			foreach ($this->callbacks[self::EVENT_PREINIT] as $callback) { // PreInit event
 				call_user_func($callback);
 			}
 			$params 		= false;
-			foreach($this->_routers as $router) {
+			foreach($this->routers as $router) {
 				if($params 	= $router->match()) {
 					$params['router'] = get_class($router);
 					break;
@@ -262,7 +266,7 @@ class Application extends Configurable {
 			if($params) {
 				$params 	= array_merge($params, self::getDefaultParams());
 				$request	= $environment->getRequest();
-				foreach ($this->_callbacks[self::EVENT_ROUTE] as $callback) { // Route event
+				foreach ($this->callbacks[self::EVENT_ROUTE] as $callback) { // Route event
 					$params = array_merge($params, call_user_func($callback, $request, $params));
 				}
 				$result 	= $this->dispatch($params);
@@ -271,7 +275,7 @@ class Application extends Configurable {
 				require_once 'System/Net/WebException.php';
 				throw new WebException(404);
 			}
-			foreach ($this->_callbacks[self::EVENT_RENDER] as $callback) { // Render event
+			foreach ($this->callbacks[self::EVENT_RENDER] as $callback) { // Render event
 				call_user_func($callback, $result);
 			}
 			$result->executeResult();
@@ -296,8 +300,8 @@ class Application extends Configurable {
 	
 	/* Eventos */
 	public function registerCallback(string $hook, callable $callback) : void {
-		if(isset($this->_callbacks[$hook])) {
-			$this->_callbacks[$hook][] = $callback;
+		if(isset($this->callbacks[$hook])) {
+			$this->callbacks[$hook][] = $callback;
 		}
 	}
 	
@@ -308,7 +312,7 @@ class Application extends Configurable {
 	}
 
 	public function raiseMessage(array $message) {
-		foreach ($this->_callbacks[self::EVENT_ERROR] as $callback) {
+		foreach ($this->callbacks[self::EVENT_ERROR] as $callback) {
 			call_user_func($callback, $message);
 		}
 		$errorLevel = $message['errorLevel'] ?? E_USER_ERROR;
@@ -323,7 +327,7 @@ class Application extends Configurable {
 			require_once 'Kansas/Exceptions/getErrorData.php';
 			$message = GetErrorData($message);
 		}
-		foreach ($this->_callbacks[self::EVENT_LOG] as $callback) {
+		foreach ($this->callbacks[self::EVENT_LOG] as $callback) {
 			call_user_func($callback, $level, $message);
 		}
 	}
@@ -362,34 +366,34 @@ class Application extends Configurable {
 	
 	public function getView() {
 		global $environment;
-		if($this->_view == null) {
+		if($this->view == null) {
 			$viewClass = $this->options['view']['class'];
 			unset($this->options['view']['class']);
-			$this->_view = new $viewClass($this->options['view']);
-			if($this->_view->getCaching()) {
-				$this->_view->setCacheId($environment->getRequest()->getUri());
+			$this->view = new $viewClass($this->options['view']);
+			if($this->view->getCaching()) {
+				$this->view->setCacheId($environment->getRequest()->getUri());
 			}
-			foreach ($this->_callbacks[self::EVENT_C_VIEW] as $callback) {
-				call_user_func($callback, $this->_view);
+			foreach ($this->callbacks[self::EVENT_C_VIEW] as $callback) {
+				call_user_func($callback, $this->view);
 			}
 		}
-		return $this->_view;
+		return $this->view;
 	}
 	
 	public function createTitle() {
-		if($this->_title == NULL) {
+		if($this->title == NULL) {
 			$titleClass = (isset($this->options['title']['class']))
 				? $this->options['title']['class']
 				: 'Kansas\\TitleBuilder\\DefaultTitleBuilder';
 			unset($this->options['title']['class']);
-			$this->_title = new $titleClass($this->options['title']);
+			$this->title = new $titleClass($this->options['title']);
 		}
-		return $this->_title;
+		return $this->title;
 	}
 
 	/* Enrutamiento */
 	public function addRouter(RouterInterface $router, $priority = 0) : void {
-		$this->_routers->insert($router, $priority);
+		$this->routers->insert($router, $priority);
 	}
   
 }
