@@ -10,6 +10,7 @@
 
 namespace Kansas\Router;
 
+use Throwable;
 use System\NotSupportedException;
 use Kansas\Router;
 use Kansas\Plugin\API as APIPlugin;
@@ -61,26 +62,34 @@ class API extends Router implements RouterInterface {
 		if($dispatch) {
 			ignore_user_abort(true);
 			set_time_limit(0);
-			if(is_array($dispatch) &&
-			   isset($dispatch[APIPlugin::PARAM_FUNCTION])) {
-				$function = $dispatch[APIPlugin::PARAM_FUNCTION];
-				if(isset($dispatch[APIPlugin::PARAM_REQUIRE])) {
-					require_once $dispatch[APIPlugin::PARAM_REQUIRE];
-				}
-			} else {
-				$function = $dispatch;
-			}
-			if(!function_exists($function)) {
-				require_once str_replace('\\', DIRECTORY_SEPARATOR, $function) . '.php';
-			}
-			$result = call_user_func($function, $path, $method);
-			if(is_array($result)) {
-				return parent::getParams($result);
-			}
+			try {
+                if(is_array($dispatch) &&
+                isset($dispatch[APIPlugin::PARAM_FUNCTION])) {
+                    $function = $dispatch[APIPlugin::PARAM_FUNCTION];
+                    if(isset($dispatch[APIPlugin::PARAM_REQUIRE])) {
+                        require_once $dispatch[APIPlugin::PARAM_REQUIRE];
+                    }
+                } else {
+                    $function = $dispatch;
+                }
+                if(!function_exists($function)) {
+                    require_once str_replace('\\', DIRECTORY_SEPARATOR, $function) . '.php';
+                }
+                $result = call_user_func($function, $path, $method);
+            } catch(Throwable $ex) {
+                $result = APIPlugin::ERROR_INTERNAL_SERVER;
+            }
+            if(is_array($result)) {
+                return parent::getParams($result);
+            }
 		}
 	
 		foreach($this->callbacks as $callback) {
-			$result = call_user_func($callback, $path, $method);
+            try {
+                $result = call_user_func($callback, $path, $method);
+            } catch(Throwable $ex) {
+                $result = APIPlugin::ERROR_INTERNAL_SERVER;
+            }
 			if(is_array($result)) {
 				return parent::getParams($result);
 			}

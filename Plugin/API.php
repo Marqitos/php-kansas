@@ -10,9 +10,7 @@
 
 namespace Kansas\Plugin;
 
-use Psr\Http\Message\RequestMethodInterface;
 use System\Localization\Resources as SystemResources;
-use System\NotSupportedException;
 use System\Version;
 use Kansas\Plugin\AbstractZone;
 use Kansas\Router\API as RouterAPI;
@@ -37,20 +35,12 @@ class API extends AbstractZone implements RouterPluginInterface {
  
 	// Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
-        switch ($environment) {
-            case 'production':
-            case 'development':
-            case 'test':
-                return [
-                    'base_path' => 'api',
-                    'params'    => [
-                        'cors'      => '*'],
-                    'plugins'   => []
-                ];
-            default:
-                require_once 'System/NotSupportedException.php';
-                NotSupportedException::NotValidEnvironment($environment);
-        }
+        return [
+            'base_path' => 'api',
+            'params'    => [
+                'cors'      => '*'],
+            'plugins'   => []
+        ];
     }
 
     public function getVersion() : Version {
@@ -111,6 +101,12 @@ class API extends AbstractZone implements RouterPluginInterface {
         'code'      => 404,
         'status'    => 'error',
         'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[404],
+    ];
+
+    public const ERROR_INTERNAL_SERVER = [
+        'code'      => 500,
+        'status'    => 'error',
+        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[500],
     ];
 
 }
