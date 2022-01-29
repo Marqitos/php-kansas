@@ -28,6 +28,10 @@ use function sprintf;
 use function strtolower;
 use function array_keys;
 
+require_once 'Psr/Http/Message/ServerRequestInterface.php';
+require_once 'Psr/Http/Message/StreamInterface.php';
+require_once 'Psr/Http/Message/UriInterface.php';
+
 /**
  * Server-side HTTP request
  *
@@ -321,6 +325,7 @@ class ServerRequest implements ServerRequestInterface {
      */
     private function validateUploadedFiles(array $uploadedFiles)
     {
+        require_once 'Psr/Http/Message/UploadedFileInterface.php';
         foreach ($uploadedFiles as $file) {
             if (is_array($file)) {
                 $this->validateUploadedFiles($file);
