@@ -1,12 +1,16 @@
 <?php
 
+namespace Kansas\Auth;
+
 use Facebook\FacebookSession;
 use Facebook\FacebookRedirectLoginHelper;
 use Facebook\FacebookRequest;
 use Facebook\GraphUser;
+use Kansas\Auth\ServiceInterface;
 
-class Kansas_Auth_Facebook
-	implements Kansas_Auth_Adapter_Interface {
+require_once 'Kansas/Auth/ServiceInterface.php';
+
+class Facebook implements ServiceInterface {
 	
 	private $_fbSession;
 	
