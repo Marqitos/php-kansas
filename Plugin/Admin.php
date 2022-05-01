@@ -13,7 +13,6 @@ namespace Kansas\Plugin;
 use System\NotSupportedException;
 use System\Version;
 use Kansas\Plugin\AbstractZone;
-use Kansas\Plugin\Zone\ZoneInterface;
 use Kansas\Router\RouterInterface;
 
 use function System\String\startWith;
@@ -56,7 +55,7 @@ class Admin extends AbstractZone implements RouterInterface {
 		return $environment->getVersion();
 	}
 	
-	/// Miembros de Kansas_Router_Interface
+	/// Miembros de Kansas\Router\RouterInterface
 	public function match() {
 		echo 'test';
 		exit;

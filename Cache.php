@@ -33,7 +33,7 @@ abstract class Cache extends Configurable implements CacheInterface {
 		/**
 		 * Factory
 		 *
-		 * @param mixed  $backend         backend name (string) or Kansas_Cache_ object
+		 * @param mixed  $backend         Nombre del backend (string) o implementación de Kansas\Cache\CacheInterface
 		 * @param array  $backendOptions  associative array of options for the corresponding backend constructor
 		 * @param boolean $customBackendNaming if true, the backend argument is used as a complete class name ; if false, the backend argument is used as the end of "Zend_Cache_Backend_[...]" class name
 		 * @param boolean $autoload if true, there will no require_once for backend and frontend (useful only for custom backends/frontends)

@@ -35,7 +35,7 @@ abstract class Router extends Configurable implements RouterInterface {
 		];
 	}
 	
-	/* Miembros de Kansas_Router_Interface */
+	// Miembros de Kansas\Router\RouterInterface
 	public function getBasePath() {
 		return $this->options['base_path'];
 	}

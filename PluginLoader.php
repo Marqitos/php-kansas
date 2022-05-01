@@ -240,7 +240,7 @@ class PluginLoader {
      * class is not resolved
      * @return string|false Class name of loaded class; false if $throwExceptions
      * if false and no class found
-     * @throws Kansas_PluginLoader_NotFoundException if class not found
+     * @throws Kansas\Loader\NotFoundException if class not found
      */
     public function load(string $name, bool $throwExceptions = true) {
         require_once 'Kansas/Autoloader.php';
