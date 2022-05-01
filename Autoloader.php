@@ -247,15 +247,14 @@ class Autoloader extends Configurable implements SplInterface {
      * @return bool|string
      * @throws Exception\InvalidArgumentException
      */
-    protected function loadClass($class, $type) {
+    protected function loadClass(string $class, string $type) : bool {
         if (!in_array($type, [self::LOAD_NS, self::LOAD_PREFIX, self::ACT_AS_FALLBACK])) {
             require_once "System/ArgumentOutOfRangeException.php";
             throw new ArgumentOutOfRangeException('type');
         }
 
         // Fallback autoloading
-        if ($type === self::ACT_AS_FALLBACK) {
-            // create filename
+        if ($type === self::ACT_AS_FALLBACK) { // create filename
             $filename     = $this->transformClassNameToFilename($class, '');
             $resolvedName = stream_resolve_include_path($filename);
             if ($resolvedName !== false) {
