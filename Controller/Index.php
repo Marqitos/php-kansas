@@ -52,43 +52,6 @@ class Index	extends AbstractController {
 		self::$actions[$actionName] = $callback;
 	}
 
-	public function template(array $vars) : Template {
-		if(!isset($vars['template'])) {
-			require_once 'System/ArgumentNullException.php';
-			throw new ArgumentNullException('vars["template"]');
-		}
-		$template = $vars['template'];
-		unset($vars['template']);
-		return $this->createViewResult($template, $vars);
-	}
-	
-	public function redirection(array $vars) {
-		if(!isset($vars['gotoUrl'])) {
-			require_once 'System/ArgumentNullException.php';
-			throw new ArgumentNullException('vars["gotoUrl"]');
-		}
-		return Redirect::gotoUrl($vars['gotoUrl']);
-	}
-	
-	public function css(array $vars) {
-		require_once 'Kansas/View/Result/Css.php';
-		global $application;
-		$files = $vars['files'];
-		$cssResult = new Css($files);
-		if($backendCache = $application->hasPlugin('BackendCache')) {
-			require_once 'Kansas/View/Result/Content.php';
-			$cacheId = $cssResult->getCacheId();
-			if($backendCache->test($cacheId)) {
-				$content = $backendCache->load($cacheId);
-			} else {
-				$content = $cssResult->getResult(null);
-				$backendCache->save($content, $cacheId);
-			}
-			return new Content($content, 'text/css');
-		}
-		return $cssResult;
-	}
-	
 	public function file(array $vars) {
 		require_once 'Kansas/View/Result/File.php';
 		return new File($vars['file']);
