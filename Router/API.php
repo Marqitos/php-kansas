@@ -35,7 +35,7 @@ class API extends Router implements RouterInterface {
 				return [
 					'base_path'	=> 'api',
 					'params'	=> [
-						'cors'			=> '*',
+						'cors'			=> true,
 						'controller'	=> 'index',
 						'action'		=> 'API']];
 			default:

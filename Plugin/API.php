@@ -10,13 +10,11 @@
 
 namespace Kansas\Plugin;
 
-use System\Localization\Resources as SystemResources;
 use System\Configurable;
 use System\Version;
 use Kansas\Router\API as RouterAPI;
 use Kansas\Router\RouterInterface;
 
-require_once 'System/Localization/Resources.php';
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/RouterPluginInterface.php';
 
@@ -38,7 +36,7 @@ class Auth extends Configurable implements RouterPluginInterface {
         return [
             'base_path' => '',
             'params'    => [
-                'cors'      => '*'],
+                'cors'      => true],
             'plugins'   => []
         ];
     }
@@ -79,34 +77,35 @@ class Auth extends Configurable implements RouterPluginInterface {
 	}
 
     public const ERROR_NO_AUTH = [
-        'code'      => 403,
-        'status'    => 'error',
-        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[403]
+        'status'    => 403,
+        'success'   => false,
+        'data'      => []
     ];
 
     public const ERROR_AUTH_BEARER = [
-        'code'      => 401,
-        'status'    => 'error',
-        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[401],
-        'scheme'    => 'Bearer'
+        'status'    => 401,
+        'success'   => false,
+        'data'      => [
+            'scheme'    => 'Bearer'
+        ]
     ];
 
     public const ERROR_REQUEST = [
-        'code'      => 412,
-        'status'    => 'error',
-        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[412],
+        'status'    => 412,
+        'success'   => false,
+        'data'      => []
     ];
 
     public const ERROR_NOT_FOUND = [
-        'code'      => 404,
-        'status'    => 'error',
-        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[404],
+        'status'    => 404,
+        'success'   => false,
+        'data'      => []
     ];
 
     public const ERROR_INTERNAL_SERVER = [
-        'code'      => 500,
-        'status'    => 'error',
-        'message'   => SystemResources::WEB_EXCEPTION_MESSAGES[500],
+        'status'    => 500,
+        'success'   => false,
+        'data'      => []
     ];
 
 }

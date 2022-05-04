@@ -89,9 +89,10 @@ class Index	extends AbstractController {
 			$code = 200;
 		}
 		http_response_code($code);
-		if(isset($vars['cors']) &&
-		   $vars['cors'] !== false) {
-			header('Access-Control-Allow-Origin: ' . $vars['cors']);
+		if(isset($vars['cors']) && $vars['cors']) {
+			header('Access-Control-Allow-Origin: *');
+			header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+			header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization');
 		}
 
 		if(isset($vars['identity']) && isset($vars['identity']['id'])) {
