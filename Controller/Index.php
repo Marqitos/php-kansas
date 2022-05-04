@@ -19,7 +19,6 @@ use Kansas\View\Result\Css;
 use Kansas\View\Result\File;
 use Kansas\View\Result\Json;
 use Kansas\View\Result\Redirect;
-use Kansas\View\Result\Template;
 use Kansas\View\Result\ViewResultInterface;
 
 use function call_user_func;
@@ -30,7 +29,6 @@ use function is_callable;
 
 require_once 'Kansas/Controller/AbstractController.php';
 require_once 'Kansas/Localization/Resources.php';
-require_once 'Kansas/View/Result/Template.php';
 require_once 'Kansas/View/Result/ViewResultInterface.php';
 
 class Index	extends AbstractController {
@@ -70,23 +68,17 @@ class Index	extends AbstractController {
 		if(connection_aborted() == 1) {
 			die;
 		}
-		if(isset($vars['error'])) {
-			if(isset($vars['code'])) {
-				$code = $vars['code'];
-				unset($vars['code']);
-				if($code == 401 && 
-				   isset($vars['scheme'])) {
-					header('WWW-Authenticate: ' . $vars['scheme']);
-					unset($vars['scheme']);
-				}
-			} else {
-				$code = 500;
+		
+		if(isset($vars['status']) &&
+		   is_int($vars['status'])) {
+			$code = $vars['status'];
+			if($code == 401 && 
+				isset($vars['scheme'])) {
+				header('WWW-Authenticate: ' . $vars['scheme']);
+				unset($vars['scheme']);
 			}
-		} elseif(isset($vars['code'])) {
-			$code = $vars['code'];
-			unset($vars['code']);
 		} else {
-			$code = 200;
+			$code = 500;
 		}
 		http_response_code($code);
 		if(isset($vars['cors']) && $vars['cors']) {
