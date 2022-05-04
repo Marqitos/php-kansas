@@ -12,13 +12,14 @@ namespace Kansas\Plugin;
 
 use System\Configurable;
 use System\Version;
+use Kansas\Application;
 use Kansas\Router\API as RouterAPI;
 use Kansas\Router\RouterInterface;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/RouterPluginInterface.php';
 
-class Auth extends Configurable implements RouterPluginInterface {
+class API extends Configurable implements RouterPluginInterface {
     
     private $router;
 
@@ -27,8 +28,13 @@ class Auth extends Configurable implements RouterPluginInterface {
     const METHOD_ALL        = 'ALL';
 
     /// Constructor
-	public function __construct(array $options) {
+	public function __construct(array $options, $object = null) {
+        global $application;
         parent::__construct($options);
+        if($object === null) {
+            $object = $this;
+        }
+		$application->registerCallback(Application::EVENT_PREINIT, [$object, "appPreInit"]);
 	}
  
 	// Miembros de System\Configurable\ConfigurableInterface
@@ -37,7 +43,6 @@ class Auth extends Configurable implements RouterPluginInterface {
             'base_path' => '',
             'params'    => [
                 'cors'      => true],
-            'plugins'   => []
         ];
     }
 
@@ -46,14 +51,9 @@ class Auth extends Configurable implements RouterPluginInterface {
 		return $environment->getVersion();
 	}
 
-	public function setUp() : void { // añadir router
-        require_once 'Kansas/API/Core.php';
+	public function appPreInit() : void { // añadir router
         global $application;
-        $this->getRouter()->registerCallback('Kansas\API\core');
-        $application->setRouter($this->router);
-        foreach($this->options['plugins'] as $pluginName => $options) {
-            $application->setPlugin($pluginName, $options);
-        }
+        $application->setRouter($this->getRouter());
     }
   
     public function registerAPICallback(callable $callback) : void {

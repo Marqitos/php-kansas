@@ -258,7 +258,7 @@ class Autoloader extends Configurable implements SplInterface {
             $filename     = $this->transformClassNameToFilename($class, '');
             $resolvedName = stream_resolve_include_path($filename);
             if ($resolvedName !== false) {
-                return include $resolvedName;
+                return (bool) include $resolvedName;
             }
             return false;
         }

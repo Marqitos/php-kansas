@@ -28,17 +28,6 @@ abstract class AbstractDb {
 		$this->cache = $application->hasPlugin('BackendCache');
 	}
 	
-	public function isInstalledDb($tableName, &$tableColumns) {
-		// SHOW DATABASES
-		// SHOW COLUMNS FROM mytable
-	}
-	
-	public function installDb() {
-		var_dump($this->db);
-		//CREATE SCHEMA `mydb` DEFAULT CHARACTER SET utf8 ;
-		
-	}
-
 	/**
 	 * Devuelve int o null del valor indicado
 	 * 
