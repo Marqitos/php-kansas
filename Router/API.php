@@ -33,7 +33,7 @@ class API extends Router implements RouterInterface {
 			case 'development':
 			case 'test':
 				return [
-					'base_path'	=> 'api',
+					'base_path'	=> '',
 					'params'	=> [
 						'cors'			=> true,
 						'controller'	=> 'index',

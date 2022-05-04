@@ -35,7 +35,7 @@ use const E_USER_ERROR;
 
 require_once 'System/Configurable.php';
 
-class API extends Configurable {
+class Application extends Configurable {
     
     public const EVENT_PREINIT		= 'preinit';
     public const EVENT_ROUTE		= 'route';
@@ -117,8 +117,6 @@ class API extends Configurable {
             foreach($this->options['loader'] as $loaderName => $options) {
                 $environment->addLoaderPaths($loaderName, $options);
             }
-        } elseif($optionName == 'theme') {
-            $environment->setTheme($this->options['theme']);
         } elseif($optionName == 'language') {
             $environment->setLanguage($this->options['language']);
         }
@@ -195,8 +193,8 @@ class API extends Configurable {
         try {
             $plugin = $environment->createPlugin($pluginName, $options);
         } catch(Throwable $e) {
-            $this->raiseError($e);
             $plugin = false;
+            throw $e;
         }
         $this->plugins[$pluginName] = $plugin;
         if($plugin instanceof RouterPluginInterface) {
@@ -242,31 +240,27 @@ class API extends Configurable {
     
     public function run() : void {
         global $environment;
-        try {
-            $this->loadPlugins();
-            foreach ($this->callbacks[self::EVENT_PREINIT] as $callback) { // PreInit event
-                call_user_func($callback);
-            }
-            $params 	    = $this->router->match();
-            if($params) {
-                $params 	= array_merge($params, self::getDefaultParams());
-                $request	= $environment->getRequest();
-                foreach ($this->callbacks[self::EVENT_ROUTE] as $callback) { // Route event
-                    $params = array_merge($params, call_user_func($callback, $request, $params));
-                }
-                $result 	= $this->dispatch($params);
-            }
-            if(!isset($result)) {
-                require_once 'System/Net/WebException.php';
-                throw new WebException(404);
-            }
-            foreach ($this->callbacks[self::EVENT_RENDER] as $callback) { // Render event
-                call_user_func($callback, $result);
-            }
-            $result->executeResult();
-        } catch(Throwable $ex) {
-            $this->raiseError($ex);
+        $this->loadPlugins();
+        foreach ($this->callbacks[self::EVENT_PREINIT] as $callback) { // PreInit event
+            call_user_func($callback);
         }
+        $params 	    = $this->router->match();
+        if($params) {
+            $params 	= array_merge($params, self::getDefaultParams());
+            $request	= $environment->getRequest();
+            foreach ($this->callbacks[self::EVENT_ROUTE] as $callback) { // Route event
+                $params = array_merge($params, call_user_func($callback, $request, $params));
+            }
+            $result 	= $this->dispatch($params);
+        }
+        if(!isset($result)) {
+            require_once 'System/Net/WebException.php';
+            throw new WebException(404);
+        }
+        foreach ($this->callbacks[self::EVENT_RENDER] as $callback) { // Render event
+            call_user_func($callback, $result);
+        }
+        $result->executeResult();
     }
     
     /**
@@ -290,33 +284,6 @@ class API extends Configurable {
         }
     }
     
-    protected function raiseError(Throwable $exception) : void {
-        require_once 'Kansas/Exceptions/getErrorData.php';
-        $errData = GetErrorData($exception);
-        $this->raiseMessage($errData);
-    }
-
-    public function raiseMessage(array $message) {
-        foreach ($this->callbacks[self::EVENT_ERROR] as $callback) {
-            call_user_func($callback, $message);
-        }
-        $errorLevel = $message['errorLevel'] ?? E_USER_ERROR;
-        unset($message['errorLevel']);
-        if(error_reporting() & $errorLevel != 0) {
-            $this->raiseLog($errorLevel, $message);
-        } 
-    }
-
-    protected function raiseLog(int $level, $message) : void {
-        if($message instanceof Throwable) {
-            require_once 'Kansas/Exceptions/getErrorData.php';
-            $message = GetErrorData($message);
-        }
-        foreach ($this->callbacks[self::EVENT_LOG] as $callback) {
-            call_user_func($callback, $level, $message);
-        }
-    }
-
     public function getDb() : DbAdapter {
         require_once 'Kansas/Db/Adapter.php';
         if($this->db == NULL) {
