@@ -11,16 +11,16 @@
 namespace Kansas\Plugin;
 
 use System\Localization\Resources as SystemResources;
+use System\Configurable;
 use System\Version;
-use Kansas\Plugin\AbstractZone;
 use Kansas\Router\API as RouterAPI;
 use Kansas\Router\RouterInterface;
 
 require_once 'System/Localization/Resources.php';
-require_once 'Kansas/Plugin/AbstractZone.php';
+require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/RouterPluginInterface.php';
 
-class API extends AbstractZone implements RouterPluginInterface {
+class Auth extends Configurable implements RouterPluginInterface {
     
     private $router;
 
@@ -36,7 +36,7 @@ class API extends AbstractZone implements RouterPluginInterface {
 	// Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
         return [
-            'base_path' => 'api',
+            'base_path' => '',
             'params'    => [
                 'cors'      => '*'],
             'plugins'   => []
@@ -52,7 +52,7 @@ class API extends AbstractZone implements RouterPluginInterface {
         require_once 'Kansas/API/Core.php';
         global $application;
         $this->getRouter()->registerCallback('Kansas\API\core');
-        $application->addRouter($this->router);
+        $application->setRouter($this->router);
         foreach($this->options['plugins'] as $pluginName => $options) {
             $application->setPlugin($pluginName, $options);
         }
