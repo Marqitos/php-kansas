@@ -46,9 +46,19 @@ class API extends Configurable implements RouterPluginInterface {
         ];
     }
 
+    // Miembros de Kansas\Plugin\PluginInterface
     public function getVersion() : Version {
 		global $environment;
 		return $environment->getVersion();
+	}
+
+    // Miembros de Kansas\Router\RouterInterface
+	public function getRouter() : RouterInterface {
+		if($this->router == null) {
+			require_once 'Kansas/Router/API.php';
+			$this->router = new RouterAPI($this->options);
+		}
+		return $this->router;
 	}
 
 	public function appPreInit() : void { // añadir router
@@ -68,13 +78,6 @@ class API extends Configurable implements RouterPluginInterface {
         $this->paths[$method][$path] = $dispatch;
     }
 
-	public function getRouter() : RouterInterface {
-		if($this->router == null) {
-			require_once 'Kansas/Router/API.php';
-			$this->router = new RouterAPI($this->options);
-		}
-		return $this->router;
-	}
 
     public const ERROR_NO_AUTH = [
         'status'    => 403,

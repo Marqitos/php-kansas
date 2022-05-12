@@ -298,7 +298,7 @@ class PluginLoader {
      *
      * @param  string $file
      * @return void
-     * @throws System_IO_IOException if file is not writeable or path does not exist
+     * @throws IOException if file is not writeable or path does not exist
      */
     public static function setIncludeFileCache(string $file) : void {
         if (null === $file) {

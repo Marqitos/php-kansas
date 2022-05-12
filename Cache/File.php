@@ -364,7 +364,7 @@ class File extends Cache implements ExtendedCacheInterface {
     /**
      * Return the filling percentage of the backend storage
      *
-     * @throws System_IO_IOException
+     * @throws IOException
      * @return int integer between 0 and 100
      */
     public function getFillingPercentage() {
@@ -604,7 +604,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @param  string $dir  Directory to clean
      * @param  string $mode Clean mode
      * @param  array  $tags Array of tags
-     * @throws System_ArgumentOutOfRangeException
+     * @throws ArgumentOutOfRangeException
      * @return boolean True if no problem
      */
     protected function _clean($dir, $mode = CacheInterface::CLEANING_MODE_ALL, $tags = array()) {
@@ -792,7 +792,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * Make a control key with the string containing datas
      *
      * @param  string $data        Data
-     * @throws System_ArgumentOutOfRangeException
+     * @throws ArgumentOutOfRangeException
      * @return string Control key
      */
     protected function _hash($data) {
