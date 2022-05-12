@@ -76,7 +76,6 @@ class Environment {
     private $version;
     private $phpVersion;
     private $specialFolders;
-    private $theme          = ['shared'];
     private $fileClass      = 'System\IO\File\FileSystem';
     private $loaders        = [
         'controller'        => ['Kansas\\Controller\\'  => 'Kansas/Controller/'],
@@ -88,7 +87,7 @@ class Environment {
         self::SF_LIBS       => '/..',
         self::SF_LAYOUT     => '/../../layout',
         self::SF_TEMP       => '/../../../tmp',
-        self::SF_THEMES     => '/../../themes',
+//        self::SF_THEMES     => '/../../themes',
         self::SF_FILES      => '/../../../private'];
     private $tempFolderParts = [
         self::SF_CACHE      => '/cache',
@@ -158,30 +157,6 @@ class Environment {
         $this->request = $request;
     }
   
-    public function setTheme($theme, $add = false) : void {
-        if(is_string($theme)) {
-            $theme = [$theme];
-        }
-        if(!is_array($theme)) {
-            require_once 'System/ArgumentOutOfRangeException.php';
-            require_once 'Kansas/Localization/Resources.php';
-            throw new ArgumentOutOfRangeException('theme', Resources::ARGUMENT_OUT_OF_RANGE_EXCEPTION_ARRAY_STRING_EXPECTED_MESSAGE, $theme);
-        }
-        $this->theme = $add
-            ? array_merge($this->theme, $theme)
-            : $theme;
-    }
-  
-    public function getThemePaths() : Generator {
-        $themeFolder = $this->getSpecialFolder(self::SF_THEMES);
-        foreach($this->theme as $theme) {
-            $dir = realpath($themeFolder . DIRECTORY_SEPARATOR . $theme);
-            if($dir) {
-                yield $dir . DIRECTORY_SEPARATOR;
-            }
-        }
-    }
-
     public function getFile($filename, $specialFolder = 0) {
         if($specialFolder != 0) {
             $path = $this->getSpecialFolder($specialFolder);
@@ -190,36 +165,6 @@ class Environment {
         if(class_exists($this->fileClass)) {
             return new $this->fileClass($filename);
         }
-    }
-  
-    public static function log($level, $message) {
-        $time = self::$instance->getExecutionTime();
-        
-        if($message instanceof Throwable) {
-            $fileError = $message->getFile();
-            $lineError = $message->getLine();
-            $message = $message->getMessage();
-        } elseif(is_array($message)) {
-            $fileError = $message['file'];
-            $lineError = $message['line'];
-            $message = $message['message'];
-        }
-                
-        if(self::$instance->status != self::ENV_DEVELOPMENT && 
-           $level != E_USER_WARNING) {
-            return;
-        }
-        
-        $level =  ($level == E_USER_ERROR)   ? 'ERROR'
-               : (($level == E_USER_WARNING) ? 'WARNING'
-               : (($level == E_USER_NOTICE)  ? 'NOTICE'
-                                             : $level));
-        
-        echo "<!-- log [" . $level . "]\n" . $time . ' - ' . $message . "\n";
-        if(isset($lineError)) {
-            echo $lineError . ' -> ' . $fileError . "\n";
-        }
-        echo " -->\n";
     }
   
     public function getSpecialFolder(int $specialFolder) {
@@ -296,13 +241,6 @@ class Environment {
         }
         yield '/tmp';
         yield '\\temp';
-    }
-
-    public function getConfig($filename, array $iniOptions = []) {
-        // TODO: Intentar busqueda en cache
-        // Cargar desde archivo ini
-        require_once 'Kansas/Config.php';
-        return Config::ParseIni($filename, $iniOptions, $this->getStatus());
     }
 
     public function getVersion() : Version {
