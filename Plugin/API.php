@@ -82,7 +82,8 @@ class API extends Configurable implements RouterPluginInterface {
     public const ERROR_NO_AUTH = [
         'status'    => 403,
         'success'   => false,
-        'data'      => []
+        'data'      => [],
+        'message'   => 'No autorizado'
     ];
 
     public const ERROR_AUTH_BEARER = [
@@ -96,7 +97,8 @@ class API extends Configurable implements RouterPluginInterface {
     public const ERROR_REQUEST = [
         'status'    => 412,
         'success'   => false,
-        'data'      => []
+        'data'      => [],
+        'message'   => 'No se han enviado los parámetros validos'
     ];
 
     public const ERROR_NOT_FOUND = [
@@ -108,7 +110,8 @@ class API extends Configurable implements RouterPluginInterface {
     public const ERROR_INTERNAL_SERVER = [
         'status'    => 500,
         'success'   => false,
-        'data'      => []
+        'data'      => [],
+        'message'   => 'Error interno del servidor'
     ];
 
 }
