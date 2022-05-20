@@ -14,6 +14,7 @@ use Throwable;
 use System\NotSupportedException;
 use Kansas\Router;
 use Kansas\Plugin\API as APIPlugin;
+use Psr\Http\Message\RequestMethodInterface;
 use function call_user_func;
 use function is_array;
 use function trim;
@@ -35,7 +36,10 @@ class API extends Router implements RouterInterface {
 				return [
 					'base_path'	=> '',
 					'params'	=> [
-						'cors'			=> true,
+						'cors'			=> [
+                            'Origin'        => '*',
+                            'Headers'       => '*',
+                            'Credentials'   => true],
 						'controller'	=> 'index',
 						'action'		=> 'API']];
 			default:
@@ -46,7 +50,7 @@ class API extends Router implements RouterInterface {
 
     /// Miembros de Kansas_Router_Interface
 	public function match() : array {
-		global $environment;
+		global $application, $environment;
 		$path = static::getPath($this);
         if($path === false) {
 			return false;
@@ -54,6 +58,26 @@ class API extends Router implements RouterInterface {
 		$path 	= trim($path, '/');
 		$method = $environment->getRequest()->getMethod();
 		$dispatch	= false;
+		if($method == RequestMethodInterface::METHOD_OPTIONS) {
+			$methods = [];
+			foreach($this->paths as $routeMethod => $routePath) {
+				if(isset($routePath[$path])) {
+					if($routeMethod == APIPlugin::METHOD_ALL) {
+                        $methods = ['*'];
+					} else {
+						$methods[] = $routeMethod;
+					}
+				}
+			}
+            if(!empty($methods)) {
+                $methods = implode(', ', $methods);
+                header('Access-Control-Allow-Origin: *');
+                header('Access-Control-Allow-Methods: ' . $methods);
+                header('Access-Control-Allow-Headers: *');
+                header('Access-Control-Allow-Credentials: true');
+                die;
+            }
+		}
 		if(isset($this->paths[$method], $this->paths[$method][$path])) {
 			$dispatch = $this->paths[$method][$path];
 		} elseif(isset($this->paths[APIPlugin::METHOD_ALL], $this->paths[APIPlugin::METHOD_ALL][$path])) {
@@ -77,6 +101,9 @@ class API extends Router implements RouterInterface {
                 }
                 $result = call_user_func($function, $path, $method);
             } catch(Throwable $ex) {
+				if($debugger = $application->hasPlugin('Debug')) {
+					$debugger->error($ex);
+				}
                 $result = APIPlugin::ERROR_INTERNAL_SERVER;
             }
             if(is_array($result)) {
@@ -88,6 +115,9 @@ class API extends Router implements RouterInterface {
             try {
                 $result = call_user_func($callback, $path, $method);
             } catch(Throwable $ex) {
+				if($debugger = $application->hasPlugin('Debug')) {
+					$debugger->error($ex);
+				}
                 $result = APIPlugin::ERROR_INTERNAL_SERVER;
             }
 			if(is_array($result)) {
