@@ -12,6 +12,8 @@ namespace Kansas\Http;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use System\ArgumentException;
+use System\IO\FileUploadException;
+use System\IO\UploadedFileAlreadyMovedException;
 
 use function dirname;
 use function fclose;
@@ -35,6 +37,7 @@ use const UPLOAD_ERR_NO_FILE;
 use const UPLOAD_ERR_NO_TMP_DIR;
 use const UPLOAD_ERR_OK;
 use const UPLOAD_ERR_PARTIAL;
+
 
 require_once 'Psr/Http/Message/StreamInterface.php';
 require_once 'Psr/Http/Message/UploadedFileInterface.php';
@@ -130,13 +133,12 @@ class UploadedFile implements UploadedFileInterface {
 
     /**
      * {@inheritdoc}
-     * @throws Exception\UploadedFileAlreadyMovedException if the upload was not successful.
+     * @throws System\IO\FileUploadException if the upload was not successful.
      */
     public function getStream() : StreamInterface {
         if ($this->error !== UPLOAD_ERR_OK) {
-            throw Exception\UploadedFileErrorException::dueToStreamUploadError(
-                self::ERROR_MESSAGES[$this->error]
-            );
+            require_once 'System/IO/FileUploadException.php';
+            throw new System\IO\FileUploadException($this->error);
         }
 
         if ($this->moved) {
@@ -157,18 +159,20 @@ class UploadedFile implements UploadedFileInterface {
      * @see http://php.net/is_uploaded_file
      * @see http://php.net/move_uploaded_file
      * @param string $targetPath Path to which to move the uploaded file.
-     * @throws Exception\UploadedFileErrorException if the upload was not successful.
-     * @throws Exception\InvalidArgumentException if the $path specified is invalid.
-     * @throws Exception\UploadedFileErrorException on any error during the
+     * @throws System\IO\FileUploadException if the upload was not successful.
+     * @throws Exception\ArgumentException if the $path specified is invalid.
+     * @throws System\IO\UploadedFileAlreadyMovedException on any error during the
      *     move operation, or on the second or subsequent call to the method.
      */
     public function moveTo($targetPath) : void {
         if ($this->moved) {
-            throw new Exception\UploadedFileAlreadyMovedException('Cannot move file; already moved!');
+            require_once 'System/IO/UploadedFileAlreadyMovedException.php';
+            throw new UploadedFileAlreadyMovedException();
         }
 
         if ($this->error !== UPLOAD_ERR_OK) {
-            throw Exception\UploadedFileErrorException::dueToStreamUploadError(self::ERROR_MESSAGES[$this->error]);
+            require_once 'System/IO/FileUploadException.php';
+            throw new FileUploadException($this->error);
         }
 
         if (! is_string($targetPath) || empty($targetPath)) {
@@ -178,7 +182,8 @@ class UploadedFile implements UploadedFileInterface {
 
         $targetDirectory = dirname($targetPath);
         if (! is_dir($targetDirectory) || ! is_writable($targetDirectory)) {
-            throw Exception\UploadedFileErrorException::dueToUnwritableTarget($targetDirectory);
+            require_once 'System/IO/FileUploadException.php';
+            throw FileUploadException::dueToUnwritableTarget($targetDirectory);
         }
 
         $sapi = PHP_SAPI;
@@ -186,7 +191,8 @@ class UploadedFile implements UploadedFileInterface {
             $this->writeFile($targetPath);
         } else { // SAPI environment, with file present
             if (false === move_uploaded_file($this->file, $targetPath)) {
-                throw Exception\UploadedFileErrorException::forUnmovableFile();
+                require_once 'System/IO/FileUploadException.php';
+                throw FileUploadException::forUnmovableFile();
             }
         }
 
@@ -241,7 +247,8 @@ class UploadedFile implements UploadedFileInterface {
     private function writeFile(string $path) : void {
         $handle = fopen($path, 'wb+');
         if (false === $handle) {
-            throw Exception\UploadedFileErrorException::dueToUnwritablePath();
+            require_once 'System/IO/FileUploadException.php';
+            throw FileUploadException::dueToUnwritablePath();
         }
 
         $this->getStream();

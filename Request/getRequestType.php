@@ -20,7 +20,7 @@ function getRequestType(RequestInterface $request) : string {
         // Devuelve XMLHttpRequest en las peticiones mediante Javascript XMLHttpRequest
         // Funciona con Prototype/Script.aculo.us, y posiblemente otros.
         $requestedWith = $request->getHeader('X_REQUESTED_WITH');
-        if(array_search('XMLHttpRequest', $requestedWith)) {
+        if(isset($requestedWith['XMLHttpRequest'])) {
             return 'XMLHttpRequest';
         }
     } 

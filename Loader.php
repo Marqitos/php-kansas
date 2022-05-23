@@ -4,6 +4,25 @@
  */
 
 namespace Kansas;
+
+use System\ArgumentOutOfRangeException;
+use System\IO\FileNotFoundException;
+use function basename;
+use function call_user_func;
+use function class_exists;
+use function dirname;
+use function explode;
+use function interface_exists;
+use function is_array;
+use function is_string;
+use function ltrim;
+use function preg_match;
+use function rtrim;
+use function spl_autoload_register;
+use function str_replace;
+use function strripos;
+use function substr;
+
 /**
  * Static methods for loading classes and files.
  */
@@ -25,8 +44,9 @@ class Loader {
      * @return Kansas\Loader
      */
     public static function autoload() {
-        if (!isset(self::$instance))
+        if (!isset(self::$instance)) {
             self::$instance = new self();
+        }
         return self::$instance;
     }
 
@@ -35,11 +55,12 @@ class Loader {
      * Get or set the value of the "suppress not found warnings" flag
      *
      * @param  null|bool $flag
-     * @return bool|Zend_Loader_Autoloader Returns boolean if no argument is passed, object instance otherwise
+     * @return bool|Loader Returns boolean if no argument is passed, object instance otherwise
      */
     public function suppressNotFoundWarnings($flag = null) {
-        if (null === $flag)
+        if (null === $flag) {
             return $this->suppressNotFoundWarnings;
+        }
         $this->suppressNotFoundWarnings = (bool) $flag;
         return $this;
     }
@@ -62,14 +83,16 @@ class Loader {
      * @return bool
      */
     protected function _autoload($class) {
+        require_once 'System/ArgumentOutOfRangeException.php';
         $callback = [__CLASS__, 'loadClass'];
         try {
-            if ($this->suppressNotFoundWarnings())
+            if ($this->suppressNotFoundWarnings()) {
                 @call_user_func($callback, $class);
-            else
+            } else {
                 call_user_func($callback, $class);
+            }
             return $class;
-        } catch (Zend_Exception $e) {
+        } catch (ArgumentOutOfRangeException $e) {
             return false;
         }
     }
@@ -93,15 +116,19 @@ class Loader {
      * @param string|array $dirs - OPTIONAL Either a path or an array of paths
      *                             to search.
      * @return void
-     * @throws Zend_Exception
+     * @throws ArgumentOutOfRangeException
      */
     public static function loadClass($class, $dirs = null) {
-        if (class_exists($class, false) || interface_exists($class, false))
+        if (class_exists($class, false) || 
+            interface_exists($class, false)) {
             return;
+        }
 
-        if ((null !== $dirs) && !is_string($dirs) && !is_array($dirs)) {
+        if ($dirs !== null && 
+            !is_string($dirs) && 
+            !is_array($dirs)) {
             require_once 'System/ArgumentOutOfRangeException.php';
-            throw new System_ArgumentOutOfRangeException('dirs', 'Debe ser una cadena de texto o un array');
+            throw new ArgumentOutOfRangeException('dirs', 'Debe ser una cadena de texto o un array');
         }
 
         // Autodiscover the path from the class name
@@ -161,7 +188,7 @@ class Loader {
      *                       to search.
      * @param  boolean       $once
      * @return boolean
-     * @throws Zend_Exception
+     * @throws ArgumentOutOfRangeException
      */
     public static function loadFile($filename, $dirs = null, $once = false) {
         self::_securityCheck($filename);
@@ -170,9 +197,12 @@ class Loader {
          * Search in provided directories, as well as include_path
          */
         $incPath = false;
-        if (!empty($dirs) && (is_array($dirs) || is_string($dirs))) {
-            if (is_array($dirs))
+        if (!empty($dirs) &&
+            (is_array($dirs) || 
+             is_string($dirs))) {
+            if (is_array($dirs)) {
                 $dirs = implode(PATH_SEPARATOR, $dirs);
+            }
             $incPath = get_include_path();
             set_include_path($dirs . PATH_SEPARATOR . $incPath);
         }
@@ -183,18 +213,20 @@ class Loader {
         $reporting = error_reporting();
         error_reporting(0);
 
-        if ($once)
-          include_once($filename);
-        else
-          include($filename);
+        if ($once) {
+            include_once($filename);
+        } else {
+            include($filename);
+        }
 
         error_reporting($reporting);
 
         /**
          * If searching in directories, reset include_path
          */
-        if ($incPath)
+        if ($incPath) {
             set_include_path($incPath);
+        }
 
         return true;
     }
@@ -212,19 +244,24 @@ class Loader {
      * @param string   $filename
      * @return boolean
      */
-    public static function isReadable($filename) {
-        if (is_readable($filename)) // Return early if the filename is readable without needing the
-            return true;            // include_path
+    public static function isReadable(string $filename) {
+        if (is_readable($filename)) { // Return early if the filename is readable without needing the
+            return true;              // include_path
+        }
 
-        if (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN'
-            && preg_match('/^[a-z]:/i', $filename)  // If on windows, and path provided is clearly an absolute path,
-        ) return false;                             // return false immediately
+        if (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN' &&
+            preg_match('/^[a-z]:/i', $filename)) {  // If on windows, and path provided is clearly an absolute path,
+            return false;                           // return false immediately
+        }
 
         foreach (self::explodeIncludePath() as $path) {
-            if ($path == '.') continue;
+            if ($path == '.') {
+                continue;
+            }
             $file = $path . '/' . $filename;
-            if (is_readable($file))
+            if (is_readable($file)) {
                 return true;
+            }
         }
         return false;
     }
@@ -239,13 +276,15 @@ class Loader {
      * @return array
      */
     public static function explodeIncludePath($path = null) {
-        if (null === $path)
+        if (null === $path) {
             $path = get_include_path();
+        }
 
-        if (PATH_SEPARATOR == ':') // On *nix systems, include_paths which include paths with a stream schema cannot be safely explode'd, so we have to be a bit more intelligent in the approach.
+        if (PATH_SEPARATOR == ':') { // On *nix systems, include_paths which include paths with a stream schema cannot be safely explode'd, so we have to be a bit more intelligent in the approach.
             $paths = preg_split('#:(?!//)#', $path);
-        else
+        } else {
             $paths = explode(PATH_SEPARATOR, $path);
+        }
         return $paths;
     }
 
