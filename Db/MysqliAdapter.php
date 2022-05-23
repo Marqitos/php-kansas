@@ -31,9 +31,9 @@ class MysqliAdapter extends Adapter {
     public const TYPE_DATE = 'DATE';
     public const TYPE_TIME = 'TIME';
     public const TYPE_NOT_NULL = 'NOTNULL';
-    private const FORMAT_DATE = 'Y-m-d'; //YYYY-MM-DD
-    private const FORMAT_TIME = 'H:i'; //HH:MM
-    private const FORMAT_DATETIME = 'Y-m-d H:i'; //YYYY-MM-DD HH:MM
+    public const FORMAT_DATE = 'Y-m-d'; //YYYY-MM-DD
+    public const FORMAT_TIME = 'H:i'; //HH:MM
+    public const FORMAT_DATETIME = 'Y-m-d H:i'; //YYYY-MM-DD HH:MM
 
     public function __construct(string $hostname, string $username, string $password, string $database, string $charset = null) {
         $this->con = new mysqli($hostname, $username, $password, $database);
