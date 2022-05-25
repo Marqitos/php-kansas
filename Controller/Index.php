@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1 );
 /**
- * Controlador principal en una aplicación con patrón MVC
+ * Controlador principal en una API con patrón MVC
  *
  * @package Kansas
  * @author Marcos Porto
@@ -14,18 +14,19 @@ use System\NotImplementedException;
 use System\ArgumentNullException;
 use Kansas\Controller\AbstractController;
 use Kansas\Localization\Resources;
-use Kansas\View\Result\Content;
-use Kansas\View\Result\Css;
 use Kansas\View\Result\File;
 use Kansas\View\Result\Json;
 use Kansas\View\Result\Redirect;
 use Kansas\View\Result\ViewResultInterface;
 
 use function call_user_func;
+use function connection_aborted;
 use function get_class;
 use function header;
 use function http_response_code;
 use function is_callable;
+use function is_int;
+use function sprintf;
 
 require_once 'Kansas/Controller/AbstractController.php';
 require_once 'Kansas/Localization/Resources.php';
@@ -80,11 +81,15 @@ class Index	extends AbstractController {
 		} else {
 			$code = 500;
 		}
-		http_response_code($code);
-		if(isset($vars['cors']) && $vars['cors']) {
-			header('Access-Control-Allow-Origin: *');
-			header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-			header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Accept, Origin, Authorization');
+		if(isset($vars['cors'])) {
+			if(is_array($vars['cors'])) {
+				var_dump($vars['cors']);
+			} elseif($vars['cors']) {
+                header('Access-Control-Allow-Origin: *');
+                header('Access-Control-Allow-Methods: *');
+                header('Access-Control-Allow-Headers: *');
+                header('Access-Control-Allow-Credentials: true');
+            }
 		}
 
 		if(isset($vars['identity']) && isset($vars['identity']['id'])) {
