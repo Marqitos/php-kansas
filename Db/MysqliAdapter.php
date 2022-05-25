@@ -28,17 +28,18 @@ use const MYSQLI_ASSOC;
 class MysqliAdapter extends Adapter {
 
     private $con;
-    public const TYPE_DATE = 'DATE';
-    public const TYPE_TIME = 'TIME';
-    public const TYPE_NOT_NULL = 'NOTNULL';
-    public const FORMAT_DATE = 'Y-m-d'; //YYYY-MM-DD
-    public const FORMAT_TIME = 'H:i'; //HH:MM
-    public const FORMAT_DATETIME = 'Y-m-d H:i'; //YYYY-MM-DD HH:MM
+    const TYPE_DATE = 'DATE';
+    const TYPE_TIME = 'TIME';
+    const TYPE_NOT_NULL = 'NOTNULL';
+    const FORMAT_DATE = 'Y-m-d'; //YYYY-MM-DD
+    const FORMAT_TIME = 'H:i:s'; //HH:MM
+    const FORMAT_DATETIME = 'Y-m-d H:i:s'; //YYYY-MM-DD HH:MM
 
     public function __construct(string $hostname, string $username, string $password, string $database, string $charset = null) {
         $this->con = new mysqli($hostname, $username, $password, $database);
 
-        if($this->con == null || $this->con->connect_error) {
+        if($this->con == null || 
+           $this->con->connect_error) {
             include_once 'Kansas/Db/MysqliConnectionException.php';
             throw new MysqliConnectionException($this->con);
         }
