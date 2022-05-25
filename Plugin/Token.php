@@ -35,8 +35,8 @@ class Token extends Configurable implements PluginInterface {
     /// Constructor
     public function __construct(array $options) {
         parent::__construct($options);
-        global $application;
-        $application->registerCallback('preinit', [$this, 'appPreInit']);
+        //global $application;
+        //$application->registerCallback('preinit', [$this, 'appPreInit']);
     }
 
 	// Miembros de System\Configurable\ConfigurableInterface
@@ -57,16 +57,6 @@ class Token extends Configurable implements PluginInterface {
 
     public function appPreInit() {
         global $application;
-        /*
-        if($this->options['session'] === null &&
-           $application->hasPlugin('Auth') &&
-           is_a($application->getPlugin('Auth')->getOptions()['session'], 'Kansas\\Auth\\Session\\AbstractToken', true)) {
-            $this->options['session'] = true;
-        }
-        if($this->options['session']) {
-
-        }
-        */
         $application->addRouter($this->getRouter(), 100);
     }
     
@@ -82,6 +72,7 @@ class Token extends Configurable implements PluginInterface {
         $parser = new Parser();
         $token = $parser->parse($tokenString);
         if($this->options['secret']) { // Comprobar firma mediante Hmac/Sha256
+            // TODO: Comprobar la firma segun la especificación del token
             require_once 'Lcobucci/JWT/Signer/Hmac/Sha256.php';
             $signer = new HS256();
             if(!$token->verify($signer, $this->options['secret'])) {
@@ -125,9 +116,11 @@ class Token extends Configurable implements PluginInterface {
                 : $data['user'];
             unset($data['user']);
         }
-        $data = array_merge($tokenData, $data);
-        $token = $this->createToken($data);
-        $id = new Guid($token->getClaim('jti'));
+        $data       = array_merge($tokenData, $data);
+        $token      = $this->createToken($data);
+        $provider   = $application->getProvider('token');
+        $provider->saveToken($token);
+        $id         = new Guid($token->getClaim('jti'));
 
         if($this->options['secret']) { // Devuelve un enlace firmado
             $signature = explode('.', (string) $token)[2];
@@ -163,10 +156,11 @@ class Token extends Configurable implements PluginInterface {
         foreach($data as $claim => $value) {
             $builder->withClaim($claim, $value);
         }
+        /*
         if(!isset($data['jti'])) { // Establecemos Id
             $id = Guid::newGuid();
             $builder->identifiedBy($id->getHex());
-        }
+        }*/
         if($device === null) {
             $device = $this->options['device'];
         }
@@ -184,8 +178,6 @@ class Token extends Configurable implements PluginInterface {
         } else {
             $token = $builder->getToken();
         }
-        $provider = $application->getProvider('token');
-        $provider->saveToken($token);
         return $token;
     }
 
