@@ -29,23 +29,15 @@ class API extends Router implements RouterInterface {
 
 	// Miembros de System\Configurable\ConfigurableInterface
 	public function getDefaultOptions(string $environment) : array {
-		switch ($environment) {
-			case 'production':
-			case 'development':
-			case 'test':
-				return [
-					'base_path'	=> '',
-					'params'	=> [
-						'cors'			=> [
-                            'Origin'        => '*',
-                            'Headers'       => '*',
-                            'Credentials'   => true],
-						'controller'	=> 'index',
-						'action'		=> 'API']];
-			default:
-				require_once 'System/NotSupportedException.php';
-				NotSupportedException::NotValidEnvironment($environment);
-		}
+		return [
+			'base_path'	=> '',
+			'params'	=> [
+				'cors'			=> [
+					'origin'        => '*',
+					'headers'       => '*',
+					'credentials'   => true],
+				'controller'	=> 'index',
+				'action'		=> 'API']];
 	}
 
     /// Miembros de Kansas_Router_Interface
@@ -55,20 +47,10 @@ class API extends Router implements RouterInterface {
         if($path === false) {
 			return false;
 		}
-		$path 	= trim($path, '/');
-		$method = $environment->getRequest()->getMethod();
-		$dispatch	= false;
+		$path 		= trim($path, '/');
+		$method 	= $environment->getRequest()->getMethod();
 		if($method == RequestMethodInterface::METHOD_OPTIONS) {
-			$methods = [];
-			foreach($this->paths as $routeMethod => $routePath) {
-				if(isset($routePath[$path])) {
-					if($routeMethod == APIPlugin::METHOD_ALL) {
-                        $methods = ['*'];
-					} else {
-						$methods[] = $routeMethod;
-					}
-				}
-			}
+			$methods = $this->getMethods($path);
             if(!empty($methods)) {
                 $methods = implode(', ', $methods);
                 header('Access-Control-Allow-Origin: *');
@@ -78,6 +60,8 @@ class API extends Router implements RouterInterface {
                 die;
             }
 		}
+		$dispatch	= false;
+		$result		= false;
 		if(isset($this->paths[$method], $this->paths[$method][$path])) {
 			$dispatch = $this->paths[$method][$path];
 		} elseif(isset($this->paths[APIPlugin::METHOD_ALL], $this->paths[APIPlugin::METHOD_ALL][$path])) {
@@ -106,26 +90,29 @@ class API extends Router implements RouterInterface {
 				}
                 $result = APIPlugin::ERROR_INTERNAL_SERVER;
             }
-            if(is_array($result)) {
-                return parent::getParams($result);
-            }
 		}
-	
-		foreach($this->callbacks as $callback) {
-            try {
-                $result = call_user_func($callback, $path, $method);
-            } catch(Throwable $ex) {
-				if($debugger = $application->hasPlugin('Debug')) {
-					$debugger->error($ex);
+
+		if(!$result) {
+			foreach($this->callbacks as $callback) {
+				try {
+					$result = call_user_func($callback, $path, $method);
+				} catch(Throwable $ex) {
+					if($debugger = $application->hasPlugin('Debug')) {
+						$debugger->error($ex);
+					}
+					$result = APIPlugin::ERROR_INTERNAL_SERVER;
 				}
-                $result = APIPlugin::ERROR_INTERNAL_SERVER;
-            }
-			if(is_array($result)) {
-				return parent::getParams($result);
 			}
 		}
 
-		return parent::getParams(APIPlugin::ERROR_NOT_FOUND);
+		if(!$result) {
+			$result = APIPlugin::ERROR_NOT_FOUND;
+		} elseif(is_array($this->options['params']['cors'])) {
+			$methods = implode(', ', $this->getMethods($path));
+			$this->options['params']['cors']['methods'] = $methods;
+		}
+
+		return parent::getParams($result);
 	}
 
 	public function registerCallback(callable $callback) : void {
@@ -138,5 +125,19 @@ class API extends Router implements RouterInterface {
         }
         $this->paths[$method][$path] = $dispatch;
     }
+
+	protected function getMethods(string $path) : array {
+		$methods = [];
+		foreach($this->paths as $routeMethod => $routePath) {
+			if(isset($routePath[$path])) {
+				if($routeMethod == APIPlugin::METHOD_ALL) {
+					$methods = ['*'];
+				} else {
+					$methods[] = $routeMethod;
+				}
+			}
+		}
+		return $methods;
+	}
 
 }
