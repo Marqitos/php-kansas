@@ -83,7 +83,19 @@ class Index	extends AbstractController {
 		}
 		if(isset($vars['cors'])) {
 			if(is_array($vars['cors'])) {
-				var_dump($vars['cors']);
+                if(isset($vars['cors']['origin'])) {
+                    header('Access-Control-Allow-Origin: ' . $vars['cors']['origin']);
+                }
+                if(isset($vars['cors']['methods'])) {
+                    header('Access-Control-Allow-Methods: ' . $vars['cors']['methods']);
+                }
+                if(isset($vars['cors']['headers'])) {
+                    header('Access-Control-Allow-Headers: ' . $vars['cors']['headers']);
+                }
+                if(isset($vars['cors']['credentials']) &&
+                   $vars['cors']['credentials']) {
+                    header('Access-Control-Allow-Credentials: true');
+                }
 			} elseif($vars['cors']) {
                 header('Access-Control-Allow-Origin: *');
                 header('Access-Control-Allow-Methods: *');

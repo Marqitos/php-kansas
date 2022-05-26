@@ -42,8 +42,10 @@ class API extends Configurable implements RouterPluginInterface {
         return [
             'base_path' => '',
             'params'    => [
-                'cors'      => true],
-        ];
+                'cors'			=> [
+                    'origin'        => '*',
+                    'headers'       => '*',
+                    'credentials'   => true]]];
     }
 
     // Miembros de Kansas\Plugin\PluginInterface
