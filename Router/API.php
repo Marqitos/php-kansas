@@ -53,6 +53,7 @@ class API extends Router implements RouterInterface {
 			$methods = $this->getMethods($path);
             if(!empty($methods)) {
                 $methods = implode(', ', $methods);
+				header('Cache-Control: no-cache');
                 header('Access-Control-Allow-Origin: *');
                 header('Access-Control-Allow-Methods: ' . $methods);
                 header('Access-Control-Allow-Headers: *');
@@ -96,6 +97,20 @@ class API extends Router implements RouterInterface {
 			foreach($this->callbacks as $callback) {
 				try {
 					$result = call_user_func($callback, $path, $method);
+					// Establecemos un cache predeterminado según el metodo de llamada
+					switch($method) {
+						case RequestMethodInterface::METHOD_GET:
+						case RequestMethodInterface::METHOD_HEAD:
+							header('Cache-Control: must-revalidate');
+							break;
+						case RequestMethodInterface::METHOD_POST:
+						case RequestMethodInterface::METHOD_PUT:
+						case RequestMethodInterface::METHOD_DELETE:
+						case RequestMethodInterface::METHOD_PATCH:
+						case RequestMethodInterface::METHOD_OPTIONS:
+							header('Cache-Control: no-cache');
+							break;
+					}
 				} catch(Throwable $ex) {
 					if($debugger = $application->hasPlugin('Debug')) {
 						$debugger->error($ex);
