@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1 );
+<?php declare(strict_types = 1);
 /**
  * Controlador principal en una API con patrón MVC
  *
@@ -23,7 +23,6 @@ use function call_user_func;
 use function connection_aborted;
 use function get_class;
 use function header;
-use function http_response_code;
 use function is_callable;
 use function is_int;
 use function sprintf;
@@ -53,7 +52,7 @@ class Index	extends AbstractController {
 
 	public function file(array $vars) {
 		require_once 'Kansas/View/Result/File.php';
-		return new File($vars['file']);
+		return new File($vars['file'], $vars);
 	}
   
 	public function clearCache(array $vars) {

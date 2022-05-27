@@ -13,17 +13,17 @@ namespace Kansas\View\Result;
 use Kansas\View\Result\ViewResultAbstract;
 use function basename;
 use function header;
-use function is_string;
 
 require_once 'Kansas/View/Result/ViewResultAbstract.php';
 
 abstract class FileAbstract extends ViewResultAbstract {
 		
 	protected $download = false;
+    protected $size		= false;
 		
 	protected function sendHeaders($noCache = false) {
-		parent::sendHeaders($noCache);
-		if($this->download) {
+        $result = parent::sendHeaders($noCache);
+		if($this->download) { // Si se quiere indicar al navegador que debe guardar el archivo
 			//$basename = basename($this->download);
 			//if(mb_check_encoding($basename, ))
 			header('Content-Disposition: attachment; filename="' . basename($this->download) . '"');
@@ -31,6 +31,11 @@ abstract class FileAbstract extends ViewResultAbstract {
 		} else {
 			header('Content-Disposition: inline');
 		}
+        if($this->size !== false &&
+            $result) {
+            header('Content-Length: ' . $this->size);
+        }
+        return $result;
 	}
 
 }
