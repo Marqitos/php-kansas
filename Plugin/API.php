@@ -21,7 +21,7 @@ require_once 'Kansas/Plugin/RouterPluginInterface.php';
 
 class API extends Configurable implements RouterPluginInterface {
     
-    private $router;
+    protected $router;
 
     const PARAM_REQUIRE     = 'require';
     const PARAM_FUNCTION    = 'function';
@@ -106,7 +106,8 @@ class API extends Configurable implements RouterPluginInterface {
     public const ERROR_NOT_FOUND = [
         'status'    => 404,
         'success'   => false,
-        'data'      => []
+        'data'      => [],
+        'message'   => 'El documento no ha sido encontrado'
     ];
 
     public const ERROR_INTERNAL_SERVER = [
