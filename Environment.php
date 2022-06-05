@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1 );
+<?php declare(strict_types = 1);
 /**
  * Proporciona información relacionada con las carpetas, tiempo de ejecución, la petición actual e idiomas
  *
@@ -87,7 +87,6 @@ class Environment {
         self::SF_LIBS       => '/..',
         self::SF_LAYOUT     => '/../../layout',
         self::SF_TEMP       => '/../../../tmp',
-//        self::SF_THEMES     => '/../../themes',
         self::SF_FILES      => '/../../../private'];
     private $tempFolderParts = [
         self::SF_CACHE      => '/cache',
@@ -107,7 +106,7 @@ class Environment {
                 unset($this->specialFolders[$key]);
             }
         }
-        $this->version = new Version('0.4');
+        $this->version = new Version('0.5');
     }
   
     public static function getInstance(string $status = null, array $specialFolders = []) : self {
