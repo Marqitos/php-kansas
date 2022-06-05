@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1 );
+<?php declare(strict_types = 1);
 /**
  * Router que controla las llamadas a la API
  *
@@ -10,9 +10,12 @@
 
 namespace Kansas\Router;
 
+use LogicException;
 use Throwable;
 use System\NotSupportedException;
+use Kansas\API\APIExceptionInterface;
 use Kansas\Router;
+use Kansas\Localization\Resources;
 use Kansas\Plugin\API as APIPlugin;
 use Psr\Http\Message\RequestMethodInterface;
 use function call_user_func;
@@ -49,6 +52,7 @@ class API extends Router implements RouterInterface {
 		}
 		$path 		= trim($path, '/');
 		$method 	= $environment->getRequest()->getMethod();
+		// Gestionamos el metodo OPTIONS
 		if($method == RequestMethodInterface::METHOD_OPTIONS) {
 			$methods = $this->getMethods($path);
             if(!empty($methods)) {
@@ -61,6 +65,8 @@ class API extends Router implements RouterInterface {
                 die;
             }
 		}
+		// Gestionamos el resto de metodos
+		require_once 'Kansas/API/APIExceptionInterface.php';
 		$dispatch	= false;
 		$result		= false;
 		if(isset($this->paths[$method], $this->paths[$method][$path])) {
@@ -85,15 +91,18 @@ class API extends Router implements RouterInterface {
                     require_once str_replace('\\', DIRECTORY_SEPARATOR, $function) . '.php';
                 }
                 $result = call_user_func($function, $path, $method);
+            } catch(APIExceptionInterface $ex) {
+                $result = $ex->getAPIResult();
             } catch(Throwable $ex) {
-				if($debugger = $application->hasPlugin('Debug')) {
+                // TODO: Cambiar por gestion de logs
+                if($debugger = $application->hasPlugin('Debug')) {
 					$debugger->error($ex);
 				}
                 $result = APIPlugin::ERROR_INTERNAL_SERVER;
             }
 		}
 
-		if(!$result) {
+        if(!$result) { // Gestionamos callbacks
 			foreach($this->callbacks as $callback) {
 				try {
 					$result = call_user_func($callback, $path, $method);
@@ -107,11 +116,13 @@ class API extends Router implements RouterInterface {
 						case RequestMethodInterface::METHOD_PUT:
 						case RequestMethodInterface::METHOD_DELETE:
 						case RequestMethodInterface::METHOD_PATCH:
-						case RequestMethodInterface::METHOD_OPTIONS:
 							header('Cache-Control: no-cache');
 							break;
 					}
-				} catch(Throwable $ex) {
+                } catch(APIExceptionInterface $ex) {
+                    $result = $ex->getAPIResult();
+                } catch(Throwable $ex) {
+					// TODO: Cambiar por gestion de logs
 					if($debugger = $application->hasPlugin('Debug')) {
 						$debugger->error($ex);
 					}
@@ -120,9 +131,9 @@ class API extends Router implements RouterInterface {
 			}
 		}
 
-		if(!$result) {
+        if(!$result) { // No se ha encontrado el documento
 			$result = APIPlugin::ERROR_NOT_FOUND;
-		} elseif(is_array($this->options['params']['cors'])) {
+        } elseif(is_array($this->options['params']['cors'])) { // Gestionamos CORS
 			$methods = implode(', ', $this->getMethods($path));
 			$this->options['params']['cors']['methods'] = $methods;
 		}
@@ -135,6 +146,10 @@ class API extends Router implements RouterInterface {
 	}
 
 	public function registerPath(string $path, $dispatch, string $method = APIPlugin::METHOD_ALL) {
+		if($method == RequestMethodInterface::METHOD_OPTIONS) {
+            require_once 'Kansas/Localization/Resources.php';
+			throw new LogicException(Resources::API_OPTIONS_METHOD_RESERVED);
+		}
         if(!isset($this->paths[$method])) {
             $this->paths[$method] = [];
         }
