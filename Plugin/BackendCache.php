@@ -39,7 +39,6 @@ class BackendCache extends Configurable implements PluginInterface {
             $this->options['cache_options']
         );
 
-        $application->registerCallback('preinit', [$this, 'appPreInit']);
         if($this->options['log'] && $this->caches['.'] instanceof CacheInterface) { // TODO: Separar registro de errores
             $application->set('log', [$this, 'log']);
         }
@@ -104,20 +103,6 @@ class BackendCache extends Configurable implements PluginInterface {
         return $this->caches['.']->getIdsMatchingTags($tags);
     }
     
-    /// Eventos de la aplicación
-    public function appPreInit() {
-        global $application;
-        $zones = $application->hasPlugin('zones');
-        require_once 'Kansas/Plugin/Admin.php';
-        if($zones && $zones->getZone() instanceof AdminPlugin) {
-            $admin = $zones->getZone();
-            $admin->registerMenuCallbacks([$this, "adminMenu"]);         
-            if($this->options['log']) {
-                $admin->registerAlertsCallbacks([$this, "adminAlerts"]);
-            }
-        }
-    }
-
     /**
      * Devuelve un id para identificar la llamada a una función con unos parámetros específicos
      * 
@@ -164,52 +149,6 @@ class BackendCache extends Configurable implements PluginInterface {
         $this->caches['.']->save($data, $key, $tags);
     }
 
-    /// Eventos de Kansas_Module_Admin
-    public function adminAlerts() {
-        $errors = $this->caches['.']->getIdsMatchingTags(['error']);
-        return [
-        'errores'         => [
-            'title'         => 'Errores',
-            'text'          => count($errors) . ' registros',
-            'icon'          => 'fa-exclamation-triangle',
-            'isDisabled'    => count($errors) == 0,
-            'dispatch'      => [
-            'controller'  => 'error',
-            'action'      => 'adminError'],
-            'match'         => [$this, 'errorMatch']]];    
-    }
-  
-    public function adminMenu() {
-        // TODO: Comprobar permisos
-        return [
-        'cache'           => [
-            'title'           => 'Cache',
-            'icon'            => 'fa-line-chart',
-            'dispatch'        => [
-            'controller'    => 'cache',
-            'action'        => 'admin']]];
-    }
-  
-    public function errorMatch($path) {
-        $path = substr($path, 8);
-        // 32
-        if($this->caches['.']->test('error-' . $path)) {
-            return [
-                'controller'  => 'error',
-                'action'      => 'adminErrorDetail',
-                'error'       => unserialize($this->caches['.']->load('error-' . $path))
-            ];
-        }
-        if($path == 'clear') {
-            return [
-                'controller'  => 'error',
-                'action'      => 'adminErrorClear'
-            ];
-        }
-        return FALSE;
-    }
- 
-  
   public function log($level, $message) {
         global $environment;
         $time = microtime();
