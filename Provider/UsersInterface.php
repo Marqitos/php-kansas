@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1 );
+<?php declare(strict_types = 1);
 /**
  * Representa un proveedor para acceso a datos de usuarios
  *

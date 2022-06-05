@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1 );
+<?php declare(strict_types = 1);
 /**
  * Plugin que representa la API de una aplicación web
  *
