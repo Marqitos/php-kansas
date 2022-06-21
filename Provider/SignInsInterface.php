@@ -18,5 +18,5 @@ interface SignInsInterface {
 	 * @param array $trackData Datos del dispositivo que realiza la petición
 	 * @param bool $login Resultado del inicio de sesión  
 	 */
-	public function registerSignIn(array &$user, array $trackData, $login);
+	public function registerSignIn(array &$user, array $trackData, bool $login);
 }
