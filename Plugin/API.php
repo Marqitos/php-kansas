@@ -72,12 +72,8 @@ class API extends Configurable implements RouterPluginInterface {
         $this->getRouter()->registerCallback($callback);
     }
 
-    public function registerPath(string $path, $dispatch, string $method = self::METHOD_ALL) {
+    public function registerPath($path, $dispatch, string $method = self::METHOD_ALL) {
         $this->getRouter()->registerPath($path, $dispatch, $method);
-        if(!isset($this->paths[$method])) {
-            $this->paths[$method] = [];
-        }
-        $this->paths[$method][$path] = $dispatch;
     }
 
 
