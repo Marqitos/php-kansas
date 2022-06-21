@@ -313,7 +313,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return array array of stored cache ids (string)
      */
     public function getIds() {
-        return $this->_get($this->getCacheDir(), 'ids', array());
+        return $this->_get($this->getCacheDir(), 'ids', []);
     }
 
     /**
@@ -322,7 +322,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return array array of stored tags (string)
      */
     public function getTags() {
-        return $this->_get($this->getCacheDir(), 'tags', array());
+        return $this->_get($this->getCacheDir(), 'tags', []);
     }
 
     /**
@@ -333,7 +333,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @param array $tags array of tags
      * @return array array of matching cache ids (string)
      */
-    public function getIdsMatchingTags(array $tags = array()) {
+    public function getIdsMatchingTags(array $tags = []) {
         return $this->_get($this->getCacheDir(), 'matching', $tags);
     }
 
@@ -345,7 +345,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @param array $tags array of tags
      * @return array array of not matching cache ids (string)
      */
-    public function getIdsNotMatchingTags(array $tags = array()) {
+    public function getIdsNotMatchingTags(array $tags = []) {
         return $this->_get($this->getCacheDir(), 'notMatching', $tags);
     }
 
@@ -357,7 +357,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @param array $tags array of tags
      * @return array array of any matching cache ids (string)
      */
-    public function getIdsMatchingAnyTags(array $tags = array()) {
+    public function getIdsMatchingAnyTags(array $tags = []) {
         return $this->_get($this->getCacheDir(), 'matchingAny', $tags);
     }
 
@@ -607,12 +607,17 @@ class File extends Cache implements ExtendedCacheInterface {
      * @throws ArgumentOutOfRangeException
      * @return boolean True if no problem
      */
-    protected function _clean($dir, $mode = CacheInterface::CLEANING_MODE_ALL, $tags = array()) {
+    protected function _clean($dir, $mode = CacheInterface::CLEANING_MODE_ALL, $tags = []) {
+        global $application;
+        if($logger = $application->hasPlugin('Logger')) {
+            $message = "Eliminando cache ($mode): " . implode(', ', $tags);
+            $logger->debug($message);
+        }
         if (!is_dir($dir)) {
             return false;
         }
         $result = true;
-        $glob = glob($dir . $this->getFileNamePrefix() . '--*');
+        $glob = glob($dir . $this->getFileNamePrefix() . '*');
         if ($glob === false) { // On some systems it is impossible to distinguish between empty match and an error.
             return true;
         }
@@ -625,7 +630,7 @@ class File extends Cache implements ExtendedCacheInterface {
                 $id = $this->_fileNameToId($fileName);
                 $metadatas = $this->_getMetadatas($id);
                 if ($metadatas === FALSE) {
-                    $metadatas = array('expire' => 1, 'tags' => array());
+                    $metadatas = array('expire' => 1, 'tags' => []);
                 }
                 switch ($mode) {
                     case CacheInterface::CLEANING_MODE_ALL:
@@ -697,7 +702,7 @@ class File extends Cache implements ExtendedCacheInterface {
         if (!is_dir($dir)) {
             return false;
         }
-        $glob = glob($dir . $this->getFileNamePrefix() . '--*');
+        $glob = glob($dir . $this->getFileNamePrefix() . '*.metadatas');
         if ($glob === false) { // On some systems it is impossible to distinguish between empty match and an error.
             return [];
         }
@@ -842,9 +847,9 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return string Complete directory path
      */
     protected function getPath($id, $parts = false) {
-        $partsArray = array();
+        $partsArray = [];
         $root = $this->getCacheDir();
-        if ($this->options['hashed_directory_level']>0) {
+        if ($this->options['hashed_directory_level'] > 0) {
             $hash = hash('adler32', $id);
             for ($i=0 ; $i < $this->options['hashed_directory_level'] ; $i++) {
                 $root = $root . $this->getFileNamePrefix() . '--' . substr($hash, 0, $i + 1) . DIRECTORY_SEPARATOR;
@@ -903,7 +908,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return string Cache id
      */
     protected function _fileNameToId($fileName) {
-        return preg_replace('~^' . $this->getFileNamePrefix() . '---(.*)$~', '$1', $fileName);
+        return preg_replace('~^' . $this->getFileNamePrefix() . '-(.*)$~', '$1', $fileName);
     }
 
 }
