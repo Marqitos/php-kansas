@@ -9,6 +9,7 @@
  */
 
 namespace Kansas\Provider;
+use function boolval;
 use function floatval;
 use function intval;
 
@@ -28,6 +29,18 @@ abstract class AbstractDb {
 		$this->cache = $application->hasPlugin('BackendCache');
 	}
 	
+	/**
+	 * Devuelve booleano o null del valor indicado
+	 * 
+	 * @param mixed valor a analizar
+	 * @return bool|null numero entero en caso de que no sea null, y se pueda evaluar como tal
+	 */
+    public static function boolOrNull($value) : ?bool {
+        return $value == null
+            ? null
+            : boolval($value);
+    }
+
 	/**
 	 * Devuelve int o null del valor indicado
 	 * 
