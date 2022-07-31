@@ -27,7 +27,7 @@ class APIException extends LogicException implements APIExceptionInterface {
      * @return integer Código HTTP
      */
     protected function getHTTPStatusCode() : int {
-        return 412;
+        return 500;
     }
 
     // Miembros de APIExceptionInterface
