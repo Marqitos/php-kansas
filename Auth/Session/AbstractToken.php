@@ -141,7 +141,7 @@ abstract class AbstractToken implements SessionInterface {
                 $this->tryParseUser($this->token->getClaim('sub'), $userId);
                 $usersProvider = $application->getProvider('Users');
                 $userRow = $usersProvider->getById($userId, $locale['lang'], $locale['country']);
-                if($userRow && $userRow['isEnabled']) {
+                if($userRow) {
                     $this->user = $userRow;
                 }
             }
