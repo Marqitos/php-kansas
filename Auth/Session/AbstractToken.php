@@ -125,12 +125,15 @@ abstract class AbstractToken implements SessionInterface {
                 $domain = $tokenPlugin->getSessionDomain();
             }
             $tokenPlugin    = $application->getPlugin('token');
-            $tokenProvider  = $application->getProvider('token');
             $jwt            = $tokenPlugin->parse($tokenString);
-            if($jwt &&
-               $jwt->hasClaim('jti')) {
-                $id = new Guid($jwt->getClaim('jti'));
-                $this->token = $tokenProvider->getToken($id);
+            if($jwt) {
+                if($jwt->hasClaim('jti')) {
+                    $tokenProvider  = $application->getProvider('token');
+                    $id = new Guid($jwt->getClaim('jti'));
+                    $this->token = $tokenProvider->getToken($id);
+                }  else {
+                    $this->token = $jwt;
+                }
             }
             if($this->token &&
                $this->token->hasClaim('sub')) { // Obtener usuario
@@ -151,7 +154,9 @@ abstract class AbstractToken implements SessionInterface {
                     $this->token = $tokenPlugin->updateToken($this->token, [
                         'exp' => $lifetime
                     ]);
-                    $tokenProvider->saveToken($this->token);
+                    if($this->token->hasClaim('jti')) {
+                        $tokenProvider->saveToken($this->token);
+                    }
                     setcookie('token', (string) $this->token, $lifetime, '/', $domain); // Establecer cookie
                 }
             }

@@ -50,11 +50,6 @@ class Token extends Configurable implements PluginInterface {
         return $environment->getVersion();
     }
 
-    public function appPreInit() {
-        global $application;
-        $application->addRouter($this->getRouter(), 100);
-    }
-    
     /**
      * Crea un token a partir de una cadena jwt,
      * y comprueba que sea válido
@@ -231,12 +226,12 @@ class Token extends Configurable implements PluginInterface {
     public static function loadAlg(string $alg) : bool {
         $dir        = __DIR__ . '/Token/';
         $handler    = opendir($dir);
+        $file       = null;
         while (($file = readdir($handler)) !== false) {
             if(filetype($dir . $file) == 'file' &&
                basename($file, '.php') == $alg) {
                 break;
             }   
-            $file = null;
         }
         closedir($handler);
 

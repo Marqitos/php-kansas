@@ -15,7 +15,6 @@ use Kansas\Auth\AuthorizationInterface;
 use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Auth\Session\SessionInterface;
 use Kansas\Loader;
-use Kansas\Plugin\Admin as AdminZone;
 use Kansas\Plugin\LocalizationInterface;
 use Kansas\Plugin\RouterPluginInterface;
 use Kansas\Provider\UsersInterface;
@@ -97,14 +96,7 @@ class Auth extends Configurable implements RouterPluginInterface {
 	/// Eventos de la aplicación
 	public function appPreInit() { // añadir router
 		global $application;
-		require_once 'Kansas/Plugin/Admin.php';
-		$zones = $application->hasPlugin('zones');
-		if($zones && $zones->getZone() instanceof AdminZone) {
-			$admin = $zones->getZone();
-			$admin->registerMenuCallbacks([$this, "adminMenu"]);
-		} else {
-			$application->addRouter($this->getRouter());
-		}
+		$application->addRouter($this->getRouter());
 	}
 
 	public function appRoute(RequestInterface $request, array $params) { // Añadir datos de usuario
@@ -235,25 +227,6 @@ class Auth extends Configurable implements RouterPluginInterface {
     }
 
 
-	/// Eventos de zona Admin
-	public function adminMenu() {
-	// TODO: Comprobar permisos
-	return [
-		'account'          => [
-			'title'           => 'Usuarios',
-			'icon'            => 'fa-user',
-			'dispatch'        => [
-				'controller'    => 'account',
-				'action'        => 'admin'],
-			'match'           => [$this, 'adminMatch'],
-			'menuItems'       => [
-				'roles'   => [
-					'title'       => 'Roles',
-					'dispatch'    => [
-					'controller'=> 'account',
-					'action'    => 'adminRoles']]]]];
-	}
-  
 	public function getAuthService($serviceName = 'membership') { // Devuelve un servicio de autenticación por el nombre
 		return isset($this->_authServices[$serviceName])
 			? $this->_authServices[$serviceName]
