@@ -39,17 +39,13 @@ class BackendCache extends Configurable implements PluginInterface {
             $this->options['cache_options']
         );
 
-        if($this->options['log'] && $this->caches['.'] instanceof CacheInterface) { // TODO: Separar registro de errores
-            $application->set('log', [$this, 'log']);
-        }
     }
   
     /// Miembros de ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
         return [
             'cache_type'    => 'File',
-            'cache_options' => [],
-            'log'           => false];
+            'cache_options' => []];
     }
   
     /// Miembros de PluginInterface
@@ -121,7 +117,7 @@ class BackendCache extends Configurable implements PluginInterface {
 
     /**
      * Recupera de cache el valor identificado por una función y sus parámetros.
-     * Para uso solamente con funciones que realizan cálculos, pero no realizan tareas colaterales.
+     * Para uso solamente con funciones puras, sin efectos secundarios
      * 
      * @param array $args Lista de argumentos originales de la función
      * @param string $functionName Nombre de la función
@@ -129,7 +125,7 @@ class BackendCache extends Configurable implements PluginInterface {
      * @param string $className Nombre de la clase a la que pertenece la función, recomendable con su espacio de nombres. (Opcional)
      * @return bool true en caso de que hubiese datos en cache, false en caso contrario
      */
-    public function memoize(array $args, string $functionName, &$data, string $className = null) {
+    public function memoize(array $args, string $functionName, &$data, string $className = null) : bool {
         $key    = self::cacheId($args, $functionName, $className);
         if($this->caches['.']->test($key)) {
             $data = unserialize($this->caches['.']->load($key));
@@ -140,72 +136,13 @@ class BackendCache extends Configurable implements PluginInterface {
 
     /**
      * Almacena en cache el valor relativo a una función y sus parámetros.
-     * Para uso solamente con funciones que realizan cálculos, pero no realizan tareas colaterales.
+     * Para uso solamente con funciones puras, sin efectos secundarios
      * 
      */
     public function memoized(array $args, string $functionName, $data, string $className = null, array $tags = []) {
         $key    = self::cacheId($args, $functionName, $className);
         $data   = serialize($data);
         $this->caches['.']->save($data, $key, $tags);
-    }
-
-  public function log($level, $message) {
-        global $environment;
-        $time = microtime();
-        $executionTime = $environment->getExecutionTime();
-        if(is_string($message)) {
-            $data = [
-                'httpCode'  => 500,
-                'file'      => $environment->getRequest()->getUriString(),
-                'line'      => null,
-                'message'   => $message];
-        } else {
-            $data = ($message['code'] == 404) 
-                ? [	'httpCode'  => 404,
-                    'file'      => $environment->getRequest()->getUriString(),
-                    'line'      => null]
-                : [	'httpCode'  => $message['code'],
-                    'file'      => $message['file'],
-                    'line'      => $message['line']];
-            $data['message'] = $message['message'];
-        }
-        $data['level'] = $level;
-        $id = md5(serialize($data));
-        $data['id'] = $id;
-        if($this->test('error-' . $id)) {
-            $data = unserialize($this->load('error-' . $id));
-        } else {
-            $data['log'] = [];
-        }
-        foreach ($message['trace'] as $traceLine) {
-            if(isset($traceLine['args'])) {
-                $args = [];
-                foreach ($traceLine['args'] as $arg) {
-                    try {
-                        $argData = serialize($arg);
-                        $args[] = $argId = md5($argData);
-                        if(!$this->test($argId)) {
-                            $this->save($argData, 'error-arg-' . $argId, ['error-arg'], null);
-                        }
-                    } catch (Exception $e) {
-                        $args[] = 'no-serializable';
-                    }
-                }
-                $traceLine['args'] = $args;
-            }
-        }
-        $log = serialize([
-            'time'          => $time,
-            'executionTime' => $executionTime,
-            'uri'           => $environment->getRequest()->getUriString(),
-            'exception'     => $message['exception'],
-            'trace'         => $message['trace']]);
-
-        $logId = md5($log);
-        $data['log'][] = $logId;
-        
-        $this->save($log, 'error-log-' . $id . '-' . $logId, ['error-log'], null);
-        $this->save(serialize($data), 'error-' . $id, ['error'], null);
     }
 
 }

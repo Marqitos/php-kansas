@@ -6,7 +6,6 @@ use System\Configurable;
 use System\Version;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Router\Cache as RouterCache;
-use System\NotSupportedException;
 
 require_once 'Psr/Http/Message/ServerRequestInterface.php';
 require_once 'System/Configurable.php';
@@ -30,18 +29,11 @@ class CacheRouter extends Configurable implements PluginInterface {
   
     /// Miembros de ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
-        switch ($environment) {
-        case 'production':
-        case 'development':
-        case 'test':
-            return [
+        return [
             'cache_category'    => 'router',
             'cache_type'        => null,
             'cache_options'     => []
-            ];
-        default:
-            throw new NotSupportedException("Entorno no soportado [$environment]");
-        }
+        ];
     }
   
     /// Miembros de PluginInterface
@@ -80,7 +72,7 @@ class CacheRouter extends Configurable implements PluginInterface {
         $roles = $application->getPlugin('Auth')->getCurrentRoles();
         $permsId = md5(serialize($roles));
         var_dump($permsId);
-        return urlencode($permsId . '|' . $request->getUriString());
+        return urlencode($permsId . '|' . $request->getUri()->String());
     }
     
     public function getRouter() {

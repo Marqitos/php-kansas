@@ -119,7 +119,7 @@ class File extends Cache implements ExtendedCacheInterface {
         if($this->_cacheDir == null) {
             $value = ($this->options['cache_dir'] !== null)
                 ? $this->options['cache_dir']
-                : $environment->getSpecialFolder(Environment::SF_TEMP);
+                : $environment->getSpecialFolder(Environment::SF_CACHE);
             if (!is_dir($value)) {
                 require_once 'System/IO/DirectoryNotFoundException.php';
                 throw new DirectoryNotFoundException();
@@ -278,7 +278,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return boolean true if no problem
      */
     public function remove($id) {
-        $fileName = $this->getFileName($id, $path);
+        list($path, $fileName) = $this->getFileName($id);
         $boolRemove   = $this->_remove($path . $fileName);
         $boolMetadata = $this->_delMetadatas($id);
         return $boolMetadata && $boolRemove;
@@ -551,8 +551,7 @@ class File extends Cache implements ExtendedCacheInterface {
      * @return string Metadatas file name (with path)
      */
     protected function _metadatasFile($id) {
-        $path = null;
-        $filename = $this->getFilename($id . '.metadatas', $path);
+        list($path, $filename) = $this->getFilename($id . '.metadatas');
 		return $path . $filename;
     }
 
@@ -820,11 +819,10 @@ class File extends Cache implements ExtendedCacheInterface {
      * Transform a cache id into a file name and return it
      *
      * @param  string $id Cache id
-     * @return string File name
+     * @return array [Path, FileName] 
      */
-    protected function getFilename($id, &$path) {
-        $path = $this->getPath($id);
-        return $this->getFileNamePrefix() . '-' . $id;
+    protected function getFilename($id) {
+        return [$this->getPath($id), $this->getFileNamePrefix() . '-' . $id];
     }
 
     /**
@@ -835,7 +833,7 @@ class File extends Cache implements ExtendedCacheInterface {
      */
     protected function getFile($id) {
         global $environment;
-        $fileName = $this->getFileName($id, $path);
+        list($path, $fileName) = $this->getFileName($id);
         return $environment->getFile($path . $fileName);
     }
 
@@ -855,10 +853,10 @@ class File extends Cache implements ExtendedCacheInterface {
                 $root = $root . $this->getFileNamePrefix() . '--' . substr($hash, 0, $i + 1) . DIRECTORY_SEPARATOR;
                 $partsArray[] = $root;
             }
-            if (!is_writable($path)) { // maybe, we just have to build the directory structure
+            if (!is_writable($root)) { // maybe, we just have to build the directory structure
                 $this->_recursiveMkdirAndChmod($partsArray);
             }
-            if (!is_writable($path)) {
+            if (!is_writable($root)) {
                 return $root;
             }
         }

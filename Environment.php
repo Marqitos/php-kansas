@@ -10,8 +10,6 @@
 
 namespace Kansas;
 
-use Generator;
-use Throwable;
 use Psr\Http\Message\ServerRequestInterface;
 use System\ArgumentOutOfRangeException;
 use System\Collections\KeyNotFoundException;
@@ -19,7 +17,6 @@ use System\IO\File;
 use System\IO\IOException;
 use System\Localization\Resources as SysResources;
 use System\Version;
-use Kansas\Config;
 use Kansas\PluginLoader;
 use Kansas\Controller\ControllerInterface;
 use Kansas\Http\ServerRequest;
@@ -168,11 +165,12 @@ class Environment {
   
     public function getSpecialFolder(int $specialFolder) {
         if(isset($this->specialFolders[$specialFolder])) {
-            $dir = realpath($this->specialFolders[$specialFolder]);
+            $dir        = realpath($this->specialFolders[$specialFolder]);
         } elseif(isset($this->specialFolderParts[$specialFolder])) {
-            $part = $this->specialFolderParts[$specialFolder];
+            $part       = $this->specialFolderParts[$specialFolder];
         } elseif(isset($this->tempFolderParts[$specialFolder])) {
-            $tmpPart = $this->tempFolderParts[$specialFolder];
+            $tmpPart    = $this->tempFolderParts[$specialFolder];
+            $part       = $this->specialFolderParts[self::SF_TEMP];
         } else {
             require_once 'System/ArgumentOutOfRangeException.php';
             require_once 'System/Localization/Resources.php';
