@@ -12,7 +12,6 @@ namespace Kansas\Plugin;
 
 use System\Configurable;
 use System\Version;
-use Kansas\Plugin\LocalizationInterface;
 use Kansas\Plugin\PluginInterface;
 
 use function strcasecmp;
@@ -24,7 +23,7 @@ use function uasort;
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
-class Localization extends Configurable implements PluginInterface, LocalizationInterface {
+class Localization extends Configurable implements PluginInterface {
 
 	private $appLangs;
 	private $userLangs;
@@ -138,7 +137,7 @@ class Localization extends Configurable implements PluginInterface, Localization
 					 : [];
 			$this->userLangs = [];
 			foreach($locales as $locale) {
-				list($l, $q) = array_merge(explode(';q=', $locale), [1]);
+				list($l, $q) = array_merge(explode(';q=', $locale), 1);
 				$lc = explode('-', $l);
 				$this->userLangs[] = [
 					'lang' 		=> $lc[0],

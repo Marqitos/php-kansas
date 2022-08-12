@@ -15,7 +15,7 @@ use Kansas\Auth\AuthorizationInterface;
 use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Auth\Session\SessionInterface;
 use Kansas\Loader;
-use Kansas\Plugin\LocalizationInterface;
+use Kansas\Plugin\Localization;
 use Kansas\Plugin\RouterPluginInterface;
 use Kansas\Provider\UsersInterface;
 use Kansas\Router\Auth as AuthRouter;
@@ -67,7 +67,6 @@ class Auth extends Configurable implements RouterPluginInterface {
             'device'                => true,
             'domain'                => '',
             'lifetime'              => 60*60*24*15, // 15 días
-            'localization_plugin'   => 'Localization',
             'router'                =>  [
                 'base_path'             => 'cuenta',
                 'pages'		            => []],
@@ -137,17 +136,10 @@ class Auth extends Configurable implements RouterPluginInterface {
         return $this->authorization;
     }
 
-    protected function getLocalization() : LocalizationInterface {
+    protected function getLocalization() : Localization {
         if($this->localization == null) {
-            if(is_string($this->options['localization_plugin'])) {
-                global $application;
-                $this->localization = $application->getPlugin($this->options['localization_plugin']);
-            } elseif($this->options['localization_plugin'] instanceof LocalizationInterface) {
-                $this->localization = $this->options['localization_plugin'];
-            } else {
-                require_once 'System/NotSupportedException.php';
-                throw new NotSupportedException();
-            }
+			global $application;
+			$this->localization = $application->getPlugin('Localization');
         }
         return $this->localization;
     }
