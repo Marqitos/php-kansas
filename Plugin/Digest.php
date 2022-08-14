@@ -51,17 +51,8 @@ class Digest extends Configurable implements PluginInterface, AuthService {
 
 	// Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
-        switch ($environment) {
-        case 'production':
-        case 'development':
-        case 'test':
             return [
-                'actions' => [
-            ]];
-        default:
-            require_once 'System/NotSupportedException.php';
-            throw new NotSupportedException("Entorno no soportado [$environment]");
-        }
+                'actions' => []];
     }
     
     public function getVersion() : Version {

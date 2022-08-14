@@ -10,12 +10,10 @@
 
 namespace Kansas\Plugin;
 
-use Exception;
 use System\Configurable;
 use System\Version;
 use Kansas\Cache;
 use Kansas\Cache\CacheInterface;
-use Kansas\Plugin\Admin as AdminPlugin;
 use Kansas\Plugin\PluginInterface;
 use function array_merge;
 use function md5;
