@@ -93,19 +93,22 @@ class Localization extends Configurable implements PluginInterface {
 			foreach($this->getUserLangs() as $userLang){
 				foreach($this->getAppLangs() as $appLang) {
 					if(strcasecmp($userLang['lang'], $appLang['lang']) == 0 &&
-						$appLang['country'] != null &&
-						strcasecmp($userLang['country'], $appLang['country']) == 0) { // obtenemos el idioma de las preferencias del navegador del usuario
+					   $appLang['country'] != null &&
+                       $userLang['country'] != null &&
+					   strcasecmp($userLang['country'], $appLang['country']) == 0) { // obtenemos el idioma de las preferencias del navegador del usuario
 						$this->options['lang'] 		= $appLang['lang'];
 						$this->options['country'] 	= $appLang['country'];
 						$this->options['q'] 		= $userLang['q'];
 						break 2;
 					} elseif(strcasecmp($userLang['lang'], $appLang['lang']) == 0 &&
-						$userLang['country'] != null &&
-						$appLang['country'] == null ) { // obtenemos el idioma de las preferencias, pero no la región
+						     ($userLang['country'] != null &&
+						      $appLang['country'] == null) ||
+                             ($userLang['country'] == null &&
+                              $appLang['country'] != null) ) { // obtenemos el idioma de las preferencias, pero no la región
 						$this->options['lang'] 		= $appLang['lang'];
 						$this->options['country'] 	= $appLang['country'];
 						$this->options['q'] 		= 0;
-					}
+                    }
 				}
 			}
 		}
@@ -137,14 +140,20 @@ class Localization extends Configurable implements PluginInterface {
 					 : [];
 			$this->userLangs = [];
 			foreach($locales as $locale) {
-				list($l, $q) = array_merge(explode(';q=', $locale), 1);
+                list($l, $q) = explode(';q=', $locale);
+                if($q == null) {
+                    $q = 1;
+                }
 				$lc = explode('-', $l);
+                if($lc == null) {
+                    $lc = [$l];
+                }
 				$this->userLangs[] = [
 					'lang' 		=> $lc[0],
 					'country'	=> isset($lc[1])
 								? $lc[1]
 								: null,
-					'q'			=> (float) $q
+                    'q'			=> floatval($q)
 				];
 			}
 			uasort($this->userLangs, ['self', 'compareQ']);
