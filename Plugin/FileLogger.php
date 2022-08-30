@@ -8,9 +8,12 @@
  * @since v0.5
  */
 
+ // TODO: Cambiar modo de escritura a markdown
+
 namespace Kansas\Plugin;
 
 use Throwable;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Psr\Log\LoggerTrait;
 use Psr\Log\LogLevel;
@@ -24,6 +27,7 @@ use function register_shutdown_function;
 use function set_error_handler;
 use function set_exception_handler;
 use function str_replace;
+use const LOCK_EX;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
@@ -167,34 +171,44 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
     }
 
     public function writeError(string $message, $showTime = false, string $level = LogLevel::INFO)	{
+        global $environment;
         if ($showTime) {
             $time = "[".date('H:i:s') . ']';
             $message = $time . $message;
         }
 
-        // TODO: Cambiar la salida a un archivo
-        $stderr = fopen('php://stderr', 'w');
-        fwrite($stderr, $message);
+        ignore_user_abort();
+        $logFile = $environment->getSpecialFolder(Environment::SF_ERRORS) . 'errors.log';
+
+        $stderr = fopen($logFile, 'a');
+        flock($stderr, LOCK_EX);
+        fwrite($stderr, $message . '<br/>');
         fclose($stderr);
     }
 
     public function log(string $level, $message, array $context = []) {
-        if (gettype($message) == 'array' || gettype($message) == 'object')
+        global $environment;
+        if (gettype($message) == 'array' || gettype($message) == 'object') {
             $message = '<br />' . $this->formatDump(print_r($message, true));
-        if (gettype($message) == 'boolean')
+        }
+        if (gettype($message) == 'boolean') {
             $message = ($message) ? 'true' : 'false';
-        if (gettype($message) == 'NULL')
+        }
+        if (gettype($message) == 'NULL') {
             $message = 'NULL';
+        }
         if(!empty($context)) {
             require_once 'System/String/interpolate.php';
             $message = StringInterpolate($message, $context);
         }
         $message = nl2br($message);
 
-        // TODO: Cambiar la salida a un archivo
         ignore_user_abort();
-        $stderr = fopen('php://stderr', 'w');
-        fwrite($stderr, $level . '<br/>');
+        $logFile = $environment->getSpecialFolder(Environment::SF_ERRORS) . 'log.log';
+
+        $stderr = fopen($logFile, 'a');
+        flock($stderr, LOCK_EX);
+        fwrite($stderr, strtoupper($level) . ':<br/>');
         fwrite($stderr, $message . '<br/>');
         fclose($stderr);
     }
@@ -206,66 +220,4 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
 		return $data;
 	}
 
-
 }
-
-/*
-    public function log($level, $message) {
-        global $environment;
-        $time = microtime();
-        $executionTime = $environment->getExecutionTime();
-        if(is_string($message)) {
-            $data = [
-                'httpCode'  => 500,
-                'file'      => $environment->getRequest()->getUriString(),
-                'line'      => null,
-                'message'   => $message];
-        } else {
-            $data = ($message['code'] == 404) 
-                ? [	'httpCode'  => 404,
-                    'file'      => $environment->getRequest()->getUriString(),
-                    'line'      => null]
-                : [	'httpCode'  => $message['code'],
-                    'file'      => $message['file'],
-                    'line'      => $message['line']];
-            $data['message'] = $message['message'];
-        }
-        $data['level'] = $level;
-        $id = md5(serialize($data));
-        $data['id'] = $id;
-        if($this->test('error-' . $id)) {
-            $data = unserialize($this->load('error-' . $id));
-        } else {
-            $data['log'] = [];
-        }
-        foreach ($message['trace'] as $traceLine) {
-            if(isset($traceLine['args'])) {
-                $args = [];
-                foreach ($traceLine['args'] as $arg) {
-                    try {
-                        $argData = serialize($arg);
-                        $args[] = $argId = md5($argData);
-                        if(!$this->test($argId)) {
-                            $this->save($argData, 'error-arg-' . $argId, ['error-arg'], null);
-                        }
-                    } catch (Exception $e) {
-                        $args[] = 'no-serializable';
-                    }
-                }
-                $traceLine['args'] = $args;
-            }
-        }
-        $log = serialize([
-            'time'          => $time,
-            'executionTime' => $executionTime,
-            'uri'           => $environment->getRequest()->getUriString(),
-            'exception'     => $message['exception'],
-            'trace'         => $message['trace']]);
-
-        $logId = md5($log);
-        $data['log'][] = $logId;
-        
-        $this->save($log, 'error-log-' . $id . '-' . $logId, ['error-log'], null);
-        $this->save(serialize($data), 'error-' . $id, ['error'], null);
-    }
-*/
