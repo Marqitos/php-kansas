@@ -8,9 +8,12 @@
  * @since v0.5
  */
 
+ // TODO: Cambiar modo de escritura a markdown
+
 namespace Kansas\Plugin;
 
 use Throwable;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Psr\Log\LoggerTrait;
 use Psr\Log\LogLevel;
@@ -24,6 +27,7 @@ use function register_shutdown_function;
 use function set_error_handler;
 use function set_exception_handler;
 use function str_replace;
+use const LOCK_EX;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
@@ -35,10 +39,11 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
     public function __construct(array $options) {
         global $application;
 		parent::__construct($options);
-       
+
         if($this->options['log_errors']) { // Activo el registro de eventos de errores
             ini_set('display_errors', '1');
             ini_set('display_startup_errors', '1');
+            error_reporting($this->options['error_level']);
             set_error_handler([$this, "errorHandler"]);
             set_exception_handler([$this, "exceptionHandler"]);
             register_shutdown_function([$this, "shutdown"]);
@@ -54,7 +59,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
             'log_errors'    => true,
             'log_sessions'  => false,
             'log_hints'     => false,
-            'error_level'   => E_ALL];
+            'error_level'   => error_reporting()];
     }
 
     /// Miembros de PluginInterface
@@ -167,34 +172,51 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
     }
 
     public function writeError(string $message, $showTime = false, string $level = LogLevel::INFO)	{
+        global $environment;
         if ($showTime) {
             $time = "[".date('H:i:s') . ']';
             $message = $time . $message;
         }
 
-        // TODO: Cambiar la salida a un archivo
-        $stderr = fopen('php://stderr', 'w');
-        fwrite($stderr, $message);
+        ignore_user_abort();
+        $logFile = $environment->getSpecialFolder(Environment::SF_ERRORS) . 'errors.html';
+
+        $stderr = fopen($logFile, 'a');
+        flock($stderr, LOCK_EX);
+        fwrite($stderr, $message . '<br/>');
         fclose($stderr);
     }
 
     public function log(string $level, $message, array $context = []) {
-        if (gettype($message) == 'array' || gettype($message) == 'object')
+        global $environment;
+        if($level == LogLevel::ERROR &&
+           is_string($message) &&
+           isset($context['exception']) &&
+           is_a($context['exception'], 'Throwable')) { // Codigo especifico para registrar errores
+            $this->exceptionHandler($context['exception']);
+        }
+
+        if (gettype($message) == 'array' || gettype($message) == 'object') {
             $message = '<br />' . $this->formatDump(print_r($message, true));
-        if (gettype($message) == 'boolean')
+        }
+        if (gettype($message) == 'boolean') {
             $message = ($message) ? 'true' : 'false';
-        if (gettype($message) == 'NULL')
+        }
+        if (gettype($message) == 'NULL') {
             $message = 'NULL';
+        }
         if(!empty($context)) {
             require_once 'System/String/interpolate.php';
             $message = StringInterpolate($message, $context);
         }
         $message = nl2br($message);
 
-        // TODO: Cambiar la salida a un archivo
         ignore_user_abort();
-        $stderr = fopen('php://stderr', 'w');
-        fwrite($stderr, $level . '<br/>');
+        $logFile = $environment->getSpecialFolder(Environment::SF_ERRORS) . 'log.html';
+
+        $stderr = fopen($logFile, 'a');
+        flock($stderr, LOCK_EX);
+        fwrite($stderr, strtoupper($level) . ':<br/>');
         fwrite($stderr, $message . '<br/>');
         fclose($stderr);
     }
