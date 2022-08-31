@@ -14,6 +14,7 @@ use System\Configurable;
 use System\Version;
 use Kansas\Plugin\PluginInterface;
 
+use function array_pad;
 use function strcasecmp;
 use function strtolower;
 use function strtoupper;
@@ -140,7 +141,7 @@ class Localization extends Configurable implements PluginInterface {
 					 : [];
 			$this->userLangs = [];
 			foreach($locales as $locale) {
-                list($l, $q) = explode(';q=', $locale);
+                list($l, $q) = array_pad(explode(';q=', $locale), 2, null);
                 if($q == null) {
                     $q = 1;
                 }

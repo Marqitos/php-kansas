@@ -224,6 +224,12 @@ class Token extends Configurable implements PluginInterface {
      * @return bool true si se han cargado las funciones con exito
      */
     public static function loadAlg(string $alg) : bool {
+        if(function_exists('Kansas\Plugin\Token\verifyToken') ||
+           function_exists('Kansas\Plugin\Token\buildToken')) {
+            var_dump('existe');
+            die;
+            return false;
+        }
         $dir        = __DIR__ . '/Token/';
         $handler    = opendir($dir);
         $file       = null;
@@ -236,7 +242,7 @@ class Token extends Configurable implements PluginInterface {
         closedir($handler);
 
         if($file) {
-            require $dir . $file;
+            require_once $dir . $file;
             return true;
         }
 
