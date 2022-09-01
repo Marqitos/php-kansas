@@ -14,12 +14,15 @@ namespace Kansas\Db;
 
 use System\ArgumentOutOfRangeException;
 use System\NotSupportedException;
+use System\DisposableInterface;
 use Kansas\Db\MysqliAdapter;
 use Kansas\Localization\Resources;
 
 use function sprintf;
 
-abstract class Adapter {
+require_once 'System/DisposableInterface.php';
+
+abstract class Adapter implements DisposableInterface {
 
     public const DRIVER_MYSQLI = 'mysqli'; // Improved MySQL
     
@@ -77,4 +80,10 @@ abstract class Adapter {
      */
     public abstract function escape(string $escapestr) : string;
 
+    /**
+     * Libera los recursos de la conexión con la base de datos
+     *
+     * @return void
+     */
+    public abstract function dispose() : void;
 }

@@ -17,17 +17,19 @@ use Kansas\Db\Adapter;
 use Kansas\Db\MysqliConnectionException;
 use Kansas\Db\MysqliException;
 use System\ArgumentOutOfRangeException;
-
+use function filter_var;
 use function is_a;
 use function is_int;
 use function is_object;
 use function is_string;
 use function strval;
 use const MYSQLI_ASSOC;
+use const FILTER_VALIDATE_IP;
 
 class MysqliAdapter extends Adapter {
 
     private $con;
+    private $disposed = false;
     const TYPE_DATE = 'DATE';
     const TYPE_TIME = 'TIME';
     const TYPE_NOT_NULL = 'NOTNULL';
@@ -46,6 +48,7 @@ class MysqliAdapter extends Adapter {
         if($charset != null) {
             $this->con->set_charset($charset);
         }
+        register_shutdown_function([$this, 'dispose']);
     }
 
     /**
@@ -90,7 +93,7 @@ class MysqliAdapter extends Adapter {
            $this->con->errno == 0) {
             try {
                 $result = $this->con->store_result();
-                if($result->num_rows == 1) { // Devolvemos el resultado en caso de que solo se devuelva una fila
+                if($result->num_rows > 0) { // Devolvemos el resultado en caso de que solo se devuelva una fila
                     return $result->fetch_assoc();
                 }
             } finally {
@@ -147,5 +150,18 @@ class MysqliAdapter extends Adapter {
         require_once 'System/ArgumentOutOfRangeException.php';
         throw new ArgumentOutOfRangeException('object');
     }
+
+    /**
+     * @inheritDoc
+     *
+     * @return void
+     */
+    public function dispose() : void {
+        if(!$this->disposed) {
+            mysqli_close($this->con);
+        }
+        $this->disposed = true;
+    }
+
 
 }
