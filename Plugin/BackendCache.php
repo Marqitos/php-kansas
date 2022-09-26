@@ -13,7 +13,6 @@ namespace Kansas\Plugin;
 use System\Configurable;
 use System\Version;
 use Kansas\Cache;
-use Kansas\Cache\CacheInterface;
 use Kansas\Plugin\PluginInterface;
 use function array_merge;
 use function md5;
@@ -28,7 +27,6 @@ class BackendCache extends Configurable implements PluginInterface {
 
     /// Constructor
     public function __construct(array $options) {
-        global $application;
         require_once 'Kansas/Cache.php';
         require_once 'Kansas/Cache/CacheInterface.php';
         parent::__construct($options);
