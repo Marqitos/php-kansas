@@ -12,7 +12,6 @@ namespace Kansas\Router;
 
 use LogicException;
 use Throwable;
-use System\NotSupportedException;
 use Kansas\API\APIExceptionInterface;
 use Kansas\Router;
 use Kansas\Localization\Resources;
@@ -35,29 +34,29 @@ class API extends Router implements RouterInterface {
     // Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
         return [
-            'base_path'	=> '',
-            'params'	=> [
-                'cors'			=> [
+            'base_path' => '',
+            'params'    => [
+                'cors'          => [
                     'origin'        => '*',
                     'headers'       => '*',
                     'credentials'   => true],
-                'controller'	=> 'index',
-                'action'		=> 'API']];
+                'controller'    => 'index',
+                'action'        => 'API']];
     }
 
     /// Miembros de Kansas_Router_Interface
     public function match() : array {
         global $application, $environment;
         $path = static::getPath($this);
-        if($path === false) {
+        if ($path === false) {
             return false;
         }
-        $path 		= trim($path, '/');
-        $method 	= $environment->getRequest()->getMethod();
+        $path       = trim($path, '/');
+        $method     = $environment->getRequest()->getMethod();
         // Gestionamos el metodo OPTIONS
-        if($method == RequestMethodInterface::METHOD_OPTIONS) {
+        if ($method == RequestMethodInterface::METHOD_OPTIONS) {
             $methods = $this->getMethods($path);
-            if(!empty($methods)) {
+            if (!empty($methods)) {
                 $methods = implode(', ', $methods);
                 header('Cache-Control: no-cache');
                 header('Access-Control-Allow-Origin: *');
@@ -71,32 +70,32 @@ class API extends Router implements RouterInterface {
         require_once 'Kansas/API/APIExceptionInterface.php';
         $dispatch	= false;
         $result		= false;
-        if(isset($this->paths[$method], $this->paths[$method][$path])) {
+        if (isset($this->paths[$method], $this->paths[$method][$path])) {
             $dispatch = $this->paths[$method][$path];
-        } elseif(isset($this->paths[APIPlugin::METHOD_ALL], $this->paths[APIPlugin::METHOD_ALL][$path])) {
+        } elseif (isset($this->paths[APIPlugin::METHOD_ALL], $this->paths[APIPlugin::METHOD_ALL][$path])) {
             $dispatch = $this->paths[APIPlugin::METHOD_ALL][$path];
         }
-        if($dispatch) {
+        if ($dispatch) {
             ignore_user_abort(true);
             set_time_limit(0);
             try {
-                if(is_array($dispatch) &&
+                if (is_array($dispatch) &&
                 isset($dispatch[APIPlugin::PARAM_FUNCTION])) {
                     $function = $dispatch[APIPlugin::PARAM_FUNCTION];
-                    if(isset($dispatch[APIPlugin::PARAM_REQUIRE])) {
+                    if (isset($dispatch[APIPlugin::PARAM_REQUIRE])) {
                         require_once $dispatch[APIPlugin::PARAM_REQUIRE];
                     }
                 } else {
                     $function = $dispatch;
                 }
-                if(!function_exists($function)) {
+                if (!function_exists($function)) {
                     require_once str_replace('\\', DIRECTORY_SEPARATOR, $function) . '.php';
                 }
                 $result = call_user_func($function, $path, $method);
-            } catch(APIExceptionInterface $ex) {
+            } catch (APIExceptionInterface $ex) {
                 $result = $ex->getAPIResult();
-            } catch(Throwable $ex) {
-                if($logger = $application->hasPlugin('Logger')) {
+            } catch (Throwable $ex) {
+                if ($logger = $application->hasPlugin('Logger')) {
                     $logger->error($ex->getMessage(), ['exception' => $ex]);
                 }
                 $result = APIPlugin::ERROR_INTERNAL_SERVER;
@@ -124,10 +123,10 @@ class API extends Router implements RouterInterface {
                             $logger->debug('metodo desconocido: {method}', ['method' => $method]);
                         }
                     }
-                } catch(APIExceptionInterface $ex) {
+                } catch (APIExceptionInterface $ex) {
                     $result = $ex->getAPIResult();
-                } catch(Throwable $ex) {
-                    if($logger = $application->hasPlugin('Logger')) {
+                } catch (Throwable $ex) {
+                    if ($logger = $application->hasPlugin('Logger')) {
                         $logger->error($ex->getMessage(), ['exception' => $ex]);
                     }
                     $result = APIPlugin::ERROR_INTERNAL_SERVER;
@@ -135,9 +134,9 @@ class API extends Router implements RouterInterface {
             }
         }
 
-        if(!$result) { // No se ha encontrado el documento
+        if (!$result) { // No se ha encontrado el documento
             $result = APIPlugin::ERROR_NOT_FOUND;
-        } elseif(is_array($this->options['params']['cors'])) { // Gestionamos CORS
+        } elseif (is_array($this->options['params']['cors'])) { // Gestionamos CORS
             $methods = implode(', ', $this->getMethods($path));
             $this->options['params']['cors']['methods'] = $methods;
         }
@@ -150,19 +149,19 @@ class API extends Router implements RouterInterface {
     }
 
     public function registerPath($path, $dispatch, string $method = APIPlugin::METHOD_ALL) {
-        if(is_array($path)) {
-            foreach($path as $item) {
+        if (is_array($path)) {
+            foreach ($path as $item) {
                 $this->registerPath($item, $dispatch, $method);
             }
             return;
-        } elseif(!is_string($path)) {
+        } elseif (!is_string($path)) {
             throw new ArgumentException('path', 'Formato de ruta no válido');
         }
-        if($method == RequestMethodInterface::METHOD_OPTIONS) {
+        if ($method == RequestMethodInterface::METHOD_OPTIONS) {
             require_once 'Kansas/Localization/Resources.php';
             throw new LogicException(Resources::API_OPTIONS_METHOD_RESERVED);
         }
-        if(!isset($this->paths[$method])) {
+        if (!isset($this->paths[$method])) {
             $this->paths[$method] = [];
         }
         $this->paths[$method][$path] = $dispatch;
@@ -170,9 +169,9 @@ class API extends Router implements RouterInterface {
 
     protected function getMethods(string $path) : array {
         $methods = [];
-        foreach($this->paths as $routeMethod => $routePath) {
-            if(isset($routePath[$path])) {
-                if($routeMethod == APIPlugin::METHOD_ALL) {
+        foreach ($this->paths as $routeMethod => $routePath) {
+            if (isset($routePath[$path])) {
+                if ($routeMethod == APIPlugin::METHOD_ALL) {
                     $methods = ['*'];
                 } else {
                     $methods[] = $routeMethod;

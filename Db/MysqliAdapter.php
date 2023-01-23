@@ -40,12 +40,12 @@ class MysqliAdapter extends Adapter {
     public function __construct(string $hostname, string $username, string $password, string $database, string $charset = null) {
         $this->con = new mysqli($hostname, $username, $password, $database);
 
-        if($this->con == null || 
+        if ($this->con == null ||
            $this->con->connect_error) {
             include_once 'Kansas/Db/MysqliConnectionException.php';
             throw new MysqliConnectionException($this->con);
         }
-        if($charset != null) {
+        if ($charset != null) {
             $this->con->set_charset($charset);
         }
         register_shutdown_function([$this, 'dispose']);
@@ -53,14 +53,14 @@ class MysqliAdapter extends Adapter {
 
     /**
      * Realiza una consulta a la base de datos
-     * 
+     *
      * @param string $sql Consulta sql a ejecutar
      * @return array|int En caso de ser una consulta tipo select, devuelve un array. En consultas insert, update, ... devuelve el número de filas afectadas. Y false en caso de que la consulta esté mal formulada o se produzca un error
      */
     public function query(string $sql, &$id = null) {
-        if($this->con->real_query($sql) &&
+        if ($this->con->real_query($sql) &&
            $this->con->errno == 0) {
-            if($this->con->field_count == 0) { // La consulta no es select
+            if ($this->con->field_count == 0) { // La consulta no es select
                 $id = $this->con->insert_id;
                 return $this->con->affected_rows;
             } else {
@@ -72,9 +72,9 @@ class MysqliAdapter extends Adapter {
                 } finally {
                     $result->close();
                 }
-            } 
+            }
         }
-        if($this->con->errno != 0) {
+        if ($this->con->errno != 0) {
             require_once 'Kansas/Db/MysqliException.php';
             throw new MysqliException($this->con);
         }
@@ -83,24 +83,24 @@ class MysqliAdapter extends Adapter {
 
     /**
      * Realiza una consulta a la base de datos que solo debe devolver una fila
-     * 
+     *
      * @param string $sql Consulta sql a ejecutar
      * @return array|bool En caso de ser una consulta devuelva una fila, devuelve un array. Y false en caso de que la consulta esté mal formulada o se produzca un error
      */
 
     public function queryRow(string $sql) {
-        if($this->con->real_query($sql) &&
+        if ($this->con->real_query($sql) &&
            $this->con->errno == 0) {
             try {
                 $result = $this->con->store_result();
-                if($result->num_rows > 0) { // Devolvemos el resultado en caso de que solo se devuelva una fila
+                if ($result->num_rows > 0) { // Devolvemos el resultado en caso de que solo se devuelva una fila
                     return $result->fetch_assoc();
                 }
             } finally {
                 $result->close();
             }
         }
-        if($this->con->errno != 0) {
+        if ($this->con->errno != 0) {
             require_once 'Kansas/Db/MysqliException.php';
             throw new MysqliException($this->con);
         }
@@ -109,7 +109,7 @@ class MysqliAdapter extends Adapter {
 
     /**
      * Remplaza los caracteres especiales en una cadena para usarla en una consulta, teniendo en cuenta el juego de caracteres utilizado
-     * 
+     *
      * @param string $escapestr Cadena a verificar
      * @return string Cadena segura para la consulta
      */
@@ -119,32 +119,32 @@ class MysqliAdapter extends Adapter {
 
     /**
      * Devuelve una cadena a partir de un objeto, para poder almacenarlo en la base de datos
-     * 
+     *
      * @param mixed $object Objeto a verificar
      * @param string $type (Opcional) Tipo de dato que se desea guardar
      * @return string Cadena segura para la consulta
      * @throws ArgumentOutOfRangeException Si el objeto no se puede procesar;
      */
     public function format($object, string $type = null) : string {
-        if($object === null) {
-            if($type == self::TYPE_NOT_NULL) {
+        if ($object === null) {
+            if ($type == self::TYPE_NOT_NULL) {
                 return "''";
             } else {
                 return 'NULL';
             }
-        } elseif(is_a($object, 'DateTime')) {
-            if($type == self::TYPE_DATE) {
-                return "'" . $object->format(self::FORMAT_DATE) . "'"; 
+        } elseif (is_a($object, 'DateTime')) {
+            if ($type == self::TYPE_DATE) {
+                return "'" . $object->format(self::FORMAT_DATE) . "'";
             } elseif ($type == self::TYPE_TIME) {
                 return "'" . $object->format(self::FORMAT_TIME) . "'";
             } else {
                 return "'" . $object->format(self::FORMAT_DATETIME) . "'";
             }
-        } elseif(is_int($object)) {
+        } elseif (is_int($object)) {
             return strval($object);
-        } elseif(is_string($object)) {
+        } elseif (is_string($object)) {
             return "'" . $this->con->real_escape_string($object) . "'";
-        } elseif(is_object($object)) {
+        } elseif (is_object($object)) {
             return "'" . $this->con->real_escape_string($object->__toString()) . "'";
         }
         require_once 'System/ArgumentOutOfRangeException.php';
@@ -157,7 +157,7 @@ class MysqliAdapter extends Adapter {
      * @return void
      */
     public function dispose() : void {
-        if(!$this->disposed) {
+        if (!$this->disposed) {
             mysqli_close($this->con);
         }
         $this->disposed = true;

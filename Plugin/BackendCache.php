@@ -28,7 +28,6 @@ class BackendCache extends Configurable implements PluginInterface {
     /// Constructor
     public function __construct(array $options) {
         require_once 'Kansas/Cache.php';
-        require_once 'Kansas/Cache/CacheInterface.php';
         parent::__construct($options);
         $this->caches['.'] = Cache::Factory( // Creamos el almacenamiento de cache
             $this->options['cache_type'],
