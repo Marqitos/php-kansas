@@ -32,13 +32,13 @@ class Token extends Configurable implements PluginInterface {
 
     private $router;
 
-	// Miembros de System\Configurable\ConfigurableInterface
+    // Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
         return [
             'device'    => false,
             'exp'       => 15 * 24 * 60 * 60, // 15 días
             'secret'    => false,
-            'signer'    => 'HS256', 
+            'signer'    => 'HS256',
             'domain'    => '',
             'iss'       => $_SERVER['SERVER_NAME'],
             'session'   => null,
@@ -61,17 +61,17 @@ class Token extends Configurable implements PluginInterface {
         require_once 'Lcobucci/JWT/Parser.php';
         $parser = new Parser();
         $token = $parser->parse($tokenString);
-        if($this->options['secret']) { // Si está firmado, comprobamos la firma conforme el algoritmo de firma
+        if ($this->options['secret']) { // Si está firmado, comprobamos la firma conforme el algoritmo de firma
             $alg        = $token->getHeader('alg');
-            if(!self::loadAlg($alg) ||
+            if (!self::loadAlg($alg) ||
                !verifyToken($token, $this->options['secret'])) {
                 return false;
             }
         }
-        if($this->options['device'] === true &&
+        if ($this->options['device'] === true &&
            $token->hasClaim('dev')) { // Comprobar dispositivo
             $hexDevice = self::getDevice();
-            if(hex2bin($hexDevice) != hex2bin($token->getClaim('dev'))) {
+            if (hex2bin($hexDevice) != hex2bin($token->getClaim('dev'))) {
                 return false;
             }
         }
@@ -91,7 +91,7 @@ class Token extends Configurable implements PluginInterface {
             'iat'   => time(),
             'exp'   => time() + $this->options['exp']
         ];
-        if(isset($data['user'])) {
+        if (isset($data['user'])) {
             $tokenData['sub'] = ($data['user'] instanceof Guid)
                 ? $data['user']->getHex()
                 : $data['user'];
@@ -103,7 +103,7 @@ class Token extends Configurable implements PluginInterface {
         $provider->saveToken($token);
         $id         = new Guid($token->getClaim('jti'));
 
-        if($this->options['secret']) { // Devuelve un enlace firmado
+        if ($this->options['secret']) { // Devuelve un enlace firmado
             $signature = explode('.', (string) $token)[2];
             return $_SERVER['SERVER_NAME'] . '/token/' . $id->getHex() . '/' . $signature;
         }
@@ -117,17 +117,17 @@ class Token extends Configurable implements PluginInterface {
             'iat'   => time(),
             'exp'   => time() + $this->options['exp']
         ], $data);
-        if(isset($data['exp']) &&
+        if (isset($data['exp']) &&
            $data['exp'] === false) {
             unset($data['exp']);
         }
-        if($device === null) {
+        if ($device === null) {
             $device = $this->options['device'];
         }
-        if($device === true) {
+        if ($device === true) {
             global $environment;
             require_once 'Kansas/Request/getTrailData.php';
-			$request    = $environment->getRequest();
+            $request    = $environment->getRequest();
             $userAgent  = getTrailData($request)['userAgent'];
             $data['dev']=  md5($userAgent); // guardar información del dispositivo
         }
@@ -137,8 +137,8 @@ class Token extends Configurable implements PluginInterface {
     public function updateToken(JWToken $token, array $changes) {
         $claims = $token->getClaims();
         $data = [];
-        foreach($claims as $claim) {
-            if(isset($changes[$claim->getName()])) {
+        foreach ($claims as $claim) {
+            if (isset($changes[$claim->getName()])) {
                 $data[$claim->getName()] = $changes[$claim->getName()];
                 unset($changes[$claim->getName()]);
             } else {
@@ -153,11 +153,11 @@ class Token extends Configurable implements PluginInterface {
         global $application;
         require_once 'Lcobucci/JWT/Builder.php';
         $builder = new Builder();
-        foreach($data as $claim => $value) {
+        foreach ($data as $claim => $value) {
             $builder->withClaim($claim, $value);
         }
-        if($this->options['secret']) { // Firma el token mediante el algoritmo solicitado
-            if(self::loadAlg($this->options['signer'])) {
+        if ($this->options['secret']) { // Firma el token mediante el algoritmo solicitado
+            if (self::loadAlg($this->options['signer'])) {
                 $token = buildToken($builder, $this->options['secret']);
             } else {
                 throw new OutOfBoundsException('El algoritmo de firma no es soportado');
@@ -165,7 +165,7 @@ class Token extends Configurable implements PluginInterface {
         } else {
             $token = $builder->getToken();
         }
-        if(isset($data['jti'])) { // Si tiene un Id, lo guardamos en la base de datos
+        if (isset($data['jti'])) { // Si tiene un Id, lo guardamos en la base de datos
             $provider = $application->getProvider('token');
             $provider->saveToken($token);
         }
@@ -173,7 +173,7 @@ class Token extends Configurable implements PluginInterface {
     }
 
     public function getRouter() {
-        if(!isset($this->router)) {
+        if (!isset($this->router)) {
             require_once 'Kansas/Router/Token.php';
             $this->router = new Router($this, $this->options);
         }
@@ -195,8 +195,8 @@ class Token extends Configurable implements PluginInterface {
     public static function authenticate($idUser) {
         global $application;
         $authPlugin         = $application->getPlugin('Auth');
-        $localizationPlugin	= $application->getPlugin('Localization');
-        $usersProvider 		= $application->getProvider('Users');
+        $localizationPlugin = $application->getPlugin('Localization');
+        $usersProvider      = $application->getProvider('Users');
         $locale             = $localizationPlugin->getLocale();
         $user               = $usersProvider->getById($idUser, $locale['lang'], $locale['country']);
         $authPlugin->setIdentity($user);
@@ -218,14 +218,14 @@ class Token extends Configurable implements PluginInterface {
     }
 
     /**
-     * Carga las funciones de firma y validación 
+     * Carga las funciones de firma y validación
      *
      * @param string $alg
      * @return bool true si se han cargado las funciones con exito
      */
     public static function loadAlg(string $alg) : bool {
-        if(function_exists('Kansas\Plugin\Token\verifyToken') ||
-           function_exists('Kansas\Plugin\Token\buildToken')) {
+        if (function_exists('Kansas\Plugin\Token\verifyToken') ||
+            function_exists('Kansas\Plugin\Token\buildToken')) {
             var_dump('existe');
             die;
             return false;
@@ -234,14 +234,14 @@ class Token extends Configurable implements PluginInterface {
         $handler    = opendir($dir);
         $file       = null;
         while (($file = readdir($handler)) !== false) {
-            if(filetype($dir . $file) == 'file' &&
+            if (filetype($dir . $file) == 'file' &&
                basename($file, '.php') == $alg) {
                 break;
-            }   
+            }
         }
         closedir($handler);
 
-        if($file) {
+        if ($file) {
             require_once $dir . $file;
             return true;
         }

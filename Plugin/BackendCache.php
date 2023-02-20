@@ -50,13 +50,13 @@ class BackendCache extends Configurable implements PluginInterface {
     }
   
     public function getCache(string $category = '.', string $cacheType = null, array $cacheOptions = []) {
-        if(!isset($this->caches[$category])) {
-            if(empty($cacheType)) {
+        if (!isset($this->caches[$category])) {
+            if (empty($cacheType)) {
                 $cacheType = $this->options['cache_type'];
             }
             $cacheOptions = array_merge($this->options['cache_options'], $cacheOptions);
             $cacheOptions['file_name_prefix'] = $category;
-            $this->cache[$category] = Cache::Factory( // Creamos el almacenamiento de cache
+            $this->caches[$category] = Cache::Factory( // Creamos el almacenamiento de cache
                 $cacheType,
                 $cacheOptions
             );
@@ -96,7 +96,7 @@ class BackendCache extends Configurable implements PluginInterface {
     
     /**
      * Devuelve un id para identificar la llamada a una función con unos parámetros específicos
-     * 
+     *
      * @param array $args Lista de argumentos originales de la función
      * @param string $functionName Nombre de la función
      * @param string $className Nombre de la clase a la que pertenece la función, recomendable con su espacio de nombres. (Opcional)
@@ -113,7 +113,7 @@ class BackendCache extends Configurable implements PluginInterface {
     /**
      * Recupera de cache el valor identificado por una función y sus parámetros.
      * Para uso solamente con funciones puras, sin efectos secundarios
-     * 
+     *
      * @param array $args Lista de argumentos originales de la función
      * @param string $functionName Nombre de la función
      * @param mixed &$data Parámetro de salida donde se almacenan los datos obtenidos de caché
@@ -122,7 +122,7 @@ class BackendCache extends Configurable implements PluginInterface {
      */
     public function memoize(array $args, string $functionName, &$data, string $className = null) : bool {
         $key    = self::cacheId($args, $functionName, $className);
-        if($this->caches['.']->test($key)) {
+        if ($this->caches['.']->test($key)) {
             $data = unserialize($this->caches['.']->load($key));
             return true;
         }
@@ -132,7 +132,7 @@ class BackendCache extends Configurable implements PluginInterface {
     /**
      * Almacena en cache el valor relativo a una función y sus parámetros.
      * Para uso solamente con funciones puras, sin efectos secundarios
-     * 
+     *
      */
     public function memoized(array $args, string $functionName, $data, string $className = null, array $tags = []) {
         $key    = self::cacheId($args, $functionName, $className);

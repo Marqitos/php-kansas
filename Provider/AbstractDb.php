@@ -9,6 +9,7 @@
  */
 
 namespace Kansas\Provider;
+
 use function boolval;
 use function floatval;
 use function intval;
@@ -23,7 +24,7 @@ abstract class AbstractDb {
 	 * usando la configuración de conexión definida por la aplicación,
 	 * y el cache en caso de estar configurado
 	 */
-	protected function __construct() {
+	public function __construct() {
 		global $application;
 		$this->db = $application->getDb();
 		$this->cache = $application->hasPlugin('BackendCache');

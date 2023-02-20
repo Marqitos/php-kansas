@@ -40,7 +40,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
         global $application;
 		parent::__construct($options);
 
-        if($this->options['log_errors']) { // Activo el registro de eventos de errores
+        if ($this->options['log_errors']) { // Activo el registro de eventos de errores
             ini_set('display_errors', '1');
             ini_set('display_startup_errors', '1');
             error_reporting($this->options['error_level']);
@@ -71,58 +71,58 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
     // Eventos de errores
     public function errorHandler(int $errorNumber, $errorMsg, $errorFile, $errorLine) {
         $type = null;
-        if((E_USER_DEPRECATED & $errorNumber) == E_USER_DEPRECATED) {
+        if ((E_USER_DEPRECATED & $errorNumber) == E_USER_DEPRECATED) {
             $type = 'E_USER_DEPRECATED';
         }
-        if((E_DEPRECATED & $errorNumber) == E_DEPRECATED) {
+        if ((E_DEPRECATED & $errorNumber) == E_DEPRECATED) {
             $type = 'E_DEPRECATED';
         }
-        if(E_RECOVERABLE_ERROR & $errorNumber == E_RECOVERABLE_ERROR) {
+        if (E_RECOVERABLE_ERROR & $errorNumber == E_RECOVERABLE_ERROR) {
             $type = 'E_RECOVERABLE_ERROR';
         }
-        if(E_STRICT & $errorNumber == E_STRICT) {
+        if (E_STRICT & $errorNumber == E_STRICT) {
             $type = 'E_STRICT';
         }
-        if(E_USER_NOTICE & $errorNumber == E_USER_NOTICE) {
+        if (E_USER_NOTICE & $errorNumber == E_USER_NOTICE) {
             $type = 'E_USER_NOTICE';
         }
-        if(E_USER_WARNING & $errorNumber == E_USER_WARNING) {
+        if (E_USER_WARNING & $errorNumber == E_USER_WARNING) {
             $type = 'E_USER_WARNING';
         }
-        if(E_USER_ERROR & $errorNumber == E_USER_ERROR) {
+        if (E_USER_ERROR & $errorNumber == E_USER_ERROR) {
             $type = 'E_USER_ERROR';
         }
-        if(E_USER_WARNING & $errorNumber == E_USER_WARNING) {
+        if (E_USER_WARNING & $errorNumber == E_USER_WARNING) {
             $type = 'E_USER_WARNING';
         }
-        if(E_COMPILE_WARNING & $errorNumber == E_COMPILE_WARNING) {
+        if (E_COMPILE_WARNING & $errorNumber == E_COMPILE_WARNING) {
             $type = 'E_COMPILE_WARNING';
         }
-        if(E_COMPILE_ERROR & $errorNumber == E_COMPILE_ERROR) {
+        if (E_COMPILE_ERROR & $errorNumber == E_COMPILE_ERROR) {
             $type = 'E_COMPILE_ERROR';
         }
-        if(E_CORE_WARNING & $errorNumber == E_CORE_WARNING) {
+        if (E_CORE_WARNING & $errorNumber == E_CORE_WARNING) {
             $type = 'E_CORE_WARNING';
         }
-        if(E_CORE_ERROR & $errorNumber == E_CORE_ERROR) {
+        if (E_CORE_ERROR & $errorNumber == E_CORE_ERROR) {
             $type = 'E_CORE_ERROR';
         }
-        if(E_NOTICE & $errorNumber == E_NOTICE) {
+        if (E_NOTICE & $errorNumber == E_NOTICE) {
             $type = 'E_NOTICE';
         }
-        if(E_PARSE & $errorNumber == E_PARSE) {
+        if (E_PARSE & $errorNumber == E_PARSE) {
             $type = 'E_PARSE';
         }
-        if(E_WARNING & $errorNumber == E_WARNING) {
+        if (E_WARNING & $errorNumber == E_WARNING) {
             $type = 'E_WARNING';
         }
-        if(E_ERROR & $errorNumber == E_ERROR) {
+        if (E_ERROR & $errorNumber == E_ERROR) {
             $type = 'E_ERROR';
         }
-        if(E_ALL & $errorNumber == E_ALL) {
+        if (E_ALL & $errorNumber == E_ALL) {
             $type = 'E_ALL';
         }
-        if($type == null) {
+        if ($type == null) {
             return;
         }
 
@@ -149,16 +149,20 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
 
     public function shutdown() {
         if ($error = error_get_last()) {
-            $this->errorHandler($error['type'], $error['message'],
-                                $error['file'], $error['line']);
+            $this->errorHandler(
+                $error['type'],
+                $error['message'],
+                $error['file'],
+                $error['line']
+            );
         }
     }
 
     public function getLineFromFile($file, $lineNumber)	{
         $line = null;
-        if(file_exists($file)) {
+        if (file_exists($file)) {
             $f = fopen($file, 'r');
-            if($f) {
+            if ($f) {
                 $count = 1;
                 while (($line = fgets($f)) !== false) {
                     if ($count == $lineNumber) {
@@ -189,7 +193,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
 
     public function log(string $level, $message, array $context = []) {
         global $environment;
-        if($level == LogLevel::ERROR &&
+        if ($level == LogLevel::ERROR &&
            is_string($message) &&
            isset($context['exception']) &&
            is_a($context['exception'], 'Throwable')) { // Codigo especifico para registrar errores
@@ -205,7 +209,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
         if (gettype($message) == 'NULL') {
             $message = 'NULL';
         }
-        if(!empty($context)) {
+        if (!empty($context)) {
             require_once 'System/String/interpolate.php';
             $message = StringInterpolate($message, $context);
         }

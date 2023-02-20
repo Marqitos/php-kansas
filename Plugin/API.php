@@ -28,21 +28,21 @@ class API extends Configurable implements RouterPluginInterface {
     const METHOD_ALL        = 'ALL';
 
     /// Constructor
-	public function __construct(array $options, $object = null) {
+    public function __construct(array $options, $object = null) {
         global $application;
         parent::__construct($options);
-        if($object === null) {
+        if ($object === null) {
             $object = $this;
         }
-		$application->registerCallback(Application::EVENT_PREINIT, [$object, "appPreInit"]);
-	}
+        $application->registerCallback(Application::EVENT_PREINIT, [$object, "appPreInit"]);
+    }
  
-	// Miembros de System\Configurable\ConfigurableInterface
+    // Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
         return [
             'base_path' => '',
             'params'    => [
-                'cors'			=> [
+                'cors'          => [
                     'origin'        => '*',
                     'headers'       => '*',
                     'credentials'   => true]]];
@@ -50,20 +50,20 @@ class API extends Configurable implements RouterPluginInterface {
 
     // Miembros de Kansas\Plugin\PluginInterface
     public function getVersion() : Version {
-		global $environment;
-		return $environment->getVersion();
-	}
+        global $environment;
+        return $environment->getVersion();
+    }
 
     // Miembros de Kansas\Router\RouterInterface
-	public function getRouter() : RouterInterface {
-		if($this->router == null) {
-			require_once 'Kansas/Router/API.php';
-			$this->router = new RouterAPI($this->options);
-		}
-		return $this->router;
-	}
+    public function getRouter() : RouterInterface {
+        if ($this->router == null) {
+            require_once 'Kansas/Router/API.php';
+            $this->router = new RouterAPI($this->options);
+        }
+        return $this->router;
+    }
 
-	public function appPreInit() : void { // añadir router
+    public function appPreInit() : void { // añadir router
         global $application;
         $application->setRouter($this->getRouter());
     }
