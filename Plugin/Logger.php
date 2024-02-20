@@ -28,15 +28,15 @@ class Logger extends Configurable implements PluginInterface, LoggerInterface {
     private $loggers = [];
 
     // Miembros de System\Configurable\ConfigurableInterface
-	public function getDefaultOptions(string $environment) : array {
+    public function getDefaultOptions(string $environment) : array {
         return [];
-	}
+    }
 
     // Miembros de PluginInterface
-	public function getVersion() : Version {
-		global $environment;
-		return $environment->getVersion();
-	}
+    public function getVersion() : Version {
+        global $environment;
+        return $environment->getVersion();
+    }
 
 
     // Miembros de Psr\Log\LoggerInterface

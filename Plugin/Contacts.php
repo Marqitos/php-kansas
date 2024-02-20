@@ -5,7 +5,7 @@ namespace Kansas\Plugin;
 use function explode;
 use function trim;
 /**
- * Proporciona metodos para trabajar con contactos
+ * Proporciona métodos para trabajar con contactos
  */
 class Contacts {
 
@@ -16,13 +16,15 @@ class Contacts {
      * @return mixed string con el nombre completo en caso de que lo tenga, false en caso contrario
      */
     public static function getCompleteName(array $contact) {
-        foreach($contact['contact'] as $property) {
-            if($property['key'] == 'N') {
+        $n = [];
+        foreach ($contact['contact'] as $property) {
+            if ($property['key'] == 'N') {
                 $n = explode(';', $property['value']);
                 break;
             }
         }
-        if($contact['kind'] == 'individual') {
+        if ($contact['kind'] == 'individual' &&
+            count($n) >= 3) {
             $name = trim($n[3] . ' ' . $n[1]); //Prefijos, Nombre
             $name .= ' ' . $n[2]; // Nombre adicionales
             $name = trim($name);
@@ -40,7 +42,7 @@ class Contacts {
      * @param array $contact
      * @return string con el nombre formateado
      */
-    public static function getFormatedName(array $contact) {
+    public static function getFormattedName(array $contact) {
         foreach($contact['contact'] as $property) {
             if($property['key'] == 'FN') {
                 return $property['value'];

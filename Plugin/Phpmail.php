@@ -23,14 +23,14 @@ require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Phpmail extends Configurable implements PluginInterface {
 
-	/// Constructor
-	public function __construct(array $options) {
+    /// Constructor
+    public function __construct(array $options) {
         require_once 'PHPMailer/PHPMailer/PHPMailer.php';
         require_once 'PHPMailer/PHPMailer/SMTP.php';
-		parent::__construct($options);
+        parent::__construct($options);
     }
   
-	// Miembros de System\Configurable\ConfigurableInterface    
+    // Miembros de System\Configurable\ConfigurableInterface    
     public function getDefaultOptions(string $environment) : array {
         switch ($environment) {
         case 'production':

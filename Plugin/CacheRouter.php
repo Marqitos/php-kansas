@@ -38,8 +38,8 @@ class CacheRouter extends Configurable implements PluginInterface {
   
     /// Miembros de PluginInterface
     public function getVersion() : Version {
-		global $environment;
-		return $environment->getVersion();
+        global $environment;
+        return $environment->getVersion();
     }
   
     public function getCache() {
@@ -84,5 +84,5 @@ class CacheRouter extends Configurable implements PluginInterface {
     }
   
 }
-		
-	
+        
+    

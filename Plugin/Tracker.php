@@ -31,43 +31,43 @@ use function serialize;
 // Tracker basado en bbclone
 class Tracker extends Configurable implements PluginInterface {
 
-	private $trail;
-	private $router;
+    private $trail;
+    private $router;
 
-	/// Constructor
-	public function __construct(array $options) {
-		global $application;
-		parent::__construct($options);
-		$headers = getallheaders();
-		if(isset($headers['DNT']) && $headers['DNT'] == '1') {
-			$this->setOption('trail', false); // Deshabilita el almacenaje de datos en caso de que el header DO NOT TRACK esté activo
-		}
-		$application->registerCallback('preinit',       [$this, 'appPreInit']);
-		if($this->options['trail']) {
-			$application->registerCallback('route',       [$this, "appRoute"]);
-			$application->registerCallback('createView',  [$this, "appCreateView"]);
-			register_shutdown_function(                   [$this, 'shutdown']);
-			ignore_user_abort(true);
-			ini_set('display_errors', 0);
-		}
-	}
+    /// Constructor
+    public function __construct(array $options) {
+        global $application;
+        parent::__construct($options);
+        $headers = getallheaders();
+        if(isset($headers['DNT']) && $headers['DNT'] == '1') {
+            $this->setOption('trail', false); // Deshabilita el almacenaje de datos en caso de que el header DO NOT TRACK esté activo
+        }
+        $application->registerCallback('preinit',         [$this, 'appPreInit']);
+        if($this->options['trail']) {
+            $application->registerCallback('route',       [$this, "appRoute"]);
+            $application->registerCallback('createView',  [$this, "appCreateView"]);
+            register_shutdown_function(                   [$this, 'shutdown']);
+            ignore_user_abort(true);
+            ini_set('display_errors', 0);
+        }
+    }
 
-	/// Miembros de Kansas_Module_Interface
-	public function getDefaultOptions(string $environment) : array {
-		switch ($environment) {
-		case 'production':
-		case 'development':
-		case 'test':
-		return [
-			'trail'          => true,
-			'request_type'   => 'HttpRequest',
-			'response_type'  => 'resource',
-			'remote_plugin'  => null];
-		default:
-			require_once 'System/NotSupportedException.php';
-			throw new NotSupportedException("Entorno no soportado [$environment]");
-		}
-	}
+    /// Miembros de Kansas_Module_Interface
+    public function getDefaultOptions(string $environment) : array {
+        switch ($environment) {
+        case 'production':
+        case 'development':
+        case 'test':
+        return [
+            'trail'          => true,
+            'request_type'   => 'HttpRequest',
+            'response_type'  => 'resource',
+            'remote_plugin'  => null];
+        default:
+            require_once 'System/NotSupportedException.php';
+            throw new NotSupportedException("Entorno no soportado [$environment]");
+        }
+    }
 
     public function getVersion() : Version {
         global $environment;
@@ -84,23 +84,23 @@ class Tracker extends Configurable implements PluginInterface {
         global $application;
         if(!isset($this->trail)) {
             $this->initialize();
-		}
+        }
         if(isset($params['requestType'])) { // Obtenemos el tipo de request
             $this->trail['requestType'] = $params['requestType'];
-		}
+        }
         if(isset($params['identity'])) {
             $identity = $params['identity']; // Obtenemos los datos de usuario y sesión
-		}
+        }
         if($authPlugin = $application->hasPlugin('auth')) {
             $session = $authPlugin->getSession();
             if(!isset($identity)) {
                 $identity = $session->getIdentity();
-			}
+            }
             $this->trail['session'] = $session->getId();
         }
         if($identity) {
             $this->trail['user'] = $identity['id'];
-		}
+        }
         return [ // Devolvemos los datos de rastreo
             'trail' => $this->trail
         ];
@@ -109,7 +109,7 @@ class Tracker extends Configurable implements PluginInterface {
     public function appCreateView($view) {
         if(!isset($this->trail)) {
             $this->initialize();
-		}
+        }
         $this->trail['responseType'] = 'page';
     }
 
@@ -126,11 +126,11 @@ class Tracker extends Configurable implements PluginInterface {
         global $environment;
         if(!isset($this->trail)) {
             $this->initialize();
-		}
+        }
         $error = error_get_last();
         if($error !== null) {
             $this->trail['lastError'] = $error;
-		}
+        }
         $this->trail['executionTime'] = $environment->getExecutionTime();
         $this->saveTrailData();
     }
@@ -145,33 +145,33 @@ class Tracker extends Configurable implements PluginInterface {
         require_once 'Kansas/Environment.php';
         $trackPath = $environment->getSpecialFolder(Environment::SF_TRACK);
         $trail = $this->trail;
-        $modifyHits = function($read) use ($trail) { // Funcion lambda de modificar archivo de solicitudes
+        $modifyHits = function($read) use ($trail) { // Función lambda de modificar archivo de solicitudes
             $hits = unserialize($read);
             if(!is_array($hits)) {
                 $hits = [];
-			}
+            }
             if($trail['responseType'] == 'page') {
                 echo "<!-- \n";
                 var_dump($trail);
                 echo " -->";
             }
             $hits[] = $trail;
-            return serialize($hits);                
+            return serialize($hits);
         };
-        $modifyIndex = function($read) use ($modifyHits, $trackPath) { // Funcion lambda de modificar archivo indice
+        $modifyIndex = function($read) use ($modifyHits, $trackPath) { // Función lambda de modificar archivo indice
             global $environment;
             $index = unserialize($read);
             if(!is_array($index)) {
                 $index = [];
-			}
+            }
             $c = 0;
             do {
                 $c++;
                 if(isset($index['hits-' . $c . '.ser'])) {
                     $count = $index['hits-' . $c . '.ser'];
-				} else {
+                } else {
                     $count = 0;
-				}
+                }
             } while($count > 99);
             $hitsFile = $environment->getFile($trackPath . 'hits-' . $c . '.ser'); // Guardar cambios de solicitud
             $hitsFile->modify($modifyHits);
@@ -189,7 +189,7 @@ class Tracker extends Configurable implements PluginInterface {
         if($useThis) {
             if(!isset($this->trail)) {
                 $this->initialize();
-			}
+            }
             $trail = $this->trail;
         }
         
@@ -209,11 +209,11 @@ class Tracker extends Configurable implements PluginInterface {
                 $userAgent,
                 $remote
             );
-		}
+        }
     }
 
     /**
-     * Obtiene el router que gestiona el acceso a los recursos para ilustrar las estadisticas de navegación
+     * Obtiene el router que gestiona el acceso a los recursos para ilustrar las estadísticas de navegación
      *
      * @return Kansas\Router\TrailResources
      */

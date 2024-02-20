@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /**
- * Proporciona metodos estaticos y tipados relativos a $application y $environment;
+ * Proporciona métodos estáticos y tipados relativos a $application y $environment;
  *
  * @package Kansas
  * @author Marcos Porto

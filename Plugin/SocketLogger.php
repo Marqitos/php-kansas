@@ -30,9 +30,9 @@ class SocketLogger extends Configurable implements PluginInterface, LoggerInterf
 
     private $maurina;
 
-	public function __construct(array $options) {
+    public function __construct(array $options) {
         global $application;
-		parent::__construct($options);
+        parent::__construct($options);
         ini_set('display_errors', '1');
         ini_set('display_startup_errors', '1');
         error_reporting(E_ALL);
@@ -40,21 +40,21 @@ class SocketLogger extends Configurable implements PluginInterface, LoggerInterf
         $this->maurina = new MaurinaDebug($this->options['server_ip'], $this->options['server_port'], $this->options['tab_captions']);
         $logger = $application->getPlugin('Logger');
         $logger->addLogger($this);
-	}
+    }
 
-	// Miembros de System\Configurable\ConfigurableInterface
-	public function getDefaultOptions(string $environment) : array {
+    // Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions(string $environment) : array {
         return [
             'server_ip'     => '127.0.0.1', 
             'server_port'   => null, 
             'tab_captions'  => ['&Usuario', '&Errores', '&Solicitudes', '&Sesión']];
-	}
+    }
 
     // Miembros de PluginInterface
-	public function getVersion() : Version {
-		global $environment;
-		return $environment->getVersion();
-	}
+    public function getVersion() : Version {
+        global $environment;
+        return $environment->getVersion();
+    }
 
     public function trackError(Throwable $ex) {
         $this->maurina->exceptionHandler($ex);

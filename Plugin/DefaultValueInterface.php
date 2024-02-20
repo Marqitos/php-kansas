@@ -12,5 +12,5 @@ namespace Kansas\Plugin;
 
 interface DefaultValueInterface {
     public function getDefault(string $key);
-    public function tryGetDefault(string $key, &$value = null); // : bool;
+    public function tryGetDefault(string $key, &$value = null) : bool;
 }

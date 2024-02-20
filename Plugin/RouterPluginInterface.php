@@ -20,9 +20,9 @@ require_once 'Kansas/Router/RouterInterface.php';
  * Representa un plugin que tiene un router asociado
  */
 interface RouterPluginInterface extends PluginInterface {
-	/**
-	 * Obtiene el router asociado al plugin
-	 * @return RouterInterface Router asociado
-	 */
-	public function getRouter() : RouterInterface;
+    /**
+     * Obtiene el router asociado al plugin
+     * @return RouterInterface Router asociado
+     */
+    public function getRouter() : RouterInterface;
 }

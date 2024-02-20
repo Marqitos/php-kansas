@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * Plugin para el guardado de logs en disco
  *
@@ -38,7 +38,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
     /// Constructor
     public function __construct(array $options) {
         global $application;
-		parent::__construct($options);
+        parent::__construct($options);
 
         if ($this->options['log_errors']) { // Activo el registro de eventos de errores
             ini_set('display_errors', '1');
@@ -123,7 +123,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
             $type = 'E_ALL';
         }
         if ($type == null) {
-            return;
+            return false;
         }
 
         $message  = "<span style='color:red'>[$type] Line $errorLine in $errorFile</span><br />";
@@ -158,7 +158,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
         }
     }
 
-    public function getLineFromFile($file, $lineNumber)	{
+    public function getLineFromFile($file, $lineNumber) {
         $line = null;
         if (file_exists($file)) {
             $f = fopen($file, 'r');
@@ -175,7 +175,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
         return $line;
     }
 
-    public function writeError(string $message, $showTime = false, string $level = LogLevel::INFO)	{
+    public function writeError(string $message, $showTime = false, string $level = LogLevel::INFO) {
         global $environment;
         if ($showTime) {
             $time = "[".date('H:i:s') . ']';
@@ -194,9 +194,9 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
     public function log(string $level, $message, array $context = []) {
         global $environment;
         if ($level == LogLevel::ERROR &&
-           is_string($message) &&
-           isset($context['exception']) &&
-           is_a($context['exception'], 'Throwable')) { // Codigo especifico para registrar errores
+            is_string($message) &&
+            isset($context['exception']) &&
+            is_a($context['exception'], 'Throwable')) { // Código especifico para registrar errores
             $this->exceptionHandler($context['exception']);
         }
 
@@ -225,12 +225,11 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
         fclose($stderr);
     }
 
-	protected function formatDump($data) {
-		$data = htmlentities($data);
-		$data = str_replace("  ", "<span style='color:#fff'>__</span>", $data);
+    protected function formatDump($data) {
+        $data = htmlentities($data);
+        $data = str_replace("  ", "<span style='color:#fff'>__</span>", $data);
 
-		return $data;
-	}
-
+        return $data;
+    }
 
 }

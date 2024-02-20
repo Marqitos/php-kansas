@@ -12,7 +12,6 @@ namespace Kansas\Plugin;
 
 use Exception;
 use System\Configurable;
-use System\NotSupportedException;
 use System\Version;
 use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Plugin\PluginInterface;
@@ -41,15 +40,15 @@ class Digest extends Configurable implements PluginInterface, AuthService {
 
     private $nonce;
   
-	/// Constructor
-	public function __construct(array $options) {
-		global $application;
+    /// Constructor
+    public function __construct(array $options) {
+        global $application;
         $this->nonce = uniqid();
-		$application->registerCallback('preinit', [$this, "appPreInit"]);
-		parent::__construct($options);
-	}
+        $application->registerCallback('preinit', [$this, "appPreInit"]);
+        parent::__construct($options);
+    }
 
-	// Miembros de System\Configurable\ConfigurableInterface
+    // Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
             return [
                 'actions' => []];
@@ -58,7 +57,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
     public function getVersion() : Version {
         global $environment;
         return $environment->getVersion();
-    }	
+    }
     
 
     // Obtiene las acciones de autenticación del servicio
@@ -66,8 +65,8 @@ class Digest extends Configurable implements PluginInterface, AuthService {
         return $this->options['actions'];
     }
     // Obtiene el tipo de autenticación
-	public function getAuthType() {
-		return 'http';
+    public function getAuthType() {
+        return 'http';
     }
     // Obtiene el nombre del servicio de autenticación
     public function getName() {
@@ -106,15 +105,16 @@ class Digest extends Configurable implements PluginInterface, AuthService {
                 return $user;
             } catch(AuthException $ex) {
                 if($ex->getErrorCode() != AuthException::FAILURE_UNCATEGORIZED) {
-                // Registar evento de intento de inicio de sesión
+                // Registrar evento de intento de inicio de sesión
                 }
                 throw $ex;
             }
-                // Based on all the info we gathered we can figure out what the response should be
+
+            // Based on all the info we gathered we can figure out what the response should be
             // $A1 = md5("{$validUser}:{$realm}:{$validPass}");
-            $A1 = $digestParts['username'] == $this->_adminUsername 
-                ? $this->_adminA1 
-                : $this->_digest->getA1($this->_realm, $digestParts['username']); 
+            $A1 = $digestParts['username'] == $this->_adminUsername
+                ? $this->_adminA1
+                : $this->_digest->getA1($this->_realm, $digestParts['username']);
             if(!$A1) {
                 throw new AuthException(AuthException::FAILURE_CREDENTIAL_INVALID);
             } else {
@@ -163,11 +163,11 @@ class Digest extends Configurable implements PluginInterface, AuthService {
         // protect against missing data
         $needed_parts = [
             'nonce'     => 1,
-            'nc'        => 1, 
-            'cnonce'    => 1, 
-            'qop'       => 1, 
-            'username'  => 1, 
-            'uri'       => 1, 
+            'nc'        => 1,
+            'cnonce'    => 1,
+            'qop'       => 1,
+            'username'  => 1,
+            'uri'       => 1,
             'response'  => 1
         ];
         $data = [];
@@ -175,7 +175,9 @@ class Digest extends Configurable implements PluginInterface, AuthService {
         preg_match_all('@(\w+)=(?:(?:")([^"]+)"|([^\s,$]+))@', $digest, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $m) {
-            $data[$m[1]] = $m[2] ? $m[2] : $m[3];
+            $data[$m[1]] = $m[2]
+                ? $m[2]
+                : $m[3];
             unset($needed_parts[$m[1]]);
         }
 

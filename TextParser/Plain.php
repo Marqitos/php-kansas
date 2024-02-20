@@ -40,7 +40,7 @@ class Plain extends TextParserAbstract {
      */
     protected function run() {
         $this->paragraph();
-		$this->lineBreaks();
+        $this->lineBreaks();
     }
 
     /**

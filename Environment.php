@@ -46,38 +46,38 @@ require_once 'Kansas/Plugin/PluginInterface.php';
 class Environment {
   
     // Posibles valores de Status
-    const ENV_CONSTRUCTION	= 'construction';
-    const ENV_DEVELOPMENT 	= 'development';
-    const ENV_PRODUCTION	= 'production';
-    const ENV_TEST			= 'test';
+    const ENV_CONSTRUCTION  = 'construction';
+    const ENV_DEVELOPMENT   = 'development';
+    const ENV_PRODUCTION    = 'production';
+    const ENV_TEST          = 'test';
 
     // Posibles valores para SpecialFolder
-    const SF_PUBLIC 	= 0x0001;
-    const SF_HOME		= 0x0002;
-    const SF_LIBS		= 0x0004;
-    const SF_LAYOUT 	= 0x0008;
+    const SF_PUBLIC     = 0x0001;
+    const SF_HOME       = 0x0002;
+    const SF_LIBS       = 0x0004;
+    const SF_LAYOUT     = 0x0008;
     const SF_TEMP       = 0x0010;
     const SF_FILES	    = 0x0020;
-    const SF_THEMES 	= 0x0108;
+    const SF_THEMES     = 0x0108;
     const SF_CACHE	    = 0x0110;
-    const SF_COMPILE	= 0x0210;
-    const SF_SESSIONS	= 0x0310;
-    const SF_TRACK 	    = 0x0410;
-    const SF_ERRORS 	= 0x0510;
+    const SF_COMPILE    = 0x0210;
+    const SF_SESSIONS   = 0x0310;
+    const SF_TRACK      = 0x0410;
+    const SF_ERRORS     = 0x0510;
 
     protected static $instance;
     private $status;
     private $request;
     private $requestTime;
-    private $t_inicio;
+    private $tStart;
     private $version;
     private $phpVersion;
     private $specialFolders;
     private $fileClass      = 'System\IO\File\FileSystem';
     private $loaders        = [
         'controller'        => ['Kansas\\Controller\\'  => 'Kansas/Controller/'],
-        'plugin'            => ['Kansas\\Plugin\\'	    => 'Kansas/Plugin/'],
-        'provider'	        => []];
+        'plugin'            => ['Kansas\\Plugin\\'      => 'Kansas/Plugin/'],
+        'provider'          => []];
     private $specialFolderParts = [
         self::SF_PUBLIC     => '/../../public',
         self::SF_HOME       => '/../../..',
@@ -95,7 +95,7 @@ class Environment {
     
 
     protected function __construct(string $status, array $specialFolders) {
-        $this->t_inicio = microtime(true);
+        $this->tStart = microtime(true);
         $this->status = $status;
         $this->specialFolders = $specialFolders;
         foreach($specialFolders as $key => $value) {
@@ -128,10 +128,10 @@ class Environment {
             $serverParams = $this->getRequest()->getServerParams();
             if(isset($serverParams['REQUEST_TIME_FLOAT'])) {
                 $this->requestTime = $serverParams['REQUEST_TIME_FLOAT'];
-            } else if(isset($serverParams['REQUEST_TIME'])) {
+            } elseif (isset($serverParams['REQUEST_TIME'])) {
                 $this->requestTime = $serverParams['REQUEST_TIME'];
             } else {
-                $this->requestTime = $this->t_inicio;
+                $this->requestTime = $this->tStart;
             }
         }
         return $this->requestTime;
@@ -176,7 +176,7 @@ class Environment {
             require_once 'System/Localization/Resources.php';
             throw new ArgumentOutOfRangeException('specialFolder', SysResources::ARGUMENT_OUT_OF_RANGE_EXCEPTION_DEFAULT_MESSAGE, $specialFolder);
         }
-        if($specialFolder == self::SF_TEMP || 
+        if($specialFolder == self::SF_TEMP ||
             isset($tmpPart)) {
             $dir = $this->getTempDir($part);
             if(isset($tmpPart)) {
@@ -184,7 +184,7 @@ class Environment {
             }
         } elseif(isset($part)) {
             $dir = realpath($dir . $part);
-        } 
+        }
         if($dir) {
             return $dir . DIRECTORY_SEPARATOR;
         }
@@ -229,8 +229,8 @@ class Environment {
             yield sys_get_temp_dir();
         }
 
-        // Attemp to detect by creating a temporary file
-        $tempFile = tempnam(md5(uniqid((string)rand(), TRUE)), '');
+        // Attempt to detect by creating a temporary file
+        $tempFile = tempnam(md5(uniqid((string)rand(), true)), '');
         if ($tempFile) {
             $dir = realpath(dirname($tempFile));
             unlink($tempFile);
@@ -272,7 +272,7 @@ class Environment {
         return new $pluginClass($options);
     }
 
-    public function createProvider($providerName) { 
+    public function createProvider($providerName) {
         $providerClass = $this->getLoader('provider')->load($providerName);
         return new $providerClass();
     }
@@ -283,8 +283,9 @@ class Environment {
             throw new KeyNotFoundException();
         }
         if($this->loaders[$loaderName] instanceof PluginLoader) {
+            $loader = $this->loaders[$loaderName];
             foreach($options as $prefix => $path) {
-                $this->loaders[$loaderName]->addPrefixPath($prefix, realpath($path));
+                $loader->addPrefixPath($prefix, realpath($path));
             }
         } else {
             $this->loaders[$loaderName] = array_merge($this->loaders[$loaderName], $options);
