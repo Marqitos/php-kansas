@@ -120,7 +120,7 @@ abstract class Cache extends Configurable implements CacheInterface {
 					throw new ArgumentOutOfRangeException("Incorrect option name : $name");
 				}
 				$name = strtolower($name);
-				if (array_key_exists($name, $this->_directives)) {
+				if (isset($this->_directives[$name])) {
 					$this->_directives[$name] = $value;
 				}
 			}

@@ -11,7 +11,6 @@
 namespace Kansas\Http;
 
 use Kansas\Http\ServerRequest;
-use function array_key_exists;
 use function Kansas\Http\marshalHeadersFromSapi;
 use function Kansas\Http\marshalMethodFromSapi;
 use function Kansas\Http\marshalProtocolVersionFromSapi;
@@ -47,7 +46,7 @@ function currentServerRequest(array $server = null, array $query = null, array $
 		$headers = marshalHeadersFromSapi($server);
 
 		if(null === $cookies &&
-		   array_key_exists('cookie', $headers)) {
+		   isset($headers['cookie'])) {
 			require_once 'Kansas/Http/parseCookieHeader.php';
 			$cookies = parseCookieHeader($headers['cookie']);
 		}

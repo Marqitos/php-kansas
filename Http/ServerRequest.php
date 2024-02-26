@@ -13,7 +13,6 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Message\UriInterface;
 
-use function array_key_exists;
 use function is_array;
 use function array_map;
 use function array_merge;
@@ -254,11 +253,9 @@ class ServerRequest implements ServerRequestInterface {
      */
     public function getAttribute($attribute, $default = null)
     {
-        if (! array_key_exists($attribute, $this->attributes)) {
-            return $default;
-        }
-
-        return $this->attributes[$attribute];
+        return isset($this->attributes[$attribute])
+            ? $this->attributes[$attribute]
+            : $default;
     }
 
     /**

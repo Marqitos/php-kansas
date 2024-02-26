@@ -11,7 +11,6 @@ use InvalidArgumentException;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 
-use function array_key_exists;
 use function fclose;
 use function feof;
 use function fopen;
@@ -308,11 +307,10 @@ class Stream implements StreamInterface {
         }
 
         $metadata = stream_get_meta_data($this->resource);
-        if (! array_key_exists($key, $metadata)) {
-            return null;
-        }
 
-        return $metadata[$key];
+        return isset($metadata[$key])
+            ? $metadata[$key]
+            : null;
     }
 
     /**

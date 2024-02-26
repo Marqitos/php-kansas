@@ -10,7 +10,6 @@ namespace Kansas\Http;
 use InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
 
-use function array_key_exists;
 use function array_keys;
 use function count;
 use function explode;
@@ -558,7 +557,7 @@ class Uri implements UriInterface {
             return '';
         }
 
-        if (! array_key_exists($scheme, $this->allowedSchemes)) {
+        if (!isset($this->allowedSchemes[$scheme])) {
             throw new InvalidArgumentException(sprintf(
                 'Unsupported scheme "%s"; must be any empty string or in the set (%s)',
                 $scheme,

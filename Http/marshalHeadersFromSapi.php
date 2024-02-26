@@ -7,7 +7,6 @@
 
 namespace Kansas\Http;
 
-use function array_key_exists;
 use function strpos;
 use function strtolower;
 use function strtr;
@@ -27,7 +26,7 @@ function marshalHeadersFromSapi(array $server) {
 
             // We will not overwrite existing variables with the
             // prefixed versions, though
-            if (array_key_exists($key, $server)) {
+            if (isset($server[$key])) {
                 continue;
             }
         }
