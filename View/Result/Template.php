@@ -20,19 +20,23 @@ require_once 'Kansas/View/Template.php';
  * Representa una respuesta a una solicitud basada en una plantilla
  */
 class Template extends StringAbstract {
-		
-	private $template;
-	
-	/**
-	 * Crea una nueva instancia del objeto, especificando la plantilla, y el tipo de datos mime que se debe devolver
-	 */
-	public function __construct(DataTemplate $template, $mimeType) {
-		parent::__construct($mimeType);
-		$this->template	= $template;
-	}
-	
-	public function getResult(&$noCache) {
-		$noCache = true;
-		return $this->template->fetch();
-	}
+        
+  private $template;
+
+  /**
+   * Crea una nueva instancia del objeto, especificando la plantilla, y el tipo de datos mime que se debe devolver
+   */
+  public function __construct(DataTemplate $template, $mimeType) {
+    $dataContextMimeType = $template::getDatacontext('mimeType');
+    if ($dataContextMimeType) {
+      $mimeType = $dataContextMimeType;
+    }
+    parent::__construct($mimeType);
+    $this->template = $template;
+  }
+
+  public function getResult(&$noCache) {
+    $noCache = true;
+    return $this->template->fetch();
+  }
 }

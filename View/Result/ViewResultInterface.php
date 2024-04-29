@@ -11,13 +11,12 @@
 namespace Kansas\View\Result;
 
 /**
- * Representa una respuesta a una solicitud
- * @author Marcos
- *
- */
+  * Representa una respuesta a una solicitud
+  *
+  */
 interface ViewResultInterface {
-	/**
-	 * Ejecuta la respuesta de la solicitud
-	 */	
-	public function executeResult();
+  /**
+    * Ejecuta la respuesta de la solicitud
+    */
+  public function executeResult();
 }

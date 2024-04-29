@@ -15,43 +15,43 @@ require_once 'Kansas/TextParser/TextParserAbstract.php';
 
 class Plain extends TextParserAbstract {
 
-    /**
-     * @access public
-     * @param string $sText
-     */
-    public function __construct($sText) {
-        $this->sText = $sText;
-        parent::__construct();
-    }
+  /**
+    * @access public
+    * @param string $sText
+    */
+  public function __construct($sText) {
+    $this->sText = $sText;
+    parent::__construct();
+  }
 
-    /**
-     * @access public
-     * @return string The code parsed
-     */
-    public function __toString() {
-        return $this->sText;
-    }
+  /**
+    * @access public
+    * @return string The code parsed
+    */
+  public function __toString() {
+    return $this->sText;
+  }
 
-    /**
-     * Run the parse methods
-     *
-     * @access protected
-     * @return void
-     */
-    protected function run() {
-        $this->paragraph();
-        $this->lineBreaks();
-    }
+  /**
+    * Run the parse methods
+    *
+    * @access protected
+    * @return void
+    */
+  protected function run() : void {
+    $this->paragraph();
+    $this->lineBreaks();
+  }
 
-    /**
-     * Parse text and processing
-     *
-     * @access protected
-     * @return void
-     */
-    protected function lineBreaks() {
-        // Line breaks
-        $this->sText = nl2br($this->sText);
-    }
+  /**
+    * Parse text and processing
+    *
+    * @access protected
+    * @return void
+    */
+  protected function lineBreaks() : void {
+      // Line breaks
+      $this->sText = nl2br($this->sText);
+  }
 
 }

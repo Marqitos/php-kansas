@@ -15,7 +15,7 @@ use System\Configurable\ConfigurableInterface;
 require_once 'System/Configurable/ConfigurableInterface.php';
 
 interface RouterInterface extends ConfigurableInterface {
-	public function match();
-	public function assemble($data = [], $reset = false, $encode = false);
-	public function getBasePath();
+  public function getBasePath() : string;
+  public function match() : mixed;
+  public function assemble($data = [], $reset = false, $encode = false) : string;
 }

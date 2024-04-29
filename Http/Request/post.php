@@ -15,34 +15,42 @@ use function stream_context_create;
 /**
  * Realiza una peticion http, usando el metodo POST, y devuelve el resultado
  *
- * @param string $uri dirección donde realizar la petición http
- * @param array $post datos a incluir en la petición
+ * @param string $uri Dirección donde realizar la petición http
+ * @param array $post Datos a incluir en la petición
+ * @param string $headers (Opcional) Cabeceras para añadir a la petición
  * @return string resultado de la petición
  */
-function post($uri, array $post) {
-    $postData = http_build_query($post); // Crea la cadena de valores
-    if(function_exists('curl_init')) { // realiza la peticion mediante curl
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_URL => $uri,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $postData
-        ]);
-        $result = curl_exec($curl);
-        curl_close($curl);
-        if($result !== false) {
-            return $result;
-        }
+function post(string $uri, array $post, array $headers = []) : string {
+  $postData = http_build_query($post); // Crea la cadena de valores
+  if(function_exists('curl_init')) { // realiza la peticion mediante curl
+    $curl = curl_init();
+    curl_setopt_array($curl, [
+      CURLOPT_RETURNTRANSFER => 1,
+      CURLOPT_URL => $uri,
+      CURLOPT_POST => true,
+      CURLOPT_POSTFIELDS => $postData
+    ]);
+    if (!empty($headers)) {
+      curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
     }
-    // realiza la petición mediante un contexto http/post
-    $opts = [
-        'http'=> [
-            'method'  => 'POST',
-            'header'  => "Content-Type: application/x-www-form-urlencoded\r\n" .
-                         "Content-Length: " . strlen($postData) . "\r\n",
-            'content' => $postData
-    ]];
-    $context = stream_context_create($opts);
-    return file_get_contents($uri, false, $context);
+    $result = curl_exec($curl);
+    curl_close($curl);
+    if($result !== false) {
+      return $result;
+    }
+  }
+  // realiza la petición mediante un contexto http/post
+  $headers = array_merge($headers, [
+    'Content-Type: application/x-www-form-urlencoded',
+    'Content-Length: ' . strlen($postData)
+  ]);
+
+  $opts = [
+    'http'=> [
+      'method'  => 'POST',
+      'header'  => join("\r\n", $headers),
+      'content' => $postData
+  ]];
+  $context = stream_context_create($opts);
+  return @file_get_contents($uri, false, $context);
 }

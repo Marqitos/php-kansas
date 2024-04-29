@@ -4,7 +4,7 @@
  *
  * @package Kansas
  * @author Marcos Porto
- * @copyright Marcos Porto
+ * @copyright 2024, Marcos Porto
  * @since v0.4
  */
 
@@ -33,11 +33,11 @@ class File extends FileAbstract {
   private $eTag;
     
   public function __construct(string $filename, array $options = []) {
-    $this->filename	    = realpath($filename);
+    $this->filename     = realpath($filename);
     $this->download     = isset($options['download'])
                         ? $options['download']
                         : false;
-    $this->chunksize	= isset($options['chunksize'])
+    $this->chunksize    = isset($options['chunksize'])
                         ? $options['chunksize']
                         : false;
     $this->eTag         = isset($options['eTag'])
@@ -51,74 +51,74 @@ class File extends FileAbstract {
     }
   }
   
-    // Obtiene o establece el tipo de contenido de archivo	
-    public function getMimeType() : string {
-        if(empty($this->_mimeType)) {
-            if(class_exists("MIME_Type", false)) {
-                return MIME_Type::autoDetect($this->filename);
-            }
-            if(function_exists("finfo_open")) {
-                try {
-                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                    return finfo_file($finfo, $this->filename);
-                } finally {
-                    finfo_close($finfo);
-                }
-            }
+  // Obtiene o establece el tipo de contenido de archivo
+  public function getMimeType() : string {
+    if(empty($this->mimeType)) {
+      if(class_exists("MIME_Type", false)) {
+        return MIME_Type::autoDetect($this->filename);
+      }
+      if(function_exists("finfo_open")) {
+        try {
+          $finfo = finfo_open(FILEINFO_MIME_TYPE);
+          return finfo_file($finfo, $this->filename);
+        } finally {
+          finfo_close($finfo);
         }
-        return $this->_mimeType;
-    }  
-  
-    /**
-     * @inheritdoc
-     */
-    public function executeResult() {
-        $cnt        = 0;
-        $sendFile   = parent::sendHeaders($this->eTag);
-        if(!$sendFile) {
-            return $cnt;
-        }
-        
-        if($this->getUseXSendFile()) {
-            $filename = (strtolower(substr(php_uname('s'), 0, 3)) == 'win')
-                ? str_replace('\\', '/', $this->filename)
-                : $this->filename;
-            header("X-SENDFILE: " . $filename);
-        } else {
-            set_time_limit(0);
-            if($this->chunksize) {
-                $buffer = ''; 
-                $handle = fopen($this->filename, 'rb'); 
-                if($handle) {
-                    while (!feof($handle)) { 
-                        $buffer = fread($handle, $this->chunksize); 
-                        echo $buffer; 
-                        ob_flush(); 
-                        flush(); 
-                        $cnt += strlen($buffer); 
-                    } 
-                    $status = fclose($handle);
-                    if(!$status) {
-                        $cnt = false;
-                    }
-                } else {
-                    $cnt = false;
-                }
-            } else {
-               $cnt = readfile($this->filename);
-            }
-        }
+      }
+    }
+    return $this->mimeType;
+  }
+
+  /**
+    * @inheritdoc
+    */
+  public function executeResult() {
+    $cnt        = 0;
+    $sendFile   = parent::sendHeaders($this->eTag);
+    if(!$sendFile) {
         return $cnt;
     }
- 
-    /**
-     * Devuelve si está instalado el modulo X-Sendfile
-     *
-     * @return boolean
-     */
-    public function getUseXSendFile() {
-        return function_exists('apache_get_modules') && 
-               in_array('mod_xsendfile', apache_get_modules());
+    
+    if($this->getUseXSendFile()) {
+      $filename = (strtolower(substr(php_uname('s'), 0, 3)) == 'win')
+        ? str_replace('\\', '/', $this->filename)
+        : $this->filename;
+      header("X-SENDFILE: " . $filename);
+    } else {
+      set_time_limit(0);
+      if($this->chunksize) {
+        $buffer = '';
+        $handle = fopen($this->filename, 'rb');
+        if($handle) {
+          while (!feof($handle)) {
+            $buffer = fread($handle, $this->chunksize);
+            echo $buffer;
+            ob_flush();
+            flush();
+            $cnt += strlen($buffer);
+          }
+          $status = fclose($handle);
+          if(!$status) {
+            $cnt = false;
+          }
+        } else {
+          $cnt = false;
+        }
+      } else {
+        $cnt = readfile($this->filename);
+      }
     }
+    return $cnt;
+  }
+
+  /**
+    * Devuelve si está instalado el modulo X-Sendfile
+    *
+    * @return boolean
+    */
+  public function getUseXSendFile() {
+    return function_exists('apache_get_modules') &&
+           in_array('mod_xsendfile', apache_get_modules());
+  }
 
 }

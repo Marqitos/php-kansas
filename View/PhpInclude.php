@@ -1,4 +1,12 @@
-<?php
+<?php declare(strict_types = 1);
+/**
+ * Renderiza una plantilla, mediante un script en PHP
+ *
+ * @package Kansas
+ * @author Marcos Porto
+ * @copyright Marcos Porto
+ * @since v0.4
+ */
 
 namespace Kansas\View;
 

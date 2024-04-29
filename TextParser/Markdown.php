@@ -43,7 +43,7 @@ class Markdown extends TextParserAbstract {
      * @access protected
      * @return void
      */
-    protected function run() {
+    protected function run() : void {
         $this->strong();
         $this->italic();
         $this->code();
