@@ -27,17 +27,14 @@ require_once 'Kansas/TitleBuilder/TitleBuilderInterface.php';
  */
 class Template {
 
-  private $data;
-  private $script;
   private static $datacontext = [];
 
   /**
     * Crea una instancia del objeto, indicando el script a ejecutar y los datos con los que debe rellenar la plantilla
     */
-  public function __construct(string $script, array $data) {
-    $this->script   = $script;
-    $this->data     = $data;
-  }
+  public function __construct(
+    private string $script,
+    private array $data) {}
     
   /**
     * Renderiza la plantilla y devuelve el resultado como una cadena de texto

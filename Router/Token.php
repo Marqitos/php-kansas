@@ -25,12 +25,12 @@ class Token extends Router {
 
     protected $plugin;
 
-	public function __construct(TokenPlugin $plugin, array $options) {
+    public function __construct(TokenPlugin $plugin, array $options) {
         parent::__construct($options);
         $this->plugin = $plugin;
     }
 
-	// Miembros de System\Configurable\ConfigurableInterface
+    // Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
         switch ($environment) {
             case 'production':
@@ -47,8 +47,8 @@ class Token extends Router {
     }
 
     /// Miembros de Kansas\Router
-	public function match() {
-		$path = self::getPath($this);
+    public function match() {
+        $path = self::getPath($this);
         if($path === false) {
             return false;
         }

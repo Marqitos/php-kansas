@@ -53,31 +53,6 @@ class ServerRequest implements ServerRequestInterface {
     private $attributes = [];
 
     /**
-     * @var array
-     */
-    private $cookieParams = [];
-
-    /**
-     * @var null|array|object
-     */
-    private $parsedBody;
-
-    /**
-     * @var array
-     */
-    private $queryParams = [];
-
-    /**
-     * @var array
-     */
-    private $serverParams;
-
-    /**
-     * @var array
-     */
-    private $uploadedFiles;
-
-    /**
      * List of all registered headers, as key => array of values.
      *
      * @var array
@@ -90,11 +65,6 @@ class ServerRequest implements ServerRequestInterface {
      * @var array
      */
     protected $headerNames = [];
-
-    /**
-     * @var string
-     */
-    private $protocol = '1.1';
 
     /**
      * @var StreamInterface
@@ -132,16 +102,16 @@ class ServerRequest implements ServerRequestInterface {
      * @throws InvalidArgumentException for any invalid value.
      */
     public function __construct(
-        array $serverParams = [],
-        array $uploadedFiles = [],
+        private array $serverParams = [],
+        private array $uploadedFiles = [],
         $uri = null,
         $method = null,
         $body = 'php://input',
         array $headers = [],
-        array $cookies = [],
-        array $queryParams = [],
-        $parsedBody = null,
-        $protocol = '1.1'
+        private array $cookieParams = [],
+        private array $queryParams = [],
+        private null|array|object $parsedBody = null,
+        private string $protocol = '1.1'
     ) {
         $this->validateUploadedFiles($uploadedFiles);
 
@@ -150,12 +120,6 @@ class ServerRequest implements ServerRequestInterface {
         }
 
         $this->initialize($uri, $method, $body, $headers);
-        $this->serverParams  = $serverParams;
-        $this->uploadedFiles = $uploadedFiles;
-        $this->cookieParams  = $cookies;
-        $this->queryParams   = $queryParams;
-        $this->parsedBody    = $parsedBody;
-        $this->protocol      = $protocol;
     }
 
     /**

@@ -22,13 +22,13 @@ require_once 'Kansas/View/Result/ViewResultAbstract.php';
 class Content extends ViewResultAbstract {
     
   protected $download = false;
-  private $content;
-  private $etag;
 
-  public function __construct(string $content, string $mimeType, string $etag = null) {
+  public function __construct(
+    private string $content,
+    string $mimeType,
+    private string|null $etag = null
+  ) {
     parent::__construct($mimeType);
-    $this->content = $content;
-    $this->etag = $etag;
   }
 
   protected function sendHeaders($cache = false) : bool {

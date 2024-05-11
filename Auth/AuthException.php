@@ -58,11 +58,9 @@ class AuthException extends Exception {
      */
     const FAILURE_UNCATEGORIZED         = 512;
 
-    private $errorCode;
-
-    public function __construct($errorCode) {
-        $this->errorCode = $errorCode;
-    }
+    public function __construct(
+        private int $errorCode
+    ) {}
 
     public function getErrorCode() {
         return $this->errorCode;

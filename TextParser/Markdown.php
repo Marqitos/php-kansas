@@ -22,15 +22,6 @@ class Markdown extends TextParserAbstract {
 
     /**
      * @access public
-     * @param string The text formatted in Markdown
-     */
-    public function __construct($sText) {
-        $this->sText = $sText;
-        parent::__construct();
-    }
-
-    /**
-     * @access public
      * @return string The code parsed
      */
     public function __toString() {

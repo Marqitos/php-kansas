@@ -22,11 +22,9 @@ require_once 'Kansas/View/Result/ViewResultInterface.php';
 
 abstract class ViewResultAbstract implements ViewResultInterface {
     
-  protected $mimeType;
-  
-  protected function __construct(string $mimeType = '') {
-    $this->mimeType = $mimeType;
-  }
+  protected function __construct(
+    protected string $mimeType = ''
+  ) {}
   
   // Obtiene o establece el tipo de contenido de archivo
   public function getMimeType() : string {

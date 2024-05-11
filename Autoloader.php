@@ -56,11 +56,11 @@ class Autoloader extends Configurable implements SplInterface {
      *
      * @param  null|array|\Traversable $options
      */
-    public function __construct($options = []) {
+    public function __construct(array $options = []) {
         parent::__construct($options);
     }
 
-	// Miembros de System\Configurable\ConfigurableInterface
+    // Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(string $environment) : array {
         return [
             self::LOAD_NS         => [],

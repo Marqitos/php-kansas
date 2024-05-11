@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * Plugin para registrar los datos del dispositivo desde que se accede
  *

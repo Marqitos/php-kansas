@@ -65,7 +65,7 @@ class PluginLoader {
      * @param  string $prefix
      * @return string
      */
-    protected function _formatPrefix(string $prefix) : string {
+    protected function formatPrefix(string $prefix) : string {
         require_once 'Kansas/Autoloader.php';
         if($prefix == "") {
             return $prefix;
@@ -87,7 +87,7 @@ class PluginLoader {
      * @return PluginLoader
      */
     public function addPrefixPath(string $prefix, string $path) {
-        $prefix = $this->_formatPrefix($prefix);
+        $prefix = $this->formatPrefix($prefix);
         $path   = strtr(rtrim($path, '/\\') . DIRECTORY_SEPARATOR, '/\\', DIRECTORY_SEPARATOR);
 
         if (!isset($this->prefixToPaths[$prefix])) {
@@ -107,7 +107,7 @@ class PluginLoader {
      */
     public function getPaths(string $prefix = null) {
         if ((null !== $prefix) && is_string($prefix)) {
-            $prefix = $this->_formatPrefix($prefix);
+            $prefix = $this->formatPrefix($prefix);
 
             if (isset($this->prefixToPaths[$prefix])) {
                 return $this->prefixToPaths[$prefix];
@@ -127,7 +127,7 @@ class PluginLoader {
      */
     public function clearPaths($prefix = null) {
         if ((null !== $prefix) && is_string($prefix)) {
-            $prefix = $this->_formatPrefix($prefix);
+            $prefix = $this->formatPrefix($prefix);
 
             if (isset($this->prefixToPaths[$prefix])) {
                 unset($this->prefixToPaths[$prefix]);
@@ -151,7 +151,7 @@ class PluginLoader {
      * @throws KeyNotFoundException
      */
     public function removePrefixPath(string $prefix, $path = null) {
-			$prefix = $this->_formatPrefix($prefix);
+			$prefix = $this->formatPrefix($prefix);
 			$registry =& $this->prefixToPaths;
 
 			if (!isset($registry[$prefix])) {

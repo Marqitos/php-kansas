@@ -21,11 +21,11 @@ require_once 'System/Collections/KeyNotFoundException.php';
  */
  
 class NotCastException extends KeyNotFoundException {
-	
-	public function __construct(string $name, string $type) {
-		require_once 'Kansas/Localization/Resources.php';
-		$message = sprintf(Resources::LOADER_NOT_CAST_EXCEPTION_FORMAT, $name, $type);
-		parent::__construct($message);
-	}
-	
+    
+    public function __construct(string $name, string $type) {
+        require_once 'Kansas/Localization/Resources.php';
+        $message = sprintf(Resources::LOADER_NOT_CAST_EXCEPTION_FORMAT, $name, $type);
+        parent::__construct($message);
+    }
+    
 }

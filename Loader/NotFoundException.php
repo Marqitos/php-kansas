@@ -22,14 +22,14 @@ require_once 'System/Collections/KeyNotFoundException.php';
  */
 
 class NotFoundException extends KeyNotFoundException {
-	
-	public function __construct(string $name, array $registry) {
-		require_once 'Kansas/Localization/Resources.php';
-		$message = sprintf(Resources::LOADER_NOT_FOUNT_EXCEPTION_FORMAT, $name);
-		foreach ($registry as $prefix => $paths) {
-			$message .= "\n$prefix: " . implode(PATH_SEPARATOR, $paths);
-		}
-		parent::__construct($message);
-	}
-	
+    
+    public function __construct(string $name, array $registry) {
+        require_once 'Kansas/Localization/Resources.php';
+        $message = sprintf(Resources::LOADER_NOT_FOUNT_EXCEPTION_FORMAT, $name);
+        foreach ($registry as $prefix => $paths) {
+            $message .= "\n$prefix: " . implode(PATH_SEPARATOR, $paths);
+        }
+        parent::__construct($message);
+    }
+    
 }

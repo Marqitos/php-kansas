@@ -21,15 +21,6 @@ class BbCode extends TextParserAbstract {
 
     /**
      * @access public
-     * @param string $sText
-     */
-    public function __construct($sText) {
-        $this->sText = $sText;
-        parent::__construct();
-    }
-
-    /**
-     * @access public
      * @return string The code parsed
      */
     public function __toString() {
@@ -42,7 +33,7 @@ class BbCode extends TextParserAbstract {
      * @access protected
      * @return void
      */
-    protected function run() {
+    protected function run() :void {
         $this->paragraph();
         $this->parse();
     }

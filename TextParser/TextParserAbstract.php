@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * @title            Code Abstract Class
  * @desc             The Prototype for the extends code classes.
@@ -19,15 +19,11 @@ use function str_replace;
 abstract class TextParserAbstract {
 
   /**
-    * @access protected
-    * @var string $sText
-    */
-  protected $sText;
-
-  /**
     * @access public
     */
-  public function __construct() {
+  public function __construct(
+    protected string $sText
+  ) {
     $this->sanitize();
     $this->convert();
     $this->run();
@@ -83,4 +79,5 @@ abstract class TextParserAbstract {
     * @return void
     */
   abstract protected function run() : void;
+
 }

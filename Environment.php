@@ -67,13 +67,11 @@ class Environment {
   const SF_V_CACHE    = 0x0610;
 
   protected static $instance;
-  private $status;
   private $request;
   private $requestTime;
   private $tStart;
   private $version;
   private $phpVersion;
-  private $specialFolders;
   private $fileClass      = 'System\IO\File\FileSystem';
   private $loaders        = [
     'controller'        => ['Kansas\\Controller\\'  => 'Kansas/Controller/'],
@@ -95,15 +93,11 @@ class Environment {
     self::SF_ERRORS     => '/log/errors'];
   private static $apacheRequestHeaders = 'apache_request_headers';
 
-  protected function __construct(string $status, array $specialFolders) {
+  protected function __construct(
+    private string $status,
+    private array $specialFolders
+  ) {
     $this->tStart = microtime(true);
-    $this->status = $status;
-    $this->specialFolders = $specialFolders;
-    foreach($specialFolders as $key => $value) {
-      if($value === false) {
-        unset($this->specialFolders[$key]);
-      }
-    }
     $this->version = new Version('0.5');
   }
 

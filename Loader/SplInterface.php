@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * @see       https://github.com/zendframework/zend-loader for the canonical source repository
  */
@@ -21,7 +21,7 @@ interface SplInterface extends ConfigurableInterface {
      *
      * @param  null|array|Traversable $options
      */
-    public function __construct($options = []);
+    public function __construct(array $options = []);
 
     /**
      * Autoload a class

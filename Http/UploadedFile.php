@@ -1,11 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @see       https://github.com/zendframework/zend-diactoros for the canonical source repository
  * @copyright Copyright (c) 2015-2018 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   https://github.com/zendframework/zend-diactoros/blob/master/LICENSE.md New BSD License
  */
-
-declare(strict_types=1);
 
 namespace Kansas\Http;
 
@@ -20,44 +18,19 @@ use function fclose;
 use function fopen;
 use function fwrite;
 use function is_dir;
-use function is_int;
 use function is_resource;
 use function is_string;
 use function is_writable;
 use function move_uploaded_file;
-use function sprintf;
 use function strpos;
 
 use const PHP_SAPI;
-use const UPLOAD_ERR_CANT_WRITE;
-use const UPLOAD_ERR_EXTENSION;
-use const UPLOAD_ERR_FORM_SIZE;
-use const UPLOAD_ERR_INI_SIZE;
-use const UPLOAD_ERR_NO_FILE;
-use const UPLOAD_ERR_NO_TMP_DIR;
 use const UPLOAD_ERR_OK;
-use const UPLOAD_ERR_PARTIAL;
-
 
 require_once 'Psr/Http/Message/StreamInterface.php';
 require_once 'Psr/Http/Message/UploadedFileInterface.php';
 
 class UploadedFile implements UploadedFileInterface {
-
-    /**
-     * @var string|null
-     */
-    private $clientFilename;
-
-    /**
-     * @var string|null
-     */
-    private $clientMediaType;
-
-    /**
-     * @var int
-     */
-    private $error;
 
     /**
      * @var null|string
@@ -68,11 +41,6 @@ class UploadedFile implements UploadedFileInterface {
      * @var bool
      */
     private $moved = false;
-
-    /**
-     * @var int
-     */
-    private $size;
 
     /**
      * @var null|StreamInterface
@@ -89,17 +57,17 @@ class UploadedFile implements UploadedFileInterface {
      */
     public function __construct(
         $streamOrFile,
-        int $size,
-        int $errorStatus,
-        string $clientFilename = null,
-        string $clientMediaType = null
+        private int $size,
+        private int $error,
+        private string|null $clientFilename = null,
+        private string|null $clientMediaType = null
     ) {
-        if ($errorStatus === UPLOAD_ERR_OK) {
-            if(is_string($streamOrFile)) {
+        if ($error === UPLOAD_ERR_OK) {
+            if (is_string($streamOrFile)) {
                 $this->file = $streamOrFile;
-            } elseif(is_resource($streamOrFile)) {
+            } elseif (is_resource($streamOrFile)) {
                 $this->stream = new Stream($streamOrFile);
-            } elseif($streamOrFile instanceof StreamInterface) {
+            } elseif ($streamOrFile instanceof StreamInterface) {
                 $this->stream = $streamOrFile;
             }
 
@@ -109,16 +77,10 @@ class UploadedFile implements UploadedFileInterface {
             }
         }
 
-        $this->size = $size;
-
-        if (0 > $errorStatus || 8 < $errorStatus) {
+        if (0 > $error || 8 < $error) {
             require_once 'System/ArgumentException.php';
-            throw new ArgumentException('errorStatus', 'Invalid error status for UploadedFile; must be an UPLOAD_ERR_* constant');
+            throw new ArgumentException('error', 'Invalid error status for UploadedFile; must be an UPLOAD_ERR_* constant');
         }
-        $this->error = $errorStatus;
-
-        $this->clientFilename = $clientFilename;
-        $this->clientMediaType = $clientMediaType;
     }
 
     /**
@@ -128,11 +90,12 @@ class UploadedFile implements UploadedFileInterface {
     public function getStream() : StreamInterface {
         if ($this->error !== UPLOAD_ERR_OK) {
             require_once 'System/IO/FileUploadException.php';
-            throw new System\IO\FileUploadException($this->error);
+            throw new FileUploadException($this->error);
         }
 
         if ($this->moved) {
-            throw new Exception\UploadedFileAlreadyMovedException();
+            require_once 'System/IO/UploadedFileAlreadyMovedException.php';
+            throw new UploadedFileAlreadyMovedException();
         }
 
         if ($this->stream instanceof StreamInterface) {

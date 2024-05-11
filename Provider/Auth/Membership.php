@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 namespace Kansas\Provider\Auth;
 
 use Exception;
@@ -13,10 +13,6 @@ require_once 'System/Guid.php';
 
 class Membership extends AbstractDb {
 		
-	public function __construct() {
-		parent::__construct();
-	}
-
 	public function createMembership(Guid $id, $password) {
 		$hash = password_hash($password, PASSWORD_BCRYPT);
 		var_dump(strlen($password), strlen($hash));
@@ -44,16 +40,21 @@ class Membership extends AbstractDb {
 				throw new AuthException(AuthException::FAILURE_CREDENTIAL_INVALID);
 			} else {
 				$error = 0;
-				if(!password_verify($password, $row['password'])) // Credenciales no validos
+				if (!password_verify($password, $row['password'])) { // Credenciales no validos
 					$error += AuthException::FAILURE_CREDENTIAL_INVALID;
-				if($row['isApproved'] == 0) // Dirección de email no verificada
+				}
+				if ($row['isApproved'] == 0) { // Dirección de email no verificada
 					$error += AuthException::FAILURE_IDENTITY_NOT_APPROVED;
-				if($row['isEnabled'] == 0) // Usuario inhabilitado
+				}
+				if ($row['isEnabled'] == 0) { // Usuario inhabilitado
 					$error += AuthException::FAILURE_IDENTITY_NOT_ENABLED;
-				if($row['isLockedOut'] == 1) // Inicio de sesión mediante contraseña bloqueado
-					$error += AuthException::FAILURE_IDENTITY_LOCKEDOUT;
-				if($error != 0)
+				}
+				if ($row['isLockedOut'] == 1) { // Inicio de sesión mediante contraseña bloqueado
+					$error += AuthException::FAILURE_LOCKEDOUT;
+				}
+				if ($error != 0) {
 					throw new AuthException($error);
+				}
 				unset($row['password']);
 				return $row;
 			}

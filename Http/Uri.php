@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * @see       https://github.com/zendframework/zend-diactoros for the canonical source repository
  * @copyright Copyright (c) 2015-2017 Zend Technologies USA Inc. (http://www.zend.com)
@@ -107,14 +107,7 @@ class Uri implements UriInterface {
      * @param string $uri
      * @throws InvalidArgumentException on non-string $uri argument
      */
-    public function __construct($uri = '')
-    {
-        if (! is_string($uri)) {
-            throw new InvalidArgumentException(sprintf(
-                'URI passed to constructor must be a string; received "%s"',
-                (is_object($uri) ? get_class($uri) : gettype($uri))
-            ));
-        }
+    public function __construct(string $uri = '') {
 
         if ('' !== $uri) {
             $this->parseUri($uri);
