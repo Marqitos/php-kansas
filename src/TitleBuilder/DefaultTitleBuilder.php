@@ -1,16 +1,17 @@
 <?php declare(strict_types = 1);
 /**
- * Proporciona un creador de titulos
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Proporciona un creador de titulos
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\TitleBuilder;
 
 use System\Configurable;
+use System\EnvStatus;
 use Kansas\TitleBuilder\TitleBuilderInterface;
 
 use function array_merge;
@@ -21,7 +22,7 @@ use function implode;
 require_once 'System/Configurable.php';
 
 class DefaultTitleBuilder extends Configurable implements TitleBuilderInterface {
-        
+
     const APPEND    = 'APPEND';
     const SET       = 'SET';
     const PREPEND   = 'PREPEND';
@@ -29,14 +30,14 @@ class DefaultTitleBuilder extends Configurable implements TitleBuilderInterface 
     protected $items = [];
 
     // Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions(string $environment) : array {
+    public function getDefaultOptions(EnvStatus $environment) : array {
         return [
             'separator'     => ' : ',
             'attachOrder'   => self::PREPEND,
             'title'         => ''
         ];
     }
-    
+
 
     public function getSeparator() {
         return $this->options['separator'];
@@ -44,14 +45,14 @@ class DefaultTitleBuilder extends Configurable implements TitleBuilderInterface 
     public function setSeparator($separator) {
         $this->options['separator'] = (string) $separator;
     }
-    
+
     public function getAttachOrder() {
         return $this->options['attachOrder'];
     }
     public function setAttachOrder($order) {
         $this->options['attachOrder'] = $order;
     }
-    
+
     public function attach($title) {
         switch($this->options['attachOrder']) {
             case self::APPEND:
@@ -68,7 +69,7 @@ class DefaultTitleBuilder extends Configurable implements TitleBuilderInterface 
     public function setTitle($title) {
         $this->options['title'] = $title;
     }
-    
+
     public function __toString() {
         if(count($this->items) == 0) {
             $result = [$this->options['title']];

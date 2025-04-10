@@ -1,18 +1,19 @@
 <?php
 /**
- * Plugin el procesamiento de archivos javascript. Une, compacta y devuelve el codigo solicitado
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin el procesamiento de archivos javascript. Une, compacta y devuelve el codigo solicitado
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use System\Configurable;
 use System\ArgumentException;
 use System\ArgumentOutOfRangeException;
+use System\EnvStatus;
 use System\Version;
 use Kansas\Application;
 use Kansas\Controller\Index;
@@ -28,7 +29,7 @@ require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Google extends Configurable implements PluginInterface {
-        
+
     private $client;
 
     public function __construct(array $options = []) {
@@ -42,22 +43,22 @@ class Google extends Configurable implements PluginInterface {
             $application->registerCallback(Application::EVENT_C_VIEW, [$this, 'appCreateView']);
         }
     }
-  
-	/// Miembros de Kansas\Plugin\Interface
-	public function getDefaultOptions(string $environment) : array {
+
+    /// Miembros de Kansas\Plugin\Interface
+    public function getDefaultOptions(EnvStatus $environment) : array {
         return [
-            'api_key'	=> false,
-            'cse_cx'		=> false,
-            'ga_tracker'	=> false];
+            'api_key'       => false,
+            'cse_cx'        => false,
+            'ga_tracker'    => false];
     }
 
     public function getVersion() : Version {
-		global $environment;
-		return $environment->getVersion();
-	}
+        global $environment;
+        return $environment->getVersion();
+    }
 
     /// Eventos de la aplicación
-	public function appPreInit() {
+    public function appPreInit() {
         // Devolver router para acción de ga_tracker
 
     }
@@ -67,20 +68,20 @@ class Google extends Configurable implements PluginInterface {
 
     }
 
-    
+
     public function customSearch(string $query) {
         if(!$this->options['cse_cx']) {
             require_once 'System/ArgumentException.php';
             throw new ArgumentException('Google::cse_cx');
         }
-            
+
         require_once 'Google/Google_Client.php';
         require_once 'Google/contrib/Google_CustomsearchService.php';
 
         $search = new Google_CustomsearchService($this->getClient());
         return $search->cse->listCse($query, ['cx' => $this->options['cse_cx']]);
     }
-    
+
     protected function getClient() {
         if($this->client == null) {
             require_once 'System/ArgumentException.php';
@@ -91,8 +92,8 @@ class Google extends Configurable implements PluginInterface {
             if(!$this->options['api_key']) {
                 throw new ArgumentException('Google::ApiKey');
             }
-    
-    
+
+
             $this->client = new Client();
             $this->client->setApplicationName($this->getOptions('AppName'));
             $this->client->setDeveloperKey($this->options['api_key']);
@@ -119,7 +120,7 @@ class Google extends Configurable implements PluginInterface {
         $url = 'https://maps.googleapis.com/maps/api/geocode/json?' . http_build_query($options);
         return json_decode(RequestGet($url), true);
     }
-  
+
     public function getGeoCodeFromLatLng(float $latitude, float $longitude, array $options = []) {
         if(!$this->options['api_key']) {
             require_once 'System/ArgumentException.php';

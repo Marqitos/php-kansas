@@ -1,9 +1,9 @@
 <?php declare(strict_types = 1);
 /**
  * Carga un plugin desde las rutas indicadas
- * 
+ *
  * Basado en código de Zend Framework 2.0\PluginLoader
- * 
+ *
  * @package Kansas
  * @author Zend Framework 2.0, editado por Marcos Porto
  * @copyright Zend Framework 2.0
@@ -65,7 +65,7 @@ class PluginLoader {
      * @param  string $prefix
      * @return string
      */
-    protected function formatPrefix(string $prefix) : string {
+    protected static function formatPrefix(string $prefix) : string {
         require_once 'Kansas/Autoloader.php';
         if($prefix == "") {
             return $prefix;
@@ -86,8 +86,11 @@ class PluginLoader {
      * @param string $path
      * @return PluginLoader
      */
-    public function addPrefixPath(string $prefix, string $path) {
-        $prefix = $this->formatPrefix($prefix);
+    public function addPrefixPath(string $prefix, ?string $path) {
+        $prefix = self::formatPrefix($prefix);
+        if ($path === null) {
+            $path = $prefix;
+        }
         $path   = strtr(rtrim($path, '/\\') . DIRECTORY_SEPARATOR, '/\\', DIRECTORY_SEPARATOR);
 
         if (!isset($this->prefixToPaths[$prefix])) {
@@ -102,10 +105,10 @@ class PluginLoader {
     /**
      * Get path stack
      *
-     * @param  string $prefix
-     * @return false|array False if prefix does not exist, array otherwise
+     * @param  ?string  $prefix
+     * @return array|false      False if prefix does not exist, array otherwise
      */
-    public function getPaths(string $prefix = null) {
+    public function getPaths(?string $prefix = null) : array|false {
         if ((null !== $prefix) && is_string($prefix)) {
             $prefix = $this->formatPrefix($prefix);
 
@@ -151,26 +154,26 @@ class PluginLoader {
      * @throws KeyNotFoundException
      */
     public function removePrefixPath(string $prefix, $path = null) {
-			$prefix = $this->formatPrefix($prefix);
-			$registry =& $this->prefixToPaths;
+            $prefix = $this->formatPrefix($prefix);
+            $registry =& $this->prefixToPaths;
 
-			if (!isset($registry[$prefix])) {
-				require_once 'System/Collections/KeyNotFoundException.php';
-				throw new KeyNotFoundException('Prefix ' . $prefix . ' was not found in the PluginLoader.');
-			}
+            if (!isset($registry[$prefix])) {
+                require_once 'System/Collections/KeyNotFoundException.php';
+                throw new KeyNotFoundException('Prefix ' . $prefix . ' was not found in the PluginLoader.');
+            }
 
-			if ($path != null) {
-				$pos = array_search($path, $registry[$prefix]);
-				if (false === $pos) {
-					require_once 'System/Collections/KeyNotFoundException.php';
-					throw new KeyNotFoundException('Prefix ' . $prefix . ' / Path ' . $path . ' was not found in the PluginLoader.');
-				}
-				unset($registry[$prefix][$pos]);
-			} else {
-				unset($registry[$prefix]);
-			}
+            if ($path != null) {
+                $pos = array_search($path, $registry[$prefix]);
+                if (false === $pos) {
+                    require_once 'System/Collections/KeyNotFoundException.php';
+                    throw new KeyNotFoundException('Prefix ' . $prefix . ' / Path ' . $path . ' was not found in the PluginLoader.');
+                }
+                unset($registry[$prefix][$pos]);
+            } else {
+                unset($registry[$prefix]);
+            }
 
-			return $this;
+            return $this;
     }
 
     /**
@@ -179,7 +182,7 @@ class PluginLoader {
      * @param  string $name
      * @return string
      */
-    protected function _formatName(string $name) {
+    protected static function formatName(string $name) {
         return ucfirst($name);
     }
 
@@ -190,8 +193,8 @@ class PluginLoader {
      * @return boolean
      */
     public function isLoaded(string $name) {
-			$name = $this->_formatName($name);
-			return isset($this->loadedPlugins[$name]);
+            $name = self::formatName($name);
+            return isset($this->loadedPlugins[$name]);
     }
 
     /**
@@ -201,7 +204,7 @@ class PluginLoader {
      * @return string|false False if class not found, class name otherwise
      */
     public function getClassName(string $name) {
-        $name = $this->_formatName($name);
+        $name = self::formatName($name);
         if (isset($this->loadedPlugins[$name])) {
             return $this->loadedPlugins[$name];
         }
@@ -216,20 +219,20 @@ class PluginLoader {
      * @return string|false False if not found
      */
     public function getClassPath($name) {
-			$name = $this->_formatName((string)$name);
-			if (!empty($this->loadedPluginPaths[$name])) {
-				return $this->loadedPluginPaths[$name];
-			}
+            $name = self::formatName((string)$name);
+            if (!empty($this->loadedPluginPaths[$name])) {
+                return $this->loadedPluginPaths[$name];
+            }
 
-			if ($this->isLoaded($name)) {
-				$class = $this->getClassName($name);
-				$r     = new ReflectionClass($class);
-				$path  = $r->getFileName();
-				$this->loadedPluginPaths[$name] = $path;
-				return $path;
-			}
+            if ($this->isLoaded($name)) {
+                $class = $this->getClassName($name);
+                $r     = new ReflectionClass($class);
+                $path  = $r->getFileName();
+                $this->loadedPluginPaths[$name] = $path;
+                return $path;
+            }
 
-			return false;
+            return false;
     }
 
     /**
@@ -244,7 +247,7 @@ class PluginLoader {
      */
     public function load(string $name, bool $throwExceptions = true) {
         require_once 'Kansas/Autoloader.php';
-        $name = $this->_formatName($name);
+        $name = self::formatName($name);
         if ($this->isLoaded($name)) {
             return $this->getClassName($name);
         }
@@ -269,7 +272,7 @@ class PluginLoader {
                     include_once $loadFile;
                     if (class_exists($className, false)) {
                         if (null !== $incFile) {
-                            self::_appendIncFile($loadFile);
+                            self::appendIncFile($loadFile);
                         }
                         $found = true;
                         break 2;
@@ -296,16 +299,16 @@ class PluginLoader {
      * Specify a path to a file that will add include_once statements for each
      * plugin class loaded. This is an opt-in feature for performance purposes.
      *
-     * @param  string $file
+     * @param  ?string $file
      * @return void
      * @throws IOException if file is not writeable or path does not exist
      */
-    public static function setIncludeFileCache(string $file) : void {
-        if (null === $file) {
+    public static function setIncludeFileCache(?string $file) : void {
+        if ($file === null) {
             self::$includeFileCache = null;
             return;
         }
-        if(!file_exists($file) && 
+        if(!file_exists($file) &&
            !file_exists(dirname($file))) {
             require_once 'System/IO/IOException.php';
             throw new IOException('Specified file does not exist and directory does not exist (' . $file . ')');
@@ -340,7 +343,7 @@ class PluginLoader {
      * @param  string $incFile
      * @return void
      */
-    protected static function _appendIncFile($incFile) {
+    protected static function appendIncFile($incFile) {
         if (!file_exists(self::$includeFileCache)) {
             $file = '<?php';
         } else {

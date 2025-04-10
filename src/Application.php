@@ -1,27 +1,30 @@
 <?php declare(strict_types = 1);
 /**
- * Clase principal de ejecución de la aplicación en modo API
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.1
- */
+  * Clase principal de ejecución de la aplicación
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.1
+  * @version    v0.6
+  */
 
 namespace Kansas;
 
 use Throwable;
-use System\ArgumentOutOfRangeException;
-use System\Configurable;
-use System\NotSupportedException;
-use System\Net\WebException;
+use Kansas\AppStatus;
 use Kansas\Db\Adapter as DbAdapter;
-use Kansas\Plugin\DefaultValueInterface;
-use Kansas\Plugin\RouterPluginInterface;
 use Kansas\Router\RouterInterface;
 use Kansas\View\Result\ViewResultInterface;
+use System\AggregateException;
+use System\ArgumentOutOfRangeException;
+use System\Configurable;
+use System\DisposableInterface;
+use System\EnvStatus;
+use System\NotSupportedException;
+use System\Net\WebException;
 
-use function Kansas\Request\getRequestType as GetRequestType;
+use function Kansas\Request\getRequestType;
 use function array_keys;
 use function array_merge;
 use function call_user_func;
@@ -29,101 +32,223 @@ use function get_class;
 use function is_array;
 use function ucfirst;
 
+require_once 'AppStatus.php';
 require_once 'System/Configurable.php';
+require_once 'System/DisposableInterface.php';
+require_once 'System/AggregateException.php';
 
-class Application extends Configurable {
-  
-  // Constantes
-  public const EVENT_PREINIT      = 'preinit';
-  public const EVENT_ROUTE        = 'route';
-  public const EVENT_RENDER       = 'render';
-  public const EVENT_DISPATCH     = 'dispatch';
-  public const EVENT_C_PROVIDER   = 'createProvider';
-  public const EVENT_C_PLUGIN     = 'createPlugin';
-  public const EVENT_C_VIEW       = 'createView';
-  public const EVENT_ERROR        = 'error';
-  public const EVENT_LOG          = 'log';
+class Application extends Configurable implements DisposableInterface {
 
-  public const STATUS_START       = 0x00;
-  public const STATUS_INIT        = 0x01;
-  public const STATUS_ROUTE       = 0x02;
-  public const STATUS_DISPATCH    = 0x04;
-  public const STATUS_ERROR       = 0x10;
+    // Constantes
+    public const EVENT_PREINIT      = 'preinit';
+    public const EVENT_ROUTE        = 'route';
+    public const EVENT_RENDER       = 'render';
+    public const EVENT_DISPATCH     = 'dispatch';
+    public const EVENT_C_PROVIDER   = 'createProvider';
+    public const EVENT_C_PLUGIN     = 'createPlugin';
+    public const EVENT_C_VIEW       = 'createView';
+    public const EVENT_ERROR        = 'error';
+    public const EVENT_LOG          = 'log';
+    public const EVENT_DISPOSE      = 'dispose';
 
-  // Campos
-  private $providers              = [];
-  private $db;
+    // Campos
+    private $providers              = [];
+    private $disposables            = [];
+    private $status                 = AppStatus::START;
+    private $db;
 
-  private $plugins;
-  private $pluginsRouter;
-  private $pluginsDefault;
+    private $plugins;
 
-  private $router;
-  
-  private $view;
-  private $title;
-    
-  // Eventos
-  private $callbacks = [
-    self::EVENT_PREINIT     => [],
-    self::EVENT_ROUTE       => [],
-    self::EVENT_RENDER      => [],
-    self::EVENT_DISPATCH    => [],
-    self::EVENT_C_PROVIDER  => [],
-    self::EVENT_C_PLUGIN    => [],
-    self::EVENT_C_VIEW      => [],
-    self::EVENT_ERROR       => [],
-    self::EVENT_LOG         => []
-  ];
-    
-  protected static $instance;
+    private $router;
 
-  /**
-   * Crea una nueva instancia Kansas\Application
-   *
-   * @param array $options Configuración de la aplicación
-   */
-  public function __construct(array $options) {
-    $this->registerEvent(self::EVENT_CHANGED, [$this, 'onOptionChanged']);
-    parent::__construct($options);
-  }
+    private $view;
+    private $title;
 
-  // Miembros de System\Configurable\ConfigurableInterface
-  public function getDefaultOptions(string $environment) : array {
-    return [
-      'db' => false,
-      'default_domain'  => '',
-      'loader' => [
-        'controller'    => [],
-        'plugin'        => [],
-        'provider'      => []],
-      'log' => ['Kansas\\Environment', 'log'],
-      'plugin' => [],
-      'title' => [
-        'class'         => 'Kansas\\TitleBuilder\\DefaultTitleBuilder'],
-      'view' => [],
+    // Eventos
+    private $callbacks = [
+        self::EVENT_PREINIT     => [],
+        self::EVENT_ROUTE       => [],
+        self::EVENT_RENDER      => [],
+        self::EVENT_DISPATCH    => [],
+        self::EVENT_C_PROVIDER  => [],
+        self::EVENT_C_PLUGIN    => [],
+        self::EVENT_C_VIEW      => [],
+        self::EVENT_ERROR       => [],
+        self::EVENT_LOG         => [],
+        self::EVENT_DISPOSE     => []
     ];
-  }
 
-  public function onOptionChanged($optionName) {
-    global $environment;
-    if($optionName == 'loader') {
-      if(!is_array($this->options['loader'])){
-        require_once 'System/ArgumentOutOfRangeException.php';
-        throw new ArgumentOutOfRangeException('optionName');
-      }
-      foreach($this->options['loader'] as $loaderName => $options) {
-        $environment->addLoaderPaths($loaderName, $options);
-      }
-    } elseif($optionName == 'language') {
-      $environment->setLanguage($this->options['language']);
+
+    protected static $instance;
+
+    /**
+      * Crea una nueva instancia Kansas\Application
+      *
+      * @param array $options Configuración de la aplicación
+      */
+    public function __construct(array $options) {
+        $this->registerEvent(self::EVENT_CHANGED, [$this, 'onOptionChanged']);
+        parent::__construct($options);
+        register_shutdown_function([$this, 'dispose']);
     }
-  }
+
+    public function __destruct() {
+        $this->dispose();
+    }
+
+## Miembros de System\Configurable\ConfigurableInterface
+
+    /**
+      * @inheritDoc
+      */
+    public function getDefaultOptions(EnvStatus $environment) : array {
+        return [
+            'db'                => false,
+            'default_domain'    => '',
+            'loader'            => [
+                'controller'        => [],
+                'plugin'            => [],
+                'provider'          => []],
+            'log'               => ['Kansas\\Environment', 'log'],
+            'plugin'            => [],
+            'title'             => [
+                'class'             => 'Kansas\\TitleBuilder\\DefaultTitleBuilder'],
+            'view'              => [],
+        ];
+    }
+
+    public function onOptionChanged($optionName) {
+        global $environment;
+        if ($optionName == 'loader') {
+            if (!is_array($this->options['loader'])){
+                require_once 'System/ArgumentOutOfRangeException.php';
+                throw new ArgumentOutOfRangeException('optionName');
+            }
+            foreach ($this->options['loader'] as $loaderName => $options) {
+                $environment->addLoaderPaths($loaderName, $options);
+            }
+        } elseif ($optionName == 'language') {
+            $environment->setLanguage($this->options['language']);
+        }
+    }
+## -- System\Configurable\ConfigurableInterface
+
+## Miembros de System\DisposableInterface
+
+    /**
+      * @inheritDoc
+      *
+      * @return void
+      */
+    public function dispose() : void {
+        $disposing = $this->status != AppStatus::DISPOSED;
+        $this->status = AppStatus::DISPOSED;
+        $this->disposing($disposing);
+    }
+
+    /**
+      * @inheritDoc
+      *
+      * @return boolean
+      */
+    public function isDisposed() : bool {
+        return $this->status == AppStatus::DISPOSED;
+    }
+
+    protected function disposing(bool $disposing) : AggregateException|true {
+        $result = true;
+        // Liberamos recursos mediante llamada a eventos
+        foreach ($this->callbacks[self::EVENT_DISPOSE] as $callback) {
+            try {
+                call_user_func($callback, $disposing);
+            } catch (Throwable $th) {
+                if (is_a($result, 'System\AggregateException')) {
+                    $result->addInnerException($th);
+                } else {
+                    $result = new AggregateException($th);
+                }
+            }
+        }
+
+        // Liberamos recursos de los objetos conocidos
+        while (count($this->disposables) > 0) {
+            $disposable = array_shift($this->disposables);
+            try {
+                $disposable->dispose();
+            } catch (Throwable $th) {
+                if (is_a($result, 'System\AggregateException')) {
+                    $result->addInnerException($th);
+                } else {
+                    $result = new AggregateException($th);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+## -- System\DisposableInterface
+
+    protected function init(): AggregateException|true {
+        $result = true;
+        foreach ($this->callbacks[self::EVENT_PREINIT] as $callback) { // PreInit event
+            try {
+                call_user_func($callback);
+            } catch (Throwable $th) {
+                if (is_a($result, 'System\AggregateException')) {
+                    $result->addInnerException($th);
+                } else {
+                    $result = new AggregateException($th);
+                }
+            }
+        }
+        $this->status = AppStatus::INIT;
+        return $result;
+    }
+
+    protected function route($request, array $params): array {
+        $this->status = AppStatus::ROUTE;
+        $params     = [...$params, ...self::getDefaultParams()];
+        foreach ($this->callbacks[self::EVENT_ROUTE] as $callback) { // Route event
+            $params = [...$params, ...call_user_func($callback, $request, $params)];
+        }
+        return $params;
+    }
+
+    protected function render(ViewResultInterface $viewResult) {
+        foreach ($this->callbacks[self::EVENT_RENDER] as $callback) { // Render event
+            call_user_func($callback, $viewResult);
+        }
+    }
+
+    protected function error(Throwable $th) {
+        $result = false;
+        $this->status = AppStatus::ERROR;
+        foreach ($this->callbacks[self::EVENT_ERROR] as $callback) { // PreInit event
+            try {
+                $result = call_user_func($callback, $th);
+                if ($result) {
+                    return $result;
+                }
+            } catch (Throwable $th) {
+                if (is_a($result, 'System\AggregateException')) {
+                    $result->addInnerException($th);
+                } else {
+                    $result = new AggregateException($th);
+                }
+            }
+        }
+        if (! $result) {
+            $result = $th;
+        }
+        return $result;
+    }
+
 
   public function getPlugin(string $pluginName) { // Obtiene el modulo seleccionado, lo carga si es necesario
     $pluginName = ucfirst($pluginName);
     $this->loadPlugins();
-    if (!isset($this->plugins[$pluginName])) {
+    if (! isset($this->plugins[$pluginName])) {
       $options = (isset($this->options['plugin'][$pluginName]) && is_array($this->options['plugin'][$pluginName]))
         ? $this->options['plugin'][$pluginName]
         : [];
@@ -174,9 +299,7 @@ class Application extends Configurable {
     if (is_array($this->plugins)) {
       return;
     }
-    $this->plugins        = [];
-    $this->pluginsRouter  = [];
-    $this->pluginsDefault = [];
+    $this->plugins = [];
     foreach (array_keys($this->options['plugin']) as $pluginName) {
       $this->getPlugin($pluginName);
     }
@@ -184,8 +307,6 @@ class Application extends Configurable {
 
   protected function loadPlugin($pluginName, array $options) {
     global $environment;
-    require_once 'Kansas/Plugin/DefaultValueInterface.php';
-    require_once 'Kansas/Plugin/RouterPluginInterface.php';
     try {
       $plugin = $environment->createPlugin($pluginName, $options);
     } catch(Throwable $e) {
@@ -193,13 +314,17 @@ class Application extends Configurable {
       throw $e;
     }
     $this->plugins[$pluginName] = $plugin;
-    if($plugin instanceof RouterPluginInterface) {
-      $this->pluginsRouter[$pluginName] = $plugin;
-    }
-    if($plugin instanceof DefaultValueInterface) {
-      $this->pluginsDefault[$pluginName] = $plugin;
-    }
     return $plugin;
+  }
+
+  public function searchProvider(string $type) {
+    foreach ($this->plugins as $pluginName => $options) {
+      $plugin = $this->getPlugin($pluginName);
+      if (is_a($plugin, $type)) {
+        return $this->plugins[$pluginName];
+      }
+    }
+    return false;
   }
 
   public function getProvider(string $providerName) {
@@ -214,7 +339,7 @@ class Application extends Configurable {
     }
     return $this->providers[$providerName];
   }
-    
+
   public function dispatch(array $params) : ViewResultInterface {
     global $environment;
     $request    = $environment->getRequest();
@@ -231,74 +356,113 @@ class Application extends Configurable {
     unset($params['controller']);
     $controller     = $environment->createController($controllerName);
     $controller->init($params);
+    $this->status = AppStatus::DISPATCH;
     return $controller->callAction($action, $params);
   }
-    
-  public function run() : void {
-    global $environment;
-    $this->loadPlugins();
-    foreach ($this->callbacks[self::EVENT_PREINIT] as $callback) { // PreInit event
-      call_user_func($callback);
-    }
-    $params     = $this->router->match();
-    if($params) {
-      $params   = array_merge($params, self::getDefaultParams());
-      $request  = $environment->getRequest();
-      foreach ($this->callbacks[self::EVENT_ROUTE] as $callback) { // Route event
-        $params = array_merge($params, call_user_func($callback, $request, $params));
-      }
-      $result = $this->dispatch($params);
-    }
-    if(!isset($result)) {
-      require_once 'System/Net/WebException.php';
-      throw new WebException(404);
-    }
-    foreach ($this->callbacks[self::EVENT_RENDER] as $callback) { // Render event
-      call_user_func($callback, $result);
-    }
-    $result->executeResult();
-  }
-    
-  /**
-   * Devuelve los parámetros básicos de la petición actual
-   */
-  public static function getDefaultParams() : array {
-    global $environment;
-    require_once 'Kansas/Request/getRequestType.php';
-    $request = $environment->getRequest();
-    return [
-      'url'         => trim($request->getUri()->getPath(), '/'),
-      'uri'         => $request->getRequestTarget(),
-      'requestType' => GetRequestType($request)
-    ];
-  }
-    
-  /* Eventos */
-  public function registerCallback(string $hook, callable $callback) : void {
-    if (isset($this->callbacks[$hook])) {
-      $this->callbacks[$hook][] = $callback;
-    }
-  }
-    
-  public function getDb() : DbAdapter {
-    require_once 'Kansas/Db/Adapter.php';
-    if ($this->db == null) {
-      if ($this->options['db'] instanceof DbAdapter) {
-        $this->db = $this->options['db'];
-      }
-      if (is_array($this->options['db'])) {
-        if (isset($this->options['db']['driver'])) {
-          $driver = $this->options['db']['driver'];
-          unset($this->options['db']['driver']);
-          $this->db = DbAdapter::Create($driver, $this->options['db']);
-        } else {
-          require_once 'System/NotSupportedException.php';
-          throw new NotSupportedException();
+
+    public function run() : void {
+        global $environment;
+        $params     = false;
+        $viewResult = false;
+        $this->loadPlugins();
+        $init = $this->init();
+        if (is_a($init, 'Throwable')) {
+            $result = $this->error($init);
+            if (is_array($result)) {
+                $params = $result;
+            } elseif(is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
+                $viewResult = $result;
+            } elseif ($environment->getStatus() == EnvStatus::DEVELOPMENT) {
+                var_dump($result);
+            }
         }
-      }
+        if (! $params &&
+            ! $viewResult) {
+            if (is_array($this->router)) {
+                foreach ($this->router as $router) {
+                    $params = $router->match();
+                    if ($params !== false) {
+                        break;
+                    }
+                }
+            } elseif (is_a($this->router, 'Kansas\Router\RouterInterface')) {
+                $params = $this->router->match();
+            }
+            if (! $params) {
+                require_once 'System/Net/WebException.php';
+                $result = $this->error(new WebException(404));
+                if (is_array($result)) {
+                    $params = $result;
+                } elseif(is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
+                    $viewResult = $result;
+                }
+            }
+        }
+        if ($params &&
+            ! $viewResult) {
+            $this->status = AppStatus::ROUTE;
+            $request    = $environment->getRequest();
+            $params     = $this->route($request, $params);
+            $viewResult = $this->dispatch($params);
+        }
+        if (! $viewResult) {
+            require_once 'System/Net/WebException.php';
+            $result = $this->error(new WebException(500));
+            if(is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
+                $viewResult = $result;
+            } elseif(is_a($result, 'Throwable')) {
+                throw $result;
+            } else {
+                throw new WebException(500);
+            }
+        }
+        $this->render($viewResult);
+        $viewResult->executeResult();
     }
-    return $this->db;
-  }
+
+    /**
+     * Devuelve los parámetros básicos de la petición actual
+     */
+    public static function getDefaultParams() : array {
+        global $environment;
+        require_once 'Kansas/Request/getRequestType.php';
+        $request = $environment->getRequest();
+        return [
+            'url'         => trim($request->getUri()->getPath(), '/'),
+            'uri'         => $request->getRequestTarget(),
+            'requestType' => getRequestType($request)
+        ];
+    }
+
+    /* Eventos */
+    public function registerCallback(string $hook, callable $callback) : void {
+        if (isset($this->callbacks[$hook])) {
+            $this->callbacks[$hook][] = $callback;
+        }
+    }
+
+    public function getDb() : DbAdapter {
+        require_once 'Kansas/Db/Adapter.php';
+        if ($this->db == null) {
+            if ($this->options['db'] instanceof DbAdapter) {
+                $this->db = $this->options['db'];
+            }
+            if (is_array($this->options['db'])) {
+                if (isset($this->options['db']['driver'])) {
+                    $driver = $this->options['db']['driver'];
+                    unset($this->options['db']['driver']);
+                    $this->db = DbAdapter::Create($driver, $this->options['db']);
+                } else {
+                    require_once 'System/NotSupportedException.php';
+                    throw new NotSupportedException();
+                }
+            }
+            if (is_a($this->db, 'System\DisposableInterface')) {
+                $this->disposables[] = $this->db;
+            }
+        }
+        return $this->db;
+    }
 
   public function getView() {
     global $environment;
@@ -315,7 +479,7 @@ class Application extends Configurable {
     }
     return $this->view;
   }
-  
+
   public function createTitle() {
     if($this->title == null) {
       $titleClass = (isset($this->options['title']['class']))
@@ -338,10 +502,13 @@ class Application extends Configurable {
         }
         return $application;
     }
-    
+
     /* Enrutamiento */
-    public function setRouter(RouterInterface $router) : void {
-        $this->router = $router;
+    public function addRouter(RouterInterface $router) : void {
+        if ($this->router === null) {
+            $this->router = [];
+        }
+        $this->router[] = $router;
     }
-  
+
 }

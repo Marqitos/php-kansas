@@ -1,17 +1,19 @@
 <?php declare(strict_types = 1);
 /**
- * Plugin de localización de la aplicación
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin de localización de la aplicación
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use System\Configurable;
+use System\EnvStatus;
 use System\Version;
+use Kansas\Application;
 use Kansas\Plugin\PluginInterface;
 use Kansas\View\Template;
 
@@ -33,17 +35,17 @@ class Localization extends Configurable implements PluginInterface {
   public function __construct(array $options) {
     parent::__construct($options);
     global $application;
-    $application->registerCallback('preinit', [$this, 'appPreInit']);
-    $application->registerCallback('createView', [$this, 'createView']);
+    $application->registerCallback(Application::EVENT_PREINIT, [$this, 'appPreInit']);
+    $application->registerCallback(Application::EVENT_C_VIEW, [$this, 'createView']);
   }
 
   /// Miembros de System\Configurable\Interface
-  public function getDefaultOptions(string $environment) : array {
+  public function getDefaultOptions(EnvStatus $environment) : array {
     return [
       'lang'      => 'es',
       'country'   => null];
   }
-  
+
   public function getVersion() : Version {
     global $environment;
     return $environment->getVersion();
@@ -176,12 +178,12 @@ class Localization extends Configurable implements PluginInterface {
     return $this->options;
   }
 
-  public function setLocale(string $lang, string $country = null, $q = true) {
+  public function setLocale(string $lang, ?string $country = null, $q = true) {
     $this->options['lang']      = $lang;
     $this->options['country']   = $country;
     $this->options['q']         = $q;
   }
-  
+
   public function __toString() : string {
     $lang = strtolower($this->options['lang']);
     if ($this->options['country'] != null) {

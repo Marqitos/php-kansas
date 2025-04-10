@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Router que controla las llamadas a la API
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Router que controla las llamadas a la API
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Router;
 
@@ -18,6 +18,7 @@ use Kansas\Localization\Resources;
 use Kansas\Plugin\API as APIPlugin;
 use Psr\Http\Message\RequestMethodInterface;
 use System\ArgumentException;
+use System\EnvStatus;
 
 use function call_user_func;
 use function is_array;
@@ -28,11 +29,11 @@ require_once 'Kansas/Router.php';
 
 class API extends Router implements RouterInterface {
 
-    private $callbacks 	= [];
-    private $paths 		= [];
+    private $callbacks  = [];
+    private $paths      = [];
 
-    // Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions(string $environment) : array {
+## Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions(EnvStatus $environment): array {
         return [
             'base_path' => '',
             'params'    => [
@@ -43,9 +44,10 @@ class API extends Router implements RouterInterface {
                 'controller'    => 'index',
                 'action'        => 'API']];
     }
+## -- ConfigurableInterface
 
-    /// Miembros de Kansas_Router_Interface
-    public function match() : array {
+## Miembros de Kansas\Router\RouterInterface
+    public function match(): array|false {
         global $application, $environment;
         $path = static::getPath($this);
         if ($path === false) {
@@ -63,13 +65,13 @@ class API extends Router implements RouterInterface {
                 header('Access-Control-Allow-Methods: ' . $methods);
                 header('Access-Control-Allow-Headers: *');
                 header('Access-Control-Allow-Credentials: true');
-                die;
+                exit(0);
             }
         }
         // Gestionamos el resto de metodos
         require_once 'Kansas/API/APIExceptionInterface.php';
-        $dispatch	= false;
-        $result		= false;
+        $dispatch   = false;
+        $result     = false;
         if (isset($this->paths[$method], $this->paths[$method][$path])) {
             $dispatch = $this->paths[$method][$path];
         } elseif (isset($this->paths[APIPlugin::METHOD_ALL], $this->paths[APIPlugin::METHOD_ALL][$path])) {
@@ -154,7 +156,7 @@ class API extends Router implements RouterInterface {
                 $this->registerPath($item, $dispatch, $method);
             }
             return;
-        } elseif (!is_string($path)) {
+        } elseif (! is_string($path)) {
             throw new ArgumentException('path', 'Formato de ruta no válido');
         }
         if ($method == RequestMethodInterface::METHOD_OPTIONS) {

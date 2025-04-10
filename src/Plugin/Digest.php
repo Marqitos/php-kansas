@@ -1,22 +1,24 @@
 <?php
 /**
- * Plugin para la autentificación mediante HTTP Digest
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin para la autentificación mediante HTTP Digest
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use Exception;
-use System\Configurable;
-use System\Version;
+use Kansas\Application;
 use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Auth\AuthException;
 use Kansas\View\Result\StringInterface;
+use System\Configurable;
+use System\EnvStatus;
+use System\Version;
 
 use function header;
 use function preg_match_all;
@@ -39,26 +41,26 @@ require_once 'Kansas/Plugin/PluginInterface.php';
 class Digest extends Configurable implements PluginInterface, AuthService {
 
     private $nonce;
-  
+
     /// Constructor
     public function __construct(array $options) {
         global $application;
         $this->nonce = uniqid();
-        $application->registerCallback('preinit', [$this, "appPreInit"]);
+        $application->registerCallback(Application::EVENT_PREINIT, [$this, "appPreInit"]);
         parent::__construct($options);
     }
 
     // Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions(string $environment) : array {
+    public function getDefaultOptions(EnvStatus $environment) : array {
             return [
                 'actions' => []];
     }
-    
+
     public function getVersion() : Version {
         global $environment;
         return $environment->getVersion();
     }
-    
+
 
     // Obtiene las acciones de autenticación del servicio
     public function getActions() {
@@ -79,7 +81,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
         $authPlugin = $application->getPlugin('Auth');
         $authPlugin->addAuthService($this);
     }
-  
+
     /**
      * Performs an authentication attempt
      *
@@ -112,17 +114,17 @@ class Digest extends Configurable implements PluginInterface, AuthService {
 
             // Based on all the info we gathered we can figure out what the response should be
             // $A1 = md5("{$validUser}:{$realm}:{$validPass}");
-            $A1 = $digestParts['username'] == $this->_adminUsername
+            $a1 = $digestParts['username'] == $this->_adminUsername
                 ? $this->_adminA1
                 : $this->_digest->getA1($this->_realm, $digestParts['username']);
-            if(!$A1) {
+            if(!$a1) {
                 throw new AuthException(AuthException::FAILURE_CREDENTIAL_INVALID);
             } else {
-                
-                $A2 = md5("{$_SERVER['REQUEST_METHOD']}:{$digestParts['uri']}");
-                
-                $validResponse = md5("{$A1}:{$digestParts['nonce']}:{$digestParts['nc']}:{$digestParts['cnonce']}:{$digestParts['qop']}:{$A2}");
-                
+
+                $a2 = md5("{$_SERVER['REQUEST_METHOD']}:{$digestParts['uri']}");
+
+                $validResponse = md5("{$a1}:{$digestParts['nonce']}:{$digestParts['nc']}:{$digestParts['cnonce']}:{$digestParts['qop']}:{$a2}");
+
                 if ($digestParts['response']!=$validResponse) {
                     throw new AuthException(AuthException::FAILURE_CREDENTIAL_INVALID);
                 } else {

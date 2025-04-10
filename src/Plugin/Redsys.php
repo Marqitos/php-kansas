@@ -1,16 +1,17 @@
 <?php
 /**
- * Plugin el pago mediante redsys, utilizando la librería omnipay
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin el pago mediante redsys, utilizando la librería omnipay
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use System\Configurable;
+use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
 use Kansas\Plugin\PluginInterface;
@@ -28,9 +29,9 @@ class Redsys extends Configurable implements PluginInterface {
     const CLASSNAME_REDIRECT    = 'Redsys_Redirect';
     const CLASSNAME_WEBSERVICE  = 'Redsys_Webservice';
 
-	public function __construct(array $options) {
-		parent::__construct($options);
-        /*
+/*
+    public function __construct(array $options) {
+        parent::__construct($options);
         // pruebas
         $gateway = $this->getGateway();
         var_dump($gateway->getName(), $gateway->supportsAuthorize(), $gateway->supportsCompleteAuthorize(), $gateway->supportsPurchase(), $gateway->supportsCompletePurchase());
@@ -66,11 +67,11 @@ class Redsys extends Configurable implements PluginInterface {
             echo $response->getMessage();
         }
         var_dump($response->isSuccessful(), $response->isRedirect(), $response->getMessage());
-        */
-	}
-  
-	// Miembros de Kansas\Plugin\PluginInterface
-	public function getDefaultOptions(string $environment) : array {
+    }
+*/
+
+    // Miembros de Kansas\Plugin\PluginInterface
+    public function getDefaultOptions(EnvStatus $environment) : array {
         $data = [
             'redirect'          => true,
             'currency'          => 'EUR',
@@ -79,27 +80,27 @@ class Redsys extends Configurable implements PluginInterface {
             'merchant_id'       => null,
             'notify_url'        => null,
             'return_url'        => null];
-		switch ($environment) {
-            case 'development':
-            case 'test':
+        switch ($environment) {
+            case EnvStatus::DEVELOPMENT:
+            case EnvStatus::TEST:
                 $data['hmac_key']     = 'sq7HjrUOBfKmC576ILgskD5srU870gJ7';
                 $data['merchant_id']  = '999008881';
                 $data['test_mode']    = true;
                 break;
-            case 'production':
+            case EnvStatus::PRODUCTION:
                 $data['test_mode']    = false;
                 break;
             default:
                 require_once 'System/NotSupportedException.php';
                 NotSupportedException::NotValidEnvironment($environment);
-		}
+        }
         return $data;
-	}
-  
-	public function getVersion() : Version {
-		global $environment;
-		return $environment->getVersion();
-	}
+    }
+
+    public function getVersion() : Version {
+        global $environment;
+        return $environment->getVersion();
+    }
 
     public function getGateway() : AbstractGateway {
         if($this->gateway == null) {

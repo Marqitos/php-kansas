@@ -1,18 +1,18 @@
 <?php declare(strict_types = 1);
 /**
- * Proporciona un manejo de la sesión de usuario mediante un token jwt
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2021, Marcos Porto
- * @since v0.4
- */
+  * Proporciona un manejo de la sesión de usuario mediante un token jwt
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Auth\Session;
 
 use System\Guid;
 use Kansas\Auth\Session\SessionInterface;
-use Kansas\Plugin\Token AS TokenPlugin;
+use Kansas\Plugin\Token as TokenPlugin;
 
 use function intval;
 use function System\String\startWith;
@@ -94,7 +94,7 @@ abstract class AbstractToken implements SessionInterface {
         $this->initialize();
         return $this->token;
     }
-    
+
     public function initialize(int $lifetime = null, string $domain = null) {
         if($this->initialized) {
             return;
@@ -145,7 +145,7 @@ abstract class AbstractToken implements SessionInterface {
                     $this->user = $userRow;
                 }
             }
-            if($this->token && 
+            if($this->token &&
                $this->token->hasClaim('exp') &&
                $lifetime > 0) { // Renovar token si es necesario
                 $updateTime = intval($this->token->getClaim('exp')) - ($lifetime / 2);
@@ -164,7 +164,7 @@ abstract class AbstractToken implements SessionInterface {
        }
     }
 
-    protected abstract function tryParseUser($value, &$userId);
+    abstract protected function tryParseUser($value, &$userId);
 
     public static function tryParseGuidUser($value, &$userId) {
         require_once 'System/Guid.php';

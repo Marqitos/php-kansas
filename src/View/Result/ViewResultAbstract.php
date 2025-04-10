@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Proporciona la funcionalidad básica del resultado de una solicitud
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2024, Marcos Porto
- * @since v0.4
- */
+  * Proporciona la funcionalidad básica del resultado de una solicitud
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\View\Result;
 
@@ -21,19 +21,19 @@ use function trim;
 require_once 'Kansas/View/Result/ViewResultInterface.php';
 
 abstract class ViewResultAbstract implements ViewResultInterface {
-    
-  protected function __construct(
-    protected string $mimeType = ''
-  ) {}
-  
-  // Obtiene o establece el tipo de contenido de archivo
-  public function getMimeType() : string {
-    return $this->mimeType;
-  }
-  public function setMimeType(string $value) : void {
-    $this->mimeType = $value;
-  }
-  
+
+    protected function __construct(
+        protected string $mimeType = ''
+    ) {}
+
+    // Obtiene o establece el tipo de contenido de archivo
+    public function getMimeType() : string {
+        return $this->mimeType;
+    }
+    public function setMimeType(string $value) : void {
+        $this->mimeType = $value;
+    }
+
   /**
     * Envía las cabecera http
     *
@@ -42,7 +42,7 @@ abstract class ViewResultAbstract implements ViewResultInterface {
     */
   protected function sendHeaders($cache = false) : bool {
     $mimeType = $this->getMimeType();
-    if (!empty($mimeType)) {
+    if (! empty($mimeType)) {
       header('Content-Type: ' . $mimeType);
     }
     if ($cache) {

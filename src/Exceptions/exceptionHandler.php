@@ -1,13 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Proporciona un manejador de errores compatible con set_exception_handler
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- * PHP 7
- */
+  * Proporciona un manejador de errores compatible con set_exception_handler
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Exceptions;
 

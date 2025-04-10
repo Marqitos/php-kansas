@@ -1,15 +1,16 @@
 <?php declare(strict_types = 1);
 /**
- * Maneja la sesión de usuario mediante la funcionalidad integrada de php
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2021, Marcos Porto
- * @since v0.4
- */
+  * Maneja la sesión de usuario mediante la funcionalidad integrada de php
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Auth\Session;
 
+use Kansas\Application;
 use Kansas\Auth\Session\SessionInterface;
 use function session_destroy;
 use function session_set_cookie_params;
@@ -42,7 +43,7 @@ class SessionDefault implements SessionInterface {
      * @param string $domain Dominio de la cookie, por ejemplo 'www.php.net'. Para hacer las cookies visibles en todos los sub-dominios, el dominio debe ser prefijado con un punto, como '.php.net'.
      * @return string $sessionId Devuelve el id de sesión para la sesión actual
      */
-    public function setIdentity(array $user, int $lifetime = 0, string $domain = NULL) {
+    public function setIdentity(array $user, int $lifetime = 0, string $domain = null) {
         $sessionId = $this->initialize(true, $lifetime, $domain);
         $_SESSION['auth'] = $user;
         return $sessionId;
@@ -65,7 +66,7 @@ class SessionDefault implements SessionInterface {
         }
         return $res;
     }
-    
+
     /**
      * Recupera la sesión actual
      *
@@ -74,7 +75,7 @@ class SessionDefault implements SessionInterface {
      * @param string $domain Dominio de la cookie, por ejemplo 'www.php.net'. Para hacer las cookies visibles en todos los sub-dominios, el dominio debe ser prefijado con un punto, como '.php.net'.
      * @return void
      */
-    public function initialize($force = false, $lifetime = 0, $domain = NULL) {
+    public function initialize($force = false, $lifetime = 0, $domain = null) {
         if(session_status() == PHP_SESSION_ACTIVE) {
             return session_id();
         }
@@ -82,14 +83,14 @@ class SessionDefault implements SessionInterface {
 
         if (isset($_COOKIE[$cookieName]) ||
             $force !== false) {
-            if($domain == NULL) {
+            if($domain == null) {
                 session_set_cookie_params($lifetime);
             } else {
                 session_set_cookie_params($lifetime, '/', $domain);
             }
             session_start();
             global $application;
-            $application->registerCallback('render',  [$this, "appRender"]);
+            $application->registerCallback(Application::EVENT_RENDER,  [$this, "appRender"]);
             return session_id();
        }
        return false;

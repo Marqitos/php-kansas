@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Representa los errores producidos durante una solicitud a la api
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2022, Marcos Porto
- * @since v0.5
- */
+  * Representa los errores producidos durante una solicitud a la api
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.5
+  */
 
 namespace Kansas\API;
 
@@ -36,20 +36,20 @@ class APIRequestException extends APIAggregateException implements APIExceptionI
         parent::__construct($previous);
     }
 
-    // Miembros de APIAggregateException
+    # Miembros de APIAggregateException
     /**
-     * Obtiene el código HTTP
-     *
-     * @return integer Código HTTP
-     */
+      * Obtiene el código HTTP
+      *
+      * @return integer Código HTTP
+      */
     protected function getHTTPStatusCode() : int {
         return 412;
     }
 
-    // Miembros de APIExceptionInterface
+    # Miembros de APIExceptionInterface
     /**
-     * @inheritDoc
-     */
+      * @inheritDoc
+      */
     public function getAPIResult() : array {
         return [
             'status'    => $this->getHTTPStatusCode(),

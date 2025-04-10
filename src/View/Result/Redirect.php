@@ -1,4 +1,4 @@
-<?php 
+<?php declare(strict_types = 1);
 
 namespace Kansas\View\Result;
 
@@ -8,13 +8,13 @@ use System\Net\WebException;
 require_once 'Kansas/View/Result/ViewResultInterface.php';
 
 class Redirect implements ViewResultInterface {
-    
+
   const MOVED_PERMANENTLY = 301;
   const MOVED_TEMPORARILY = 302;
-  
+
   private $location;
   private $code = self::MOVED_TEMPORARILY;
-  
+
   /**
    * Obtiene el tipo de redirección.
    * @return int Codigo de redirección.
@@ -37,7 +37,7 @@ class Redirect implements ViewResultInterface {
       throw new WebException($code, 'Invalid redirect HTTP status code (' . $code  . ')');
     }
   }
-  
+
 
   /**
    * Establece la dirección de redirección mediante una URL
@@ -47,7 +47,7 @@ class Redirect implements ViewResultInterface {
   public function setGotoUrl($url) {
     $this->location = str_replace(["\n", "\r"], '', $url);
   }
-    
+
   /* (non-PHPdoc)
    * @see Kansas_View_Result_Interface::executeResult()
    */
@@ -55,7 +55,7 @@ class Redirect implements ViewResultInterface {
     self::redirect($this->location);
     return true;
   }
-  
+
   public static function gotoUrl($url, $code = self::MOVED_TEMPORARILY) {
     $result = new self();
     $result->setCode($code);
@@ -66,7 +66,7 @@ class Redirect implements ViewResultInterface {
   public static function redirect($location, $exit = true) {
     header("Location: " . $location);
     if ($exit) {
-      exit;
+      exit(0);
     }
   }
 

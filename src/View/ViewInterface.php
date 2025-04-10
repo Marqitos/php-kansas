@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Kansas\View;
 
@@ -22,14 +22,14 @@ interface ViewInterface {
      * directories.
      * @return void
      */
-    public function setScriptPath($path);
+    public function setScriptPath(string $path): void;
 
     /**
      * Retrieve all view script paths
      *
      * @return array
      */
-    public function getScriptPaths();
+    public function getScriptPaths(): string;
 
     /**
      * Assign a variable to the view
@@ -38,7 +38,7 @@ interface ViewInterface {
      * @param mixed $val The variable value.
      * @return void
      */
-    public function __set($key, $val);
+    public function __set(string $name, mixed $value): void;
 
     /**
      * Allows testing with empty() and isset() to work
@@ -46,7 +46,7 @@ interface ViewInterface {
      * @param string $key
      * @return boolean
      */
-    public function __isset($key);
+    public function __isset(string $name): bool;
 
     /**
      * Allows unset() on object properties to work
@@ -54,7 +54,7 @@ interface ViewInterface {
      * @param string $key
      * @return void
      */
-    public function __unset($key);
+    public function __unset(string $name): void;
 
     /**
      * Assign variables to the view script via differing strategies.
@@ -70,7 +70,7 @@ interface ViewInterface {
      * as the value.
      * @return void
      */
-    public function assign($spec, $value = null);
+    public function assign(string|array $spec, $value = null);
 
     /**
      * Clear all assigned variables
@@ -80,7 +80,7 @@ interface ViewInterface {
      *
      * @return void
      */
-    public function clearVars();
+    public function clearVars(): void;
 
     /**
      * Processes a view script and returns the output.
@@ -88,5 +88,5 @@ interface ViewInterface {
      * @param string $name The script name to process.
      * @return string The script output.
      */
-    public function render($name);
+    public function render(string $name): string;
 }

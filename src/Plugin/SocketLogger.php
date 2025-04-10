@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Plugin para depuración mediante Maurina.
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2022, Marcos Porto
- * @since v0.4
- */
+  * Plugin para depuración mediante Maurina.
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
@@ -17,6 +17,7 @@ use Psr\Log\LoggerTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use System\Configurable;
+use System\EnvStatus;
 use System\Version;
 use function System\String\interpolate as StringInterpolate;
 
@@ -33,8 +34,6 @@ class SocketLogger extends Configurable implements PluginInterface, LoggerInterf
     public function __construct(array $options) {
         global $application;
         parent::__construct($options);
-        ini_set('display_errors', '1');
-        ini_set('display_startup_errors', '1');
         error_reporting(E_ALL);
         require_once 'Maurina/Debug.php';
         $this->maurina = new MaurinaDebug($this->options['server_ip'], $this->options['server_port'], $this->options['tab_captions']);
@@ -43,10 +42,10 @@ class SocketLogger extends Configurable implements PluginInterface, LoggerInterf
     }
 
     // Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions(string $environment) : array {
+    public function getDefaultOptions(EnvStatus $environment) : array {
         return [
-            'server_ip'     => '127.0.0.1', 
-            'server_port'   => null, 
+            'server_ip'     => '127.0.0.1',
+            'server_port'   => null,
             'tab_captions'  => ['&Usuario', '&Errores', '&Solicitudes', '&Sesión']];
     }
 

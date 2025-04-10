@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin para controlar la autenticación
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin para controlar la autenticación
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
@@ -22,6 +22,7 @@ use Kansas\Router\Auth as AuthRouter;
 use Kansas\Router\RouterInterface;
 use Psr\Http\Message\RequestInterface;
 use System\Configurable;
+use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
 
@@ -37,7 +38,7 @@ class Auth extends Configurable implements RouterPluginInterface {
     /// Constantes
     const TYPE_FORM         = 'form';
     const TYPE_FEDERATED    = 'federated';
-    
+
     /// Campos
     private $authorization;
     private $localization;
@@ -58,9 +59,9 @@ class Auth extends Configurable implements RouterPluginInterface {
         $application->registerCallback(Application::EVENT_PREINIT, [$this, "appPreInit"]);
         $application->registerCallback(Application::EVENT_ROUTE,   [$this, "appRoute"]);
     }
-  
+
     // Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions(string $environment) : array {
+    public function getDefaultOptions(EnvStatus $environment) : array {
         return [
             'actions'               => [],
             'authorization_plugin'  => null, //'NullAuthorization',
@@ -91,7 +92,7 @@ class Auth extends Configurable implements RouterPluginInterface {
         }
         return $this->router;
     }
-  
+
     /// Eventos de la aplicación
     public function appPreInit() { // añadir router
         global $application;
@@ -183,6 +184,15 @@ class Auth extends Configurable implements RouterPluginInterface {
         return $this->getSession()->getIdentity();
     }
 
+    public function getRole() {
+        $user = $this->getIdentity();
+        if ($user) {
+            return $user['role'];
+        }
+        return null;
+
+    }
+
     public function registerChangedPassword($callback) {
         if (is_callable($callback)) {
             $this->callbacks['onChangedPassword'][] = $callback;
@@ -199,7 +209,7 @@ class Auth extends Configurable implements RouterPluginInterface {
      * @param array $user Si se ha encontrado un usuario, establece la tupla del usuario
      * @return bool true en caso de que el usuario y contraseña concuerden, false en caso contrario.
      */
-    public function login(string $username, string $password, bool $rememberMe, array &$user = null) {
+    public function login(string $username, string $password, bool $rememberMe, ?array &$user = null) {
         $email              = filter_var($username, FILTER_VALIDATE_EMAIL);
         $login              = false;
 
@@ -224,7 +234,7 @@ class Auth extends Configurable implements RouterPluginInterface {
             ? $this->authServices[$serviceName]
             : false;
     }
-  
+
     public function getAuthServices($serviceAuthType = 'form') { // Devuelve los servicios de autenticación por el tipo
         $result = [];
         foreach ($this->authServices as $name => $service) {
@@ -234,7 +244,7 @@ class Auth extends Configurable implements RouterPluginInterface {
         }
         return $result;
     }
-  
+
     public function addAuthService(AuthService $authService) {
         $this->authServices[$authService->getName()] = $authService;
         if (!array_search($authService->getAuthType(), $this->authTypes)) {
@@ -247,5 +257,5 @@ class Auth extends Configurable implements RouterPluginInterface {
         $user = $this->getIdentity();
         return $this->getAuthorization()->hasPermision($user, $permisionName);
     }
- 
+
 }

@@ -1,26 +1,27 @@
 <?php declare(strict_types = 1);
 /**
- * Plugin que representa la API de una aplicación web
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin que representa la API de una aplicación web
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
-use System\Configurable;
-use System\Version;
 use Kansas\Application;
 use Kansas\Router\API as RouterAPI;
 use Kansas\Router\RouterInterface;
+use System\Configurable;
+use System\EnvStatus;
+use System\Version;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/RouterPluginInterface.php';
 
 class API extends Configurable implements RouterPluginInterface {
-    
+
     protected $router;
 
     const PARAM_REQUIRE     = 'require';
@@ -36,9 +37,9 @@ class API extends Configurable implements RouterPluginInterface {
         }
         $application->registerCallback(Application::EVENT_PREINIT, [$object, "appPreInit"]);
     }
- 
+
     // Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions(string $environment) : array {
+    public function getDefaultOptions(EnvStatus $environment) : array {
         return [
             'base_path' => '',
             'params'    => [
@@ -65,9 +66,9 @@ class API extends Configurable implements RouterPluginInterface {
 
     public function appPreInit() : void { // añadir router
         global $application;
-        $application->setRouter($this->getRouter());
+        $application->addRouter($this->getRouter());
     }
-  
+
     public function registerAPICallback(callable $callback) : void {
         $this->getRouter()->registerCallback($callback);
     }

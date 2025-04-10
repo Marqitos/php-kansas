@@ -1,19 +1,20 @@
 <?php
 /**
- * Plugin para el almacenamiento en cache
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2021, Marcos Porto
- * @since v0.4
- */
+  * Plugin para el almacenamiento en cache
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
-use System\Configurable;
-use System\Version;
 use Kansas\Cache;
 use Kansas\Plugin\PluginInterface;
+use System\Configurable;
+use System\EnvStatus;
+use System\Version;
 use function array_merge;
 use function md5;
 
@@ -21,7 +22,7 @@ require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class BackendCache extends Configurable implements PluginInterface {
-  
+
   /// Campos
   private $caches = [];
   public const TYPE_FILE = 'File';
@@ -37,7 +38,7 @@ class BackendCache extends Configurable implements PluginInterface {
   }
 
   /// Miembros de ConfigurableInterface
-  public function getDefaultOptions(string $environment) : array {
+  public function getDefaultOptions(EnvStatus $environment) : array {
     return [
       'cache_type'    => self::TYPE_FILE,
       'cache_options' => []];
@@ -49,7 +50,7 @@ class BackendCache extends Configurable implements PluginInterface {
     return $environment->getVersion();
   }
 
-  public function getCache(string $category = '.', string $cacheType = null, array $cacheOptions = []) {
+  public function getCache(string $category = '.', ?string $cacheType = null, array $cacheOptions = []) {
     if (!isset($this->caches[$category])) {
       if (empty($cacheType)) {
           $cacheType = $this->options['cache_type'];
@@ -93,48 +94,48 @@ class BackendCache extends Configurable implements PluginInterface {
   public function getIdsMatchingTags($tags = []) {
     return $this->caches['.']->getIdsMatchingTags($tags);
   }
-  
-  /**
-   * Devuelve un id para identificar la llamada a una función con unos parámetros específicos
-   *
-   * @param array $args Lista de argumentos originales de la función
-   * @param string $functionName Nombre de la función
-   * @param string $className Nombre de la clase a la que pertenece la función, recomendable con su espacio de nombres. (Opcional)
-   * @return string Clave identificativa relativa a los parámetros facilitados
-   */
-  private static function cacheId(array $args, string $functionName, string $className = null) : string {
-    $key    = md5(serialize($args));
-    $key   .= ($className === null)
-            ? '-' . $functionName
-            : '-' . $className . '-' . $functionName;
-    return $key;
-  }
 
-  /**
-   * Recupera de cache el valor identificado por una función y sus parámetros.
-   * Para uso solamente con funciones puras, sin efectos secundarios
-   *
-   * @param array $args Lista de argumentos originales de la función
-   * @param string $functionName Nombre de la función
-   * @param mixed &$data Parámetro de salida donde se almacenan los datos obtenidos de caché
-   * @param string $className Nombre de la clase a la que pertenece la función, recomendable con su espacio de nombres. (Opcional)
-   * @return bool true en caso de que hubiese datos en cache, false en caso contrario
-   */
-  public function memoize(array $args, string $functionName, &$data, string $className = null) : bool {
-    $key    = self::cacheId($args, $functionName, $className);
-    if ($this->caches['.']->test($key)) {
-      $data = unserialize($this->caches['.']->load($key));
-      return true;
+    /**
+      * Devuelve un id para identificar la llamada a una función con unos parámetros específicos
+      *
+      * @param     array $args Lista de argumentos originales de la función
+      * @param     string $functionName Nombre de la función
+      * @param     ?string $className Nombre de la clase a la que pertenece la función, recomendable con su espacio de nombres. (Opcional)
+      * @return    string Clave identificativa relativa a los parámetros facilitados
+      */
+    private static function cacheId(array $args, string $functionName, ?string $className = null) : string {
+        $key    = ($className === null)
+                ? $functionName . '-'
+                : $className . '-' . $functionName . '-';
+        $key   .= md5(serialize($args));
+        return $key;
     }
-    return false;
-  }
+
+    /**
+      * Recupera de cache el valor identificado por una función y sus parámetros.
+      * Para uso solamente con funciones puras, sin efectos secundarios
+      *
+      * @param  array   $args           Lista de argumentos originales de la función
+      * @param  string  $functionName   Nombre de la función
+      * @param  mixed   &$data          Parámetro de salida donde se almacenan los datos obtenidos de caché
+      * @param  string  $className      Nombre de la clase a la que pertenece la función, recomendable con su espacio de nombres. (Opcional)
+      * @return bool                    true en caso de que hubiese datos en cache, false en caso contrario
+      */
+    public function memoize(array $args, string $functionName, &$data, ?string $className = null) : bool {
+        $key    = self::cacheId($args, $functionName, $className);
+        if ($this->caches['.']->test($key)) {
+            $data = unserialize($this->caches['.']->load($key));
+            return true;
+        }
+        return false;
+    }
 
   /**
    * Almacena en cache el valor relativo a una función y sus parámetros.
    * Para uso solamente con funciones puras, sin efectos secundarios
    *
    */
-  public function memoized(array $args, string $functionName, $data, string $className = null, array $tags = []) {
+  public function memoized(array $args, string $functionName, $data, ?string $className = null, array $tags = []) {
     $key    = self::cacheId($args, $functionName, $className);
     $data   = serialize($data);
     $this->caches['.']->save($data, $key, $tags);

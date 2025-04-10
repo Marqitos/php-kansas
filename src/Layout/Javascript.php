@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Proporciona métodos para importar código en javascript
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.5
- */
+  * Proporciona métodos para importar código en javascript
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.5
+  */
 
 namespace Kansas\Layout;
 

@@ -1,13 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Devuelve un elemento que cumple unas reglas de USER_AGENT
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- * PHP 7 >= 7.2
- */
+  * Devuelve un elemento que cumple unas reglas de USER_AGENT
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Request;
 

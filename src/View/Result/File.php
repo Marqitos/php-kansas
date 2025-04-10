@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Representa el resultado de una solicitud, en la que se va a devolver un archivo
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2024, Marcos Porto
- * @since v0.4
- */
+  * Representa el resultado de una solicitud, en la que se va a devolver un archivo
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\View\Result;
 
@@ -26,12 +26,12 @@ use const FILEINFO_MIME_TYPE;
 require_once 'Kansas/View/Result/FileAbstract.php';
 
 class File extends FileAbstract {
-    
+
   private $filename;
   // TODO: Aceptar rangos de bytes
   private $chunksize; // tamaño del buffer, false para usar el metodo integrado de php
   private $eTag;
-    
+
   public function __construct(string $filename, array $options = []) {
     $this->filename     = realpath($filename);
     $this->download     = isset($options['download'])
@@ -50,7 +50,7 @@ class File extends FileAbstract {
         parent::__construct($options['mime']);
     }
   }
-  
+
   // Obtiene o establece el tipo de contenido de archivo
   public function getMimeType() : string {
     if(empty($this->mimeType)) {
@@ -78,7 +78,7 @@ class File extends FileAbstract {
     if(!$sendFile) {
         return $cnt;
     }
-    
+
     if($this->getUseXSendFile()) {
       $filename = (strtolower(substr(php_uname('s'), 0, 3)) == 'win')
         ? str_replace('\\', '/', $this->filename)

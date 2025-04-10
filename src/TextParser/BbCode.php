@@ -20,14 +20,6 @@ require_once 'Kansas/TextParser/TextParserAbstract.php';
 class BbCode extends TextParserAbstract {
 
     /**
-     * @access public
-     * @return string The code parsed
-     */
-    public function __toString() {
-        return $this->sText;
-    }
-
-    /**
      * Run the parse methods
      *
      * @access protected

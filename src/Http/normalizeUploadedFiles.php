@@ -40,8 +40,8 @@ function normalizeUploadedFiles(array $files) {
         array $tmpNameTree,
         array $sizeTree,
         array $errorTree,
-        array $nameTree = null,
-        array $typeTree = null
+        ?array $nameTree = null,
+        ?array $typeTree = null
     ) use (&$recursiveNormalize) {
         $normalized = [];
         foreach ($tmpNameTree as $key => $value) {
@@ -81,7 +81,8 @@ function normalizeUploadedFiles(array $files) {
      * @param array $files
      * @return UploadedFile[]
      */
-    $normalizeUploadedFileSpecification = function (array $files = []) use (&$recursiveNormalize) {
+    $normalizeUploadedFileSpecification = function (array $files = [])
+        use (&$recursiveNormalize) {
         if (! isset($files['tmp_name']) || ! is_array($files['tmp_name'])
             || ! isset($files['size']) || ! is_array($files['size'])
             || ! isset($files['error']) || ! is_array($files['error'])

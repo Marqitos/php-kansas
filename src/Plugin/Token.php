@@ -1,17 +1,18 @@
 <?php declare(strict_types = 1);
 /**
- * Plugin para el uso de tokens JWT
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin para el uso de tokens JWT
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use OutOfBoundsException;
 use System\Configurable;
+use System\EnvStatus;
 use System\Guid;
 use System\Version;
 use Kansas\Plugin\PluginInterface;
@@ -30,25 +31,25 @@ require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Token extends Configurable implements PluginInterface {
 
-  private $router;
+    private $router;
 
-  // Miembros de System\Configurable\ConfigurableInterface
-  public function getDefaultOptions(string $environment) : array {
-    return [
-      'device'    => false,
-      'exp'       => 15 * 24 * 60 * 60, // 15 días
-      'secret'    => false,
-      'signer'    => 'HS256',
-      'domain'    => '',
-      'iss'       => $_SERVER['SERVER_NAME'],
-      'session'   => null,
-      'router'    => false];
-  }
+    // Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions(EnvStatus $environment) : array {
+        return [
+            'device'    => false,
+            'exp'       => 15 * 24 * 60 * 60, // 15 días
+            'secret'    => false,
+            'signer'    => 'HS256',
+            'domain'    => '',
+            'iss'       => $_SERVER['SERVER_NAME'],
+            'session'   => null,
+            'router'    => false];
+    }
 
-  public function getVersion() : Version {
-    global $environment;
-    return $environment->getVersion();
-  }
+    public function getVersion() : Version {
+        global $environment;
+        return $environment->getVersion();
+    }
 
   /**
    * Crea un token a partir de una cadena jwt,
@@ -226,8 +227,7 @@ class Token extends Configurable implements PluginInterface {
   public static function loadAlg(string $alg) : bool {
     if (function_exists('Kansas\Plugin\Token\verifyToken') ||
         function_exists('Kansas\Plugin\Token\buildToken')) {
-      var_dump('existe');
-      die;
+      die('ya existe');
       return false;
     }
     $dir        = __DIR__ . '/Token/';

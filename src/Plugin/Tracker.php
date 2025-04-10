@@ -1,19 +1,21 @@
 <?php declare(strict_types = 1);
 /**
- * Plugin para registrar los datos del dispositivo desde que se accede
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin para registrar los datos del dispositivo desde que se accede
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use Psr\Http\Message\RequestInterface;
 use System\Configurable;
+use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
+use Kansas\Application;
 use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Router\TrailResources;
@@ -25,7 +27,6 @@ use function error_get_last;
 use function getallheaders;
 use function ignore_user_abort;
 use function ini_set;
-use function register_shutdown_function;
 use function serialize;
 
 // Tracker basado en bbclone
@@ -39,34 +40,27 @@ class Tracker extends Configurable implements PluginInterface {
         global $application;
         parent::__construct($options);
         $headers = getallheaders();
-        if(isset($headers['DNT']) && $headers['DNT'] == '1') {
-            $this->setOption('trail', false); // Deshabilita el almacenaje de datos en caso de que el header DO NOT TRACK esté activo
+        if (isset($headers['DNT']) &&
+            $headers['DNT'] == '1') { // Deshabilita el almacenaje de datos en caso de que el header DO NOT TRACK esté activo
+            $this->setOption('trail', false);
         }
-        $application->registerCallback('preinit',         [$this, 'appPreInit']);
+        $application->registerCallback(Application::EVENT_PREINIT,      [$this, 'appPreInit']);
         if($this->options['trail']) {
-            $application->registerCallback('route',       [$this, "appRoute"]);
-            $application->registerCallback('createView',  [$this, "appCreateView"]);
-            register_shutdown_function(                   [$this, 'shutdown']);
+            $application->registerCallback(Application::EVENT_ROUTE,    [$this, "appRoute"]);
+            $application->registerCallback(Application::EVENT_C_VIEW,   [$this, "appCreateView"]);
+            $application->registerCallback(Application::EVENT_DISPOSE,  [$this, "appShutdown"]);
             ignore_user_abort(true);
             ini_set('display_errors', 0);
         }
     }
 
     /// Miembros de Kansas_Module_Interface
-    public function getDefaultOptions(string $environment) : array {
-        switch ($environment) {
-        case 'production':
-        case 'development':
-        case 'test':
+    public function getDefaultOptions(EnvStatus $environment) : array {
         return [
             'trail'          => true,
             'request_type'   => 'HttpRequest',
             'response_type'  => 'resource',
             'remote_plugin'  => null];
-        default:
-            require_once 'System/NotSupportedException.php';
-            throw new NotSupportedException("Entorno no soportado [$environment]");
-        }
     }
 
     public function getVersion() : Version {
@@ -113,16 +107,7 @@ class Tracker extends Configurable implements PluginInterface {
         $this->trail['responseType'] = 'page';
     }
 
-    protected function initialize() { // obtiene los datos de solicitud actual
-        require_once 'Kansas/Request/getTrailData.php';
-        global $environment;
-        $request = $environment->getRequest();
-        $this->trail = getTrailData($request);
-        $this->trail['requestType'] = $this->options['request_type'];
-        $this->trail['responseType'] = $this->options['response_type'];
-    }
-
-    public function shutdown() {
+    public function appShutdown() {
         global $environment;
         if(!isset($this->trail)) {
             $this->initialize();
@@ -133,6 +118,16 @@ class Tracker extends Configurable implements PluginInterface {
         }
         $this->trail['executionTime'] = $environment->getExecutionTime();
         $this->saveTrailData();
+    }
+
+
+    protected function initialize() { // obtiene los datos de solicitud actual
+        require_once 'Kansas/Request/getTrailData.php';
+        global $environment;
+        $request = $environment->getRequest();
+        $this->trail = getTrailData($request);
+        $this->trail['requestType'] = $this->options['request_type'];
+        $this->trail['responseType'] = $this->options['response_type'];
     }
 
     /**
@@ -147,10 +142,10 @@ class Tracker extends Configurable implements PluginInterface {
         $trail = $this->trail;
         $modifyHits = function($read) use ($trail) { // Función lambda de modificar archivo de solicitudes
             $hits = unserialize($read);
-            if(!is_array($hits)) {
+            if (!is_array($hits)) {
                 $hits = [];
             }
-            if($trail['responseType'] == 'page') {
+            if ($trail['responseType'] == 'page') {
                 echo "<!-- \n";
                 var_dump($trail);
                 echo " -->";
@@ -192,10 +187,10 @@ class Tracker extends Configurable implements PluginInterface {
             }
             $trail = $this->trail;
         }
-        
+
         $userAgent = getUserAgentData($trail['userAgent']);
         $remote = getRemoteAddressData($trail['remoteAddress'], $this->options['remote_plugin']);
-        
+
         if($useThis) {
             $this->trail = array_merge(
                 $trail,

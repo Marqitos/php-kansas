@@ -30,6 +30,8 @@ abstract class TextParserAbstract {
   }
 
   /**
+    * Elimina los elementos de <scrript>
+    *
     * @access protected
     * @return void
     */
@@ -46,10 +48,11 @@ abstract class TextParserAbstract {
     */
   protected function paragraph() : void {
     $this->sText = '<p>' . str_replace("\n\n", '</p><p>', $this->sText) . '</p>';
+    $this->sText = str_replace('<p></p>', '<br>', $this->sText);
   }
 
   /**
-    * Convert the space
+    * Unifica los saltos de línea
     *
     * @access protected
     * @return void
@@ -69,7 +72,9 @@ abstract class TextParserAbstract {
     * @abstract
     * @return string The code parsed
     */
-  abstract public function __toString();
+    public function __toString() {
+      return $this->sText;
+    }
 
   /**
     * Run the parse methods

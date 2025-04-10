@@ -33,34 +33,33 @@ use const E_WARNING;
 use const SEEK_SET;
 
 /**
- * Implementation of PSR HTTP streams
- */
+  * Implementation of PSR HTTP streams
+  */
 class Stream implements StreamInterface {
     /**
-     * @var resource|null
-     */
+      * @var resource|null
+      */
     protected $resource;
 
     /**
-     * @var string|resource
-     */
+      * @var string|resource
+      */
     protected $stream;
 
     /**
-     * @param string|resource $stream
-     * @param string $mode Mode with which to open stream
-     * @throws InvalidArgumentException
-     */
-    public function __construct($stream, $mode = 'r')
-    {
+      * @param string|resource $stream
+      * @param string $mode Mode with which to open stream
+      * @throws InvalidArgumentException
+      */
+    public function __construct($stream, $mode = 'r') {
         $this->setStream($stream, $mode);
     }
 
+## Miembros de Psr\Http\Message\StreamInterface
     /**
-     * {@inheritdoc}
-     */
-    public function __toString()
-    {
+      * {@inheritdoc}
+      */
+    public function __toString(): string {
         if (! $this->isReadable()) {
             return '';
         }
@@ -77,10 +76,9 @@ class Stream implements StreamInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function close()
-    {
+      * {@inheritdoc}
+      */
+    public function close(): void {
         if (! $this->resource) {
             return;
         }
@@ -90,34 +88,18 @@ class Stream implements StreamInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function detach()
-    {
+      * {@inheritdoc}
+      */
+    public function detach() {
         $resource = $this->resource;
         $this->resource = null;
         return $resource;
     }
 
     /**
-     * Attach a new stream/resource to the instance.
-     *
-     * @param string|resource $resource
-     * @param string $mode
-     * @throws InvalidArgumentException for stream identifier that cannot be
-     *     cast to a resource
-     * @throws InvalidArgumentException for non-resource stream
-     */
-    public function attach($resource, $mode = 'r')
-    {
-        $this->setStream($resource, $mode);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getSize()
-    {
+      * {@inheritdoc}
+      */
+    public function getSize(): ?int {
         if (null === $this->resource) {
             return null;
         }
@@ -131,10 +113,9 @@ class Stream implements StreamInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function tell()
-    {
+      * {@inheritdoc}
+      */
+    public function tell(): int {
         if (! $this->resource) {
             throw new RuntimeException('No resource available; cannot tell position');
         }
@@ -148,10 +129,9 @@ class Stream implements StreamInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function eof()
-    {
+      * {@inheritdoc}
+      */
+    public function eof(): bool {
         if (! $this->resource) {
             return true;
         }
@@ -160,10 +140,9 @@ class Stream implements StreamInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function isSeekable()
-    {
+      * {@inheritdoc}
+      */
+    public function isSeekable(): bool {
         if (! $this->resource) {
             return false;
         }
@@ -173,10 +152,9 @@ class Stream implements StreamInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function seek($offset, $whence = SEEK_SET)
-    {
+      * {@inheritdoc}
+      */
+    public function seek(int $offset, int $whence = SEEK_SET): void {
         if (! $this->resource) {
             throw new RuntimeException('No resource available; cannot seek position');
         }
@@ -190,23 +168,19 @@ class Stream implements StreamInterface {
         if (0 !== $result) {
             throw new RuntimeException('Error seeking within stream');
         }
-
-        return true;
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function rewind()
-    {
-        return $this->seek(0);
+      * {@inheritdoc}
+      */
+    public function rewind(): void {
+        $this->seek(0);
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function isWritable()
-    {
+      * {@inheritdoc}
+      */
+    public function isWritable(): bool {
         if (! $this->resource) {
             return false;
         }
@@ -214,20 +188,17 @@ class Stream implements StreamInterface {
         $meta = stream_get_meta_data($this->resource);
         $mode = $meta['mode'];
 
-        return (
-            strstr($mode, 'x')
-            || strstr($mode, 'w')
-            || strstr($mode, 'c')
-            || strstr($mode, 'a')
-            || strstr($mode, '+')
-        );
+        return strstr($mode, 'x') ||
+               strstr($mode, 'w') ||
+               strstr($mode, 'c') ||
+               strstr($mode, 'a') ||
+               strstr($mode, '+');
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function write($string)
-    {
+      * {@inheritdoc}
+      */
+    public function write(string $string): int {
         if (! $this->resource) {
             throw new RuntimeException('No resource available; cannot write');
         }
@@ -245,10 +216,9 @@ class Stream implements StreamInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function isReadable()
-    {
+      * {@inheritdoc}
+      */
+    public function isReadable(): bool {
         if (! $this->resource) {
             return false;
         }
@@ -256,14 +226,14 @@ class Stream implements StreamInterface {
         $meta = stream_get_meta_data($this->resource);
         $mode = $meta['mode'];
 
-        return (strstr($mode, 'r') || strstr($mode, '+'));
+        return strstr($mode, 'r') ||
+               strstr($mode, '+');
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function read($length)
-    {
+      * {@inheritdoc}
+      */
+    public function read(int $length): string {
         if (! $this->resource) {
             throw new RuntimeException('No resource available; cannot read');
         }
@@ -282,10 +252,9 @@ class Stream implements StreamInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function getContents()
-    {
+      * {@inheritdoc}
+      */
+    public function getContents(): string {
         if (! $this->isReadable()) {
             throw new RuntimeException('Stream is not readable');
         }
@@ -298,10 +267,9 @@ class Stream implements StreamInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function getMetadata($key = null)
-    {
+      * {@inheritdoc}
+      */
+    public function getMetadata(?string $key = null) {
         if (null === $key) {
             return stream_get_meta_data($this->resource);
         }
@@ -312,16 +280,29 @@ class Stream implements StreamInterface {
             ? $metadata[$key]
             : null;
     }
+## Fin StreamInterface
 
     /**
-     * Set the internal stream resource.
-     *
-     * @param string|resource $stream String stream target or stream resource.
-     * @param string $mode Resource mode for stream target.
-     * @throws InvalidArgumentException for invalid streams or resources.
-     */
-    private function setStream($stream, $mode = 'r')
-    {
+      * Attach a new stream/resource to the instance.
+      *
+      * @param string|resource $resource
+      * @param string $mode
+      * @throws InvalidArgumentException for stream identifier that cannot be
+      *     cast to a resource
+      * @throws InvalidArgumentException for non-resource stream
+      */
+    public function attach($resource, $mode = 'r') {
+        $this->setStream($resource, $mode);
+    }
+
+    /**
+      * Set the internal stream resource.
+      *
+      * @param string|resource $stream String stream target or stream resource.
+      * @param string $mode Resource mode for stream target.
+      * @throws InvalidArgumentException for invalid streams or resources.
+      */
+    private function setStream($stream, $mode = 'r') {
         $error    = null;
         $resource = $stream;
 

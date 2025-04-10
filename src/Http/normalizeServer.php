@@ -22,28 +22,25 @@ use function is_callable;
  *     `apache_request_headers` under the Apache mod_php.
  * @return array Either $server verbatim, or with an added HTTP_AUTHORIZATION header.
  */
-function normalizeServer(array $server, callable $apacheRequestHeaderCallback = null) {
-    if (null === $apacheRequestHeaderCallback && is_callable('apache_request_headers')) {
+function normalizeServer(array $server, ?callable $apacheRequestHeaderCallback = null) {
+    if ($apacheRequestHeaderCallback === null &&
+        is_callable('apache_request_headers')) {
         $apacheRequestHeaderCallback = 'apache_request_headers';
     }
 
     // If the HTTP_AUTHORIZATION value is already set, or the callback is not
     // callable, we return verbatim
-    if (isset($server['HTTP_AUTHORIZATION'])
-        || ! is_callable($apacheRequestHeaderCallback)
-    ) {
+    if (isset($server['HTTP_AUTHORIZATION']) ||
+        ! is_callable($apacheRequestHeaderCallback)) {
         return $server;
     }
 
     $apacheRequestHeaders = $apacheRequestHeaderCallback();
-    if (isset($apacheRequestHeaders['Authorization'])) {
-        $server['HTTP_AUTHORIZATION'] = $apacheRequestHeaders['Authorization'];
-        return $server;
-    }
-
-    if (isset($apacheRequestHeaders['authorization'])) {
-        $server['HTTP_AUTHORIZATION'] = $apacheRequestHeaders['authorization'];
-        return $server;
+    foreach (['Authorization', 'authorization'] as $key) {
+        if (isset($apacheRequestHeaders[$key])) {
+            $server['HTTP_AUTHORIZATION'] = $apacheRequestHeaders[$key];
+            return $server;
+        }
     }
 
     return $server;

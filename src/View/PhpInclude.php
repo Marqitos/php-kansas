@@ -1,19 +1,21 @@
 <?php declare(strict_types = 1);
 /**
- * Renderiza una plantilla, mediante un script en PHP
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Renderiza una plantilla, mediante un script en PHP
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\View;
 
-use System\Configurable;
 use Kansas\View\ViewInterface;
 use Kansas\Environment;
 use Kansas\View\Template;
+use System\Configurable;
+use System\EnvStatus;
+use function is_array;
 
 require_once 'System/Configurable.php';
 require_once 'Kansas/View/ViewInterface.php';
@@ -30,21 +32,29 @@ class PhpInclude extends Configurable implements ViewInterface {
         $this->clearVars();
     }
 
-    // Miembros de System\Configurable\ConfigurableInterface
-    public function getDefaultOptions(string $environment) : array {
+## Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions(EnvStatus $environment) : array {
         return [];
     }
-    
-    // Miembros de Kansas\View\ViewInterface
-    public function getEngine() {
+## -- ConfigurableInterface
 
-    }
+## Miembros de Kansas\View\ViewInterface
+    /**
+      * @inheritDoc
+      */
+    public function getEngine() { }
 
-    public function setScriptPath($path) {
+    /**
+      * @inheritDoc
+      */
+    public function setScriptPath(string $path): void {
         $this->scriptPaths = $path;
     }
 
-    public function getScriptPaths() {
+    /**
+      * @inheritDoc
+      */
+    public function getScriptPaths(): string {
         if($this->scriptPaths !== null) {
             return $this->scriptPaths;
         }
@@ -53,45 +63,63 @@ class PhpInclude extends Configurable implements ViewInterface {
         return $environment->getSpecialFolder(Environment::SF_LAYOUT);
     }
 
-    public function __set($key, $val) {
-        $this->data[$key] = $val;
+    /**
+      * @inheritDoc
+      */
+    public function __set(string $name, mixed $value): void {
+        $this->data[$name] = $value;
     }
 
-    public function __isset($key) {
-        return isset($this->data[$key]);
+    /**
+      * @inheritDoc
+      */
+    public function __isset(string $name): bool {
+        return isset($this->data[$name]);
     }
 
-    public function __unset($key){
-        unset($this->data[$key]);
+    /**
+      * @inheritDoc
+      */
+    public function __unset(string $name): void {
+        unset($this->data[$name]);
     }
 
-
-    public function assign($spec, $value = null) {
-        if(\is_array($spec)) {
+    /**
+      * @inheritDoc
+      */
+    public function assign(string|array $spec, $value = null) {
+        if(is_array($spec)) {
             $this->data = array_merge($this->data, $spec);
         } else {
             $this->data[$spec] = $value;
         }
     }
 
-    public function clearVars() {
+    /**
+      * @inheritDoc
+      */
+    public function clearVars(): void {
         $this->data = $this->options;
     }
 
-    public function render($name) {
+    /**
+      * @inheritDoc
+      */
+    public function render(string $name): string {
         $template = $this->createTemplate($name, $this->data);
         echo $template->fetch();
     }
+## -- ViewInterface
 
-    public function getCaching() {
+    public function getCaching(): bool {
         return $this->caching;
     }
 
-    public function setCaching($value) {
+    public function setCaching(bool $value): void {
         $this->caching = $value;
     }
 
-    public function createTemplate($file, array $data = []) {
+    public function createTemplate(string $file, array $data = []): Template {
         require_once 'Kansas/View/Template.php';
         return new Template($this->getScriptPaths() . $file, $data);
     }

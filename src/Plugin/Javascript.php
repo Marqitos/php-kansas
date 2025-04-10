@@ -1,16 +1,17 @@
 <?php declare(strict_types = 1);
 /**
- * Plugin el procesamiento de archivos javascript. Une, compacta y devuelve el código solicitado
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin el procesamiento de archivos javascript. Une, compacta y devuelve el código solicitado
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use System\Configurable;
+use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
 use Kansas\Controller\ControllerInterface;
@@ -30,33 +31,33 @@ require_once 'System/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Javascript extends Configurable implements PluginInterface {
-  
+
     private $packager;
-  
+
     public function __construct(array $options = []) {
         require_once 'Kansas/Controller/Index.php';
         parent::__construct($options);
         Index::addAction('javascript', [self::class, 'controllerAction']); // Añade una acción al controlador principal
     }
-  
-    /// Miembros de Kansas\Plugin\Interface
-    public function getDefaultOptions(string $environment) : array {
+
+    # Miembros de Kansas\Plugin\Interface
+    public function getDefaultOptions(EnvStatus $environment) : array {
         switch ($environment) {
-        case 'production':
-            return [
-                'packages' => [],
-                'minifier' => [
-                    'flaggedComments' => false],
-                'verifyFiles' => false]; // En producción no comprobamos cambios en los archivos individuales
-                case 'development':
-        case 'test':
-            return [
-                'packages' => [],
-                'minifier' => false, // En entorno de desarrollo no minimiza la salida de javascript
-                'verifyFiles' => true];
-        default:
-            require_once 'System/NotSupportedException.php';
-            throw new NotSupportedException("Entorno no soportado [$environment]");
+            case 'production':
+                return [
+                    'packages' => [],
+                    'minifier' => [
+                        'flaggedComments' => false],
+                    'verifyFiles' => false]; // En producción no comprobamos cambios en los archivos individuales
+                    case 'development':
+            case 'test':
+                return [
+                    'packages' => [],
+                    'minifier' => false, // En entorno de desarrollo no minimiza la salida de javascript
+                    'verifyFiles' => true];
+            default:
+                require_once 'System/NotSupportedException.php';
+                throw new NotSupportedException("Entorno no soportado [$environment]");
         }
     }
 
@@ -64,6 +65,7 @@ class Javascript extends Configurable implements PluginInterface {
         global $environment;
         return $environment->getVersion();
     }
+    # -- Miembros de Kansas\Plugin\Interface
 
     public function getPackager() {
         if($this->packager == null){
@@ -72,7 +74,7 @@ class Javascript extends Configurable implements PluginInterface {
         }
         return $this->packager;
     }
-  
+
     public function build($components, &$md5 = null) {
         global $application;
         $md5 = false;
@@ -133,7 +135,7 @@ class Javascript extends Configurable implements PluginInterface {
         }
         return $this->javascriptFromComponents($components, $this->options['minifier']);
     }
-  
+
     public function javascriptFromComponents($components, $minifier = false) {
         $jsCode = $this->getPackager()->build_from_components($components);
         return self::minifier($jsCode, $minifier);
@@ -164,5 +166,5 @@ class Javascript extends Configurable implements PluginInterface {
         }
         return false;
     }
-   
+
 }

@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Proporciona métodos estáticos y tipados relativos a $application y $environment;
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2021, Marcos Porto
- * @since v0.4
- */
+  * Proporciona métodos estáticos y tipados relativos a $application y $environment;
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 namespace Kansas;
 
 use Kansas\Db\Adapter;
@@ -35,11 +35,11 @@ class App {
         return $application->getProvider($providerName);
     }
 
-    public static function getRouter(string $pluginName) : RouterInterface {
+    public static function getRouter(string $pluginName) : ?RouterInterface {
         require_once 'Kansas/Plugin/RouterPluginInterface.php';
         global $application;
         $plugin = $application->hasPlugin($pluginName);
-        if($plugin instanceof RouterPluginInterface) {
+        if (is_a($plugin, 'Kansas\Plugin\RouterPluginInterface')) {
             return $plugin->getRouter();
         }
         return null;
@@ -68,13 +68,13 @@ class App {
     public static function getLocale(array $keys, ...$values) {
         require_once 'System/Localization/Resources.php';
         $value = Resources::getResource($keys);
-        if(!$value) {
+        if (!$value) {
             return false;
         }
         return count($values) == 0
             ? $value
             : sprintf($value, ...$values);
-        
+
     }
 
 }

@@ -10,17 +10,17 @@ namespace Kansas\Http;
 use function stream_get_contents;
 
 /**
- * Caching version of php://input
- */
+  * Caching version of php://input
+  */
 class PhpInputStream extends Stream {
     /**
-     * @var string
-     */
+      * @var string
+      */
     private $cache = '';
 
     /**
-     * @var bool
-     */
+      * @var bool
+      */
     private $reachedEof = false;
 
     /**
@@ -31,8 +31,8 @@ class PhpInputStream extends Stream {
     }
 
     /**
-     * {@inheritdoc}
-     */
+      * {@inheritdoc}
+      */
     public function __toString() : string {
         if ($this->reachedEof) {
             return $this->cache;
@@ -43,15 +43,15 @@ class PhpInputStream extends Stream {
     }
 
     /**
-     * {@inheritdoc}
-     */
+      * {@inheritdoc}
+      */
     public function isWritable() : bool {
         return false;
     }
 
     /**
-     * {@inheritdoc}
-     */
+      * {@inheritdoc}
+      */
     public function read($length) : string {
         $content = parent::read($length);
         if (! $this->reachedEof) {
@@ -66,8 +66,8 @@ class PhpInputStream extends Stream {
     }
 
     /**
-     * {@inheritdoc}
-     */
+      * {@inheritdoc}
+      */
     public function getContents($maxLength = -1) : string {
         if ($this->reachedEof) {
             return $this->cache;
@@ -76,7 +76,8 @@ class PhpInputStream extends Stream {
         $contents     = stream_get_contents($this->resource, $maxLength);
         $this->cache .= $contents;
 
-        if ($maxLength === -1 || $this->eof()) {
+        if ($maxLength === -1 ||
+            $this->eof()) {
             $this->reachedEof = true;
         }
 

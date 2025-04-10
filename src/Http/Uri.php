@@ -29,6 +29,7 @@ use function strpos;
 use function strtolower;
 use function substr;
 
+require_once 'Psr/Http/Message/UriInterface.php';
 /**
  * Implementación de Psr\Http\UriInterface.
  *
@@ -39,6 +40,7 @@ use function substr;
  * state of the current instance and return a new instance that contains the
  * changed state.
  */
+#[SuppressWarnings("php:S1448")]
 class Uri implements UriInterface {
     /**
      * Sub-delimiters used in user info, query strings and fragments.
@@ -128,8 +130,7 @@ class Uri implements UriInterface {
     /**
      * {@inheritdoc}
      */
-    public function __toString()
-    {
+    public function __toString(): string {
         if (null !== $this->uriString) {
             return $this->uriString;
         }
@@ -145,19 +146,19 @@ class Uri implements UriInterface {
         return $this->uriString;
     }
 
+## Miembros de Psr\Http\Message\UriInterface
+
     /**
-     * {@inheritdoc}
-     */
-    public function getScheme()
-    {
+      * {@inheritdoc}
+      */
+    public function getScheme(): string {
         return $this->scheme;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getAuthority()
-    {
+    public function getAuthority(): string {
         if ('' === $this->host) {
             return '';
         }
@@ -181,24 +182,21 @@ class Uri implements UriInterface {
      *
      * {@inheritdoc}
      */
-    public function getUserInfo()
-    {
+    public function getUserInfo(): string {
         return $this->userInfo;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getHost()
-    {
+    public function getHost(): string {
         return $this->host;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getPort()
-    {
+    public function getPort(): ?int {
         return $this->isNonStandardPort($this->scheme, $this->host, $this->port)
             ? $this->port
             : null;
@@ -207,40 +205,28 @@ class Uri implements UriInterface {
     /**
      * {@inheritdoc}
      */
-    public function getPath()
-    {
+    public function getPath(): string {
         return $this->path;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getQuery()
-    {
+    public function getQuery(): string {
         return $this->query;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getFragment()
-    {
+    public function getFragment(): string {
         return $this->fragment;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function withScheme($scheme)
-    {
-        if (! is_string($scheme)) {
-            throw new InvalidArgumentException(sprintf(
-                '%s expects a string argument; received %s',
-                __METHOD__,
-                (is_object($scheme) ? get_class($scheme) : gettype($scheme))
-            ));
-        }
-
+    public function withScheme(string $scheme): UriInterface {
         $scheme = $this->filterScheme($scheme);
 
         if ($scheme === $this->scheme) {
@@ -262,23 +248,7 @@ class Uri implements UriInterface {
      *
      * {@inheritdoc}
      */
-    public function withUserInfo($user, $password = null)
-    {
-        if (! is_string($user)) {
-            throw new InvalidArgumentException(sprintf(
-                '%s expects a string user argument; received %s',
-                __METHOD__,
-                (is_object($user) ? get_class($user) : gettype($user))
-            ));
-        }
-        if (null !== $password && ! is_string($password)) {
-            throw new InvalidArgumentException(sprintf(
-                '%s expects a string password argument; received %s',
-                __METHOD__,
-                (is_object($password) ? get_class($password) : gettype($password))
-            ));
-        }
-
+    public function withUserInfo(string $user, ?string $password = null): UriInterface {
         $info = $this->filterUserInfoPart($user);
         if ($password) {
             $info .= ':' . $this->filterUserInfoPart($password);
@@ -298,16 +268,7 @@ class Uri implements UriInterface {
     /**
      * {@inheritdoc}
      */
-    public function withHost($host)
-    {
-        if (! is_string($host)) {
-            throw new InvalidArgumentException(sprintf(
-                '%s expects a string argument; received %s',
-                __METHOD__,
-                (is_object($host) ? get_class($host) : gettype($host))
-            ));
-        }
-
+    public function withHost(string $host): UriInterface {
         if ($host === $this->host) {
             // Do nothing if no change was made.
             return $this;
@@ -322,15 +283,7 @@ class Uri implements UriInterface {
     /**
      * {@inheritdoc}
      */
-    public function withPort($port)
-    {
-        if (! is_numeric($port) && $port !== null) {
-            throw new InvalidArgumentException(sprintf(
-                'Invalid port "%s" specified; must be an integer, an integer string, or null',
-                (is_object($port) ? get_class($port) : gettype($port))
-            ));
-        }
-
+    public function withPort(?int $port): UriInterface {
         if ($port !== null) {
             $port = (int) $port;
         }
@@ -340,7 +293,8 @@ class Uri implements UriInterface {
             return $this;
         }
 
-        if ($port !== null && ($port < 1 || $port > 65535)) {
+        if ($port !== null &&
+            ($port < 1 || $port > 65535)) {
             throw new InvalidArgumentException(sprintf(
                 'Invalid port "%d" specified; must be a valid TCP/UDP port',
                 $port
@@ -356,14 +310,7 @@ class Uri implements UriInterface {
     /**
      * {@inheritdoc}
      */
-    public function withPath($path)
-    {
-        if (! is_string($path)) {
-            throw new InvalidArgumentException(
-                'Invalid path provided; must be a string'
-            );
-        }
-
+    public function withPath(string $path): UriInterface {
         if (strpos($path, '?') !== false) {
             throw new InvalidArgumentException(
                 'Invalid path provided; must not contain a query string'
@@ -392,14 +339,7 @@ class Uri implements UriInterface {
     /**
      * {@inheritdoc}
      */
-    public function withQuery($query)
-    {
-        if (! is_string($query)) {
-            throw new InvalidArgumentException(
-                'Query string must be a string'
-            );
-        }
-
+    public function withQuery(string $query): UriInterface {
         if (strpos($query, '#') !== false) {
             throw new InvalidArgumentException(
                 'Query string must not include a URI fragment'
@@ -422,16 +362,7 @@ class Uri implements UriInterface {
     /**
      * {@inheritdoc}
      */
-    public function withFragment($fragment)
-    {
-        if (! is_string($fragment)) {
-            throw new InvalidArgumentException(sprintf(
-                '%s expects a string argument; received %s',
-                __METHOD__,
-                (is_object($fragment) ? get_class($fragment) : gettype($fragment))
-            ));
-        }
-
+    public function withFragment(string $fragment): UriInterface {
         $fragment = $this->filterFragment($fragment);
 
         if ($fragment === $this->fragment) {
@@ -483,8 +414,7 @@ class Uri implements UriInterface {
      * @param string $fragment
      * @return string
      */
-    private static function createUriString($scheme, $authority, $path, $query, $fragment)
-    {
+    private static function createUriString($scheme, $authority, $path, $query, $fragment) {
         $uri = '';
 
         if ('' !== $scheme) {
@@ -495,7 +425,8 @@ class Uri implements UriInterface {
             $uri .= '//' . $authority;
         }
 
-        if ('' !== $path && '/' !== substr($path, 0, 1)) {
+        if ('' !== $path &&
+            '/' !== substr($path, 0, 1)) {
             $path = '/' . $path;
         }
 

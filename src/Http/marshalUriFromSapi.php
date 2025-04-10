@@ -40,8 +40,9 @@ function marshalUriFromSapi(array $server, array $headers) {
         $header  = strtolower($name);
         $headers = array_change_key_case($headers, CASE_LOWER);
         if (array_key_exists($header, $headers)) {
-            $value = is_array($headers[$header]) ? implode(', ', $headers[$header]) : $headers[$header];
-            return $value;
+            return is_array($headers[$header])
+                ? implode(', ', $headers[$header])
+                : $headers[$header];
         }
 
         return $default;
@@ -84,7 +85,7 @@ function marshalUriFromSapi(array $server, array $headers) {
         * @return array Array of two items, host and port, in that order (can be
         *     passed to a list() operation).
         */
-        $marshalIpv6HostAndPort = function (array $server, $host, $port) {
+        $marshalIpv6HostAndPort = function (array $server, $port) {
             $host = '[' . $server['SERVER_ADDR'] . ']';
             $port = $port ?: 80;
             if ($port . ']' === substr($host, strrpos($host, ':') + 1)) {
@@ -116,7 +117,7 @@ function marshalUriFromSapi(array $server, array $headers) {
 
         // Misinterpreted IPv6-Address
         // Reported for Safari on Windows
-        return $marshalIpv6HostAndPort($server, $host, $port);
+        return $marshalIpv6HostAndPort($server, $port);
     };
 
     /**

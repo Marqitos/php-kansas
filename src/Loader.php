@@ -27,7 +27,7 @@ use function substr;
  * Static methods for loading classes and files.
  */
 class Loader {
-	
+
     /**
      * @var Loader Singleton instance
      */
@@ -96,8 +96,8 @@ class Loader {
             return false;
         }
     }
-	
-	
+
+
     /**
      * Loads a class from a PHP file.  The filename must be formatted
      * as "$class.php".
@@ -119,13 +119,13 @@ class Loader {
      * @throws ArgumentOutOfRangeException
      */
     public static function loadClass($class, $dirs = null) {
-        if (class_exists($class, false) || 
+        if (class_exists($class, false) ||
             interface_exists($class, false)) {
             return;
         }
 
-        if ($dirs !== null && 
-            !is_string($dirs) && 
+        if ($dirs !== null &&
+            !is_string($dirs) &&
             !is_array($dirs)) {
             require_once 'System/ArgumentOutOfRangeException.php';
             throw new ArgumentOutOfRangeException('dirs', 'Debe ser una cadena de texto o un array');
@@ -198,7 +198,7 @@ class Loader {
          */
         $incPath = false;
         if (!empty($dirs) &&
-            (is_array($dirs) || 
+            (is_array($dirs) ||
              is_string($dirs))) {
             if (is_array($dirs)) {
                 $dirs = implode(PATH_SEPARATOR, $dirs);
@@ -214,9 +214,9 @@ class Loader {
         error_reporting(0);
 
         if ($once) {
-            include_once($filename);
+            include_once $filename;
         } else {
-            include($filename);
+            include $filename;
         }
 
         error_reporting($reporting);

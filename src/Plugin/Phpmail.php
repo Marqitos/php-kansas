@@ -1,16 +1,17 @@
 <?php
 /**
- * Plugin para el envío de mensajes utilizando PHPMailer
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin para el envío de mensajes utilizando PHPMailer
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use System\Configurable;
+use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
 use Kansas\Environment;
@@ -23,19 +24,10 @@ require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Phpmail extends Configurable implements PluginInterface {
 
-    /// Constructor
-    public function __construct(array $options) {
+    // Miembros de System\Configurable\ConfigurableInterface
+    public function getDefaultOptions(EnvStatus $environment) : array {
         require_once 'PHPMailer/PHPMailer/PHPMailer.php';
         require_once 'PHPMailer/PHPMailer/SMTP.php';
-        parent::__construct($options);
-    }
-  
-    // Miembros de System\Configurable\ConfigurableInterface    
-    public function getDefaultOptions(string $environment) : array {
-        switch ($environment) {
-        case 'production':
-        case 'development':
-        case 'test':
         return [
             'smtp' =>  [
                 'charset'   => PHPMailer::CHARSET_UTF8,
@@ -53,10 +45,6 @@ class Phpmail extends Configurable implements PluginInterface {
                 'fromName'  => ''
             ]
         ];
-        default:
-            require_once 'System/NotSupportedException.php';
-            throw new NotSupportedException("Entorno no soportado [$environment]");
-        }
     }
 
     public function getVersion() : Version {
@@ -82,7 +70,7 @@ class Phpmail extends Configurable implements PluginInterface {
 
     /**
      * Envía un mensaje mediante el servidor smtp
-     * 
+     *
      * @param array|string $to Destinatario del mensaje: array con el correo y el nombre; o string con el correo
      * @param string $subject Asunto del mensaje
      * @param string $htmlTemplate Nombre del archivo de la plantilla para el mensaje en formato html
@@ -122,6 +110,6 @@ class Phpmail extends Configurable implements PluginInterface {
         return $mail->send()
             ? true
             : $mail->ErrorInfo;
-    }    
-  
+    }
+
 }

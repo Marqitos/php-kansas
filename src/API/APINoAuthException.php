@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Representa un error de autenticación durante una solicitud a la API
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2022, Marcos Porto
- * @since v0.5
- */
+  * Representa un error de autenticación durante una solicitud a la API
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.5
+  */
 
 namespace Kansas\API;
 

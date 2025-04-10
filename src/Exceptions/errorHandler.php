@@ -1,13 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Proporciona un manejador de errores compatible con set_error_handler
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- * PHP 7
- */
+  * Proporciona un manejador de errores compatible con set_error_handler
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Exceptions;
 
@@ -18,16 +17,16 @@ function errorHandler(int $errno, string $errstr, string $errfile, int $errline,
     global $application;
     $trace = debug_backtrace();
     array_shift($trace);
-    
+
     $errData = [
-        'exception'   	=> null,
-        'errorLevel'	=> $errno,
-        'code'			=> 500,
-        'message'		=> $errstr,
-        'trace'			=> $trace,
-        'line'			=> $errline,
-        'file'			=> $errfile,
-        'context'		=> $errcontext
+        'exception'     => null,
+        'errorLevel'    => $errno,
+        'code'          => 500,
+        'message'       => $errstr,
+        'trace'         => $trace,
+        'line'          => $errline,
+        'file'          => $errfile,
+        'context'       => $errcontext
     ];
     $application->raiseMessage($errData);
     return true; // No ejecutar el gestor de errores interno de PHP

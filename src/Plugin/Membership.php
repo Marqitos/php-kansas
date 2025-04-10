@@ -1,17 +1,18 @@
 <?php
 /**
- * Plugin para la autenticación mediante usuario y contraseña
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin para la autenticación mediante usuario y contraseña
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use Exception;
 use System\Configurable;
+use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
 use Kansas\Auth\ServiceInterface as AuthService;
@@ -33,52 +34,44 @@ class Membership extends Configurable implements PluginInterface, AuthService {
     $this->authPlugin = $application->getPlugin('Auth');
     $this->authPlugin->addAuthService($this);
   }
-  
+
   /// Miembros de Kansas_Module_Interface
-  public function getDefaultOptions(string $environment) : array {
-    switch ($environment) {
-      case 'production':
-      case 'development':
-      case 'test':
-        return [
-          'actions' => [
-            'signin' => [
-              'path' => '/iniciar-sesion',
-              'controller' => 'Membership',
-              'action' => 'signIn'],
-            'signup' => [
-              'path' => '/registro',
-              'controller' => 'Membership',
-              'action' => 'signUp'],
-            'reset-password' => [
-              'path' => 'recordar',
-              'controller' => 'Membership',
-              'action' => 'resetPassword'],
-            'change-password' => [
-              'path' => 'cambiar-contrasena',
-              'controller' => 'Membership',
-              'action' => 'changePassword'],
-            'set-password' => [
-              'controller' => 'Membership',
-              'action' => 'setPassword']
-          ]
-        ];
-      default:
-        require_once 'System/NotSupportedException.php';
-        throw new NotSupportedException("Entorno no soportado [$environment]");
-    }
+  public function getDefaultOptions(EnvStatus $environment) : array {
+    return [
+        'actions' => [
+        'signin' => [
+            'path' => '/iniciar-sesion',
+            'controller' => 'Membership',
+            'action' => 'signIn'],
+        'signup' => [
+            'path' => '/registro',
+            'controller' => 'Membership',
+            'action' => 'signUp'],
+        'reset-password' => [
+            'path' => 'recordar',
+            'controller' => 'Membership',
+            'action' => 'resetPassword'],
+        'change-password' => [
+            'path' => 'cambiar-contrasena',
+            'controller' => 'Membership',
+            'action' => 'changePassword'],
+        'set-password' => [
+            'controller' => 'Membership',
+            'action' => 'setPassword']
+        ]
+    ];
   }
 
   public function getVersion() : Version {
     global $environment;
     return $environment->getVersion();
   }
-  
+
   /// Miembros de Kansas_Auth_Service_Interface
   public function getActions() {
     return $this->options['actions'];
   }
-  
+
   public function getAuthType() {
     return 'form';
   }
@@ -109,7 +102,7 @@ class Membership extends Configurable implements PluginInterface, AuthService {
         throw new AuthException(AuthException::FAILURE_UNCATEGORIZED);
       }
     } else {
-      
+
     }
 
   }

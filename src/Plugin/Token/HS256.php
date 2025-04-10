@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Verificación  y creación de tokens firmados mediante HS256
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.5
- */
+  * Verificación  y creación de tokens firmados mediante HS256
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.5
+  */
 
 namespace Kansas\Plugin\Token;
 

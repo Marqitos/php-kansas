@@ -1,12 +1,12 @@
 <?php declare(strict_types = 1);
 /**
- * Representa un objeto que presenta valores predeterminados.
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2021, Marcos Porto
- * @since v0.4
- */
+  * Representa un objeto que presenta valores predeterminados.
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 

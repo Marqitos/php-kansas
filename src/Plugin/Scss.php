@@ -1,16 +1,17 @@
 <?php
 /**
- * Plugin para el procesamiento de archivos scss. Compilación y almacenamiento en cache, para devolución css
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Plugin para el procesamiento de archivos scss. Compilación y almacenamiento en cache, para devolución css
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Plugin;
 
 use System\Configurable;
+use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
 use Kansas\Controller\ControllerInterface;
@@ -26,7 +27,7 @@ require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Kansas/Controller/Index.php';
 
 class Scss extends Configurable implements PluginInterface {
-        
+
     private $parser;
 
     public function __construct(array $options = []) {
@@ -35,29 +36,29 @@ class Scss extends Configurable implements PluginInterface {
     }
 
     /// Miembros de Kansas\Plugin\Interface
-    public function getDefaultOptions(string $environment) : array {
+    public function getDefaultOptions(EnvStatus $environment) : array {
         switch ($environment) {
-        case 'production':
-            return [
-            'formater' => 'Leafo\ScssPhp\Formatter\Compressed',
-            'cache' => true,
-            'environment' => $environment];
-        case 'development':
-        case 'test':
-            return [
-            'formater' => 'Leafo\ScssPhp\Formatter\Expanded',
-            'cache' => false,
-            'environment' => $environment];
-        default:
-            require_once 'System/NotSupportedException.php';
-            throw new NotSupportedException("Entorno no soportado [$environment]");
+            case EnvStatus::PRODUCTION:
+                return [
+                'formater' => 'Leafo\ScssPhp\Formatter\Compressed',
+                'cache' => true,
+                'environment' => $environment];
+            case EnvStatus::DEVELOPMENT:
+            case EnvStatus::TEST:
+                return [
+                'formater' => 'Leafo\ScssPhp\Formatter\Expanded',
+                'cache' => false,
+                'environment' => $environment];
+            default:
+                require_once 'System/NotSupportedException.php';
+                throw new NotSupportedException("Entorno no soportado [$environment]");
         }
     }
-        
+
     public function getVersion() : Version {
         global $environment;
         return $environment->getVersion();
-    }  
+    }
 
     public function getParser() {
         if($this->parser == null) {
@@ -65,10 +66,10 @@ class Scss extends Configurable implements PluginInterface {
             $this->parser = new Compiler();
             $this->parser->addImportPath([$this, 'getFile']);
             $this->parser->setFormatter($this->options['formater']);
-        } 
+        }
         return $this->parser;
     }
-    
+
     public function getFile($fileName, $first = false) {
         if(file_exists($fileName)) {
             return $fileName;
@@ -97,7 +98,7 @@ class Scss extends Configurable implements PluginInterface {
         }
         return false;
     }
-    
+
     public function toCss($fileName, &$md5 = null) {
         global $application;
         $file = $this->getFile($fileName, true);
@@ -129,11 +130,12 @@ class Scss extends Configurable implements PluginInterface {
                 $fileList[$path] = hash_file("crc32b", $path);
             }
             $data = serialize($fileList);
+            // ignore CWE-328
             $md5 = md5($data);
         }
         if($this->options['cache'] &&
            $cache = $application->hasPlugin('BackendCache')) { // guardamos resultado en cache
-            $cache->save($data, 'scss-list-' . md5($file));        
+            $cache->save($data, 'scss-list-' . md5($file));
             $cache->save($css, 'scss-' . $md5 . '.css', ['scss']);
         }
         return $css;
@@ -143,5 +145,5 @@ class Scss extends Configurable implements PluginInterface {
         require_once 'Kansas/View/Result/Scss.php';
         return new ScssViewResult($vars['file']);
     }
-    
+
 }

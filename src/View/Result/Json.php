@@ -10,14 +10,12 @@ use function md5;
 require_once 'Kansas/View/Result/StringAbstract.php';
 
 class Json extends StringAbstract {
-        
-    private $data;
-    
-    public function __construct($data) {
+
+    public function __construct(
+        private $data) {
         parent::__construct('application/json');
-        $this->data = $data;
     }
-        
+
     public function getResult(&$cache) {
         global $environment;
         require_once 'Kansas/Environment.php';

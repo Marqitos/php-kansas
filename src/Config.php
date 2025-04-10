@@ -11,8 +11,9 @@ use Kansas\Config\Exception as ConfigException;
 
 use function is_array;
 
+#[Deprecated]
 class Config {
-  
+
   /**
    * Loads the section $section from the config file $filename for
    * access facilitated by nested object properties.
@@ -55,7 +56,7 @@ class Config {
    * @throws ArgumentOutOfRangeException
    * @throws Kansas\Config\Exception
    * @return array
-   */  
+   */
   public static function ParseIni($filename, array $options, $section = null) {
     if (empty($filename)) {
       require_once 'System/ArgumentOutOfRangeException.php';
@@ -88,8 +89,8 @@ class Config {
       }
     }
     return $dataArray;
-  } 
-  
+  }
+
     /**
      * Load the ini file and preprocess the section separator (':' in the
      * section name (that is used for section extension) so that the resultant

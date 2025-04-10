@@ -1,27 +1,28 @@
 <?php declare(strict_types = 1);
 /**
- * Proporciona información relacionada con las carpetas, tiempo de ejecución, la petición actual e idiomas
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright 2024, Marcos Porto
- * @since v0.1
- */
+  * Proporciona información relacionada con las carpetas, tiempo de ejecución, la petición actual e idiomas
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.1
+  */
 
 namespace Kansas;
 
-use Psr\Http\Message\ServerRequestInterface;
-use System\ArgumentOutOfRangeException;
-use System\Collections\KeyNotFoundException;
-use System\IO\File;
-use System\IO\IOException;
-use System\Localization\Resources as SysResources;
-use System\Version;
 use Kansas\PluginLoader;
 use Kansas\Controller\ControllerInterface;
 use Kansas\Http\ServerRequest;
 use Kansas\Localization\Resources;
 use Kansas\Plugin\PluginInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use System\ArgumentOutOfRangeException;
+use System\Collections\KeyNotFoundException;
+use System\EnvStatus;
+use System\IO\File;
+use System\IO\IOException;
+use System\Localization\Resources as SysResources;
+use System\Version;
 
 use function array_merge;
 use function constant;
@@ -32,24 +33,19 @@ use function rand;
 use function realpath;
 use function Kansas\Http\currentServerRequest;
 
-require_once 'Psr/Http/Message/ServerRequestInterface.php';
-require_once 'System/Version.php';
-require_once 'Kansas/PluginLoader.php';
+require_once 'PluginLoader.php';
 require_once 'Kansas/Controller/ControllerInterface.php';
 require_once 'Kansas/Http/ServerRequest.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
+require_once 'Psr/Http/Message/ServerRequestInterface.php';
+require_once 'System/EnvStatus.php';
+require_once 'System/Version.php';
 
 /**
   * Objeto singleton con valores de entorno.
   * Carpetas especiales, temas, información sobre la solicitud actual, ...
   */
 class Environment {
-  
-  // Posibles valores de Status
-  const ENV_CONSTRUCTION  = 'construction';
-  const ENV_DEVELOPMENT   = 'development';
-  const ENV_PRODUCTION    = 'production';
-  const ENV_TEST          = 'test';
 
   // Posibles valores para SpecialFolder
   const SF_PUBLIC     = 0x0001;
@@ -94,34 +90,29 @@ class Environment {
   private static $apacheRequestHeaders = 'apache_request_headers';
 
   protected function __construct(
-    private string $status,
+    private EnvStatus $status,
     private array $specialFolders
   ) {
     $this->tStart = microtime(true);
-    $this->version = new Version('0.5');
+    $this->version = new Version('0.6');
   }
 
-  public static function getInstance(string $status = null, array $specialFolders = []) : self {
-    if(self::$instance == null) {
+  public static function getInstance(EnvStatus $status, array $specialFolders = []) : self {
+    if (self::$instance == null) {
       global $environment;
-      if(empty($status)) {
-        $status = defined('APP_ENVIRONMENT')
-          ? constant("APP_ENVIRONMENT")
-          : self::ENV_PRODUCTION;
-      }
       $environment = self::$instance = new self($status, $specialFolders);
     }
     return self::$instance;
   }
 
-  public function getStatus() {
+  public function getStatus(): EnvStatus {
     return $this->status;
   }
 
   public function getRequestTime() {
-    if(!isset($this->requestTime)) {
+    if (!isset($this->requestTime)) {
       $serverParams = $this->getRequest()->getServerParams();
-      if(isset($serverParams['REQUEST_TIME_FLOAT'])) {
+      if (isset($serverParams['REQUEST_TIME_FLOAT'])) {
         $this->requestTime = $serverParams['REQUEST_TIME_FLOAT'];
       } elseif (isset($serverParams['REQUEST_TIME'])) {
         $this->requestTime = $serverParams['REQUEST_TIME'];
@@ -136,8 +127,8 @@ class Environment {
     return microtime(true) - $this->getRequestTime();
   }
 
-  public function getRequest(array $server = null, array $query = null, array $body = null, array $cookies = null, array $files = null) : ServerRequest {
-    if(!isset($this->request)) {
+  public function getRequest(?array $server = null, ?array $query = null, ?array $body = null, ?array $cookies = null, ?array $files = null) : ServerRequest {
+    if (!isset($this->request)) {
       require_once 'Kansas/Http/currentServerRequest.php';
       $this->request = currentServerRequest($server, $query, $body, $cookies, $files, self::$apacheRequestHeaders);
     }
@@ -149,38 +140,38 @@ class Environment {
   }
 
   public function getFile($filename, $specialFolder = 0) {
-    if($specialFolder != 0) {
+    if ($specialFolder != 0) {
       $path = $this->getSpecialFolder($specialFolder);
       $filename = $path . $filename;
     }
-    if(class_exists($this->fileClass)) {
+    if (class_exists($this->fileClass)) {
       return new $this->fileClass($filename);
     }
   }
 
   public function getSpecialFolder(int $specialFolder) {
-    if(isset($this->specialFolders[$specialFolder])) {
+    if (isset($this->specialFolders[$specialFolder])) {
       $dir        = realpath($this->specialFolders[$specialFolder]);
-    } elseif(isset($this->specialFolderParts[$specialFolder])) {
+    } elseif (isset($this->specialFolderParts[$specialFolder])) {
       $part       = $this->specialFolderParts[$specialFolder];
-    } elseif(isset($this->tempFolderParts[$specialFolder])) {
+    } elseif (isset($this->tempFolderParts[$specialFolder])) {
       $tmpPart    = $this->tempFolderParts[$specialFolder];
       $part       = $this->specialFolderParts[self::SF_TEMP];
     } else {
       require_once 'System/ArgumentOutOfRangeException.php';
       require_once 'System/Localization/Resources.php';
-      throw new ArgumentOutOfRangeException('specialFolder', SysResources::ARGUMENT_OUT_OF_RANGE_EXCEPTION_DEFAULT_MESSAGE, $specialFolder);
+      throw new ArgumentOutOfRangeException('specialFolder', SysResources::E_ARGUMENT_OUT_OF_RANGE, $specialFolder);
     }
-    if($specialFolder == self::SF_TEMP ||
+    if ($specialFolder == self::SF_TEMP ||
       isset($tmpPart)) {
       $dir = $this->getTempDir($part);
-      if(isset($tmpPart)) {
+      if (isset($tmpPart)) {
         $dir = realpath($dir . $tmpPart);
       }
-    } elseif(isset($part)) {
+    } elseif (isset($part)) {
       $dir = realpath(__DIR__ . $part);
     }
-    if($dir) {
+    if ($dir) {
       return $dir . DIRECTORY_SEPARATOR;
     }
     return false;
@@ -230,7 +221,7 @@ class Environment {
     }
 
     // Attempt to detect by creating a temporary file
-    $tempFile = tempnam(md5(uniqid((string)rand(), true)), '');
+    $tempFile = tempnam(bin2hex(random_bytes(16)), '');
     if ($tempFile) {
       $dir = realpath(dirname($tempFile));
       unlink($tempFile);
@@ -245,18 +236,18 @@ class Environment {
   }
 
   public function getPhpVersion() {
-    if(!isset($this->phpVersion)) {
+    if (!isset($this->phpVersion)) {
       $this->phpVersion = new Version(PHP_VERSION);
     }
     return $this->phpVersion;
   }
 
   protected function getLoader($loaderName) : PluginLoader {
-    if(!isset($this->loaders[$loaderName])) {
+    if (!isset($this->loaders[$loaderName])) {
       require_once 'System/Collections/KeyNotFoundException.php';
       throw new KeyNotFoundException();
     }
-    if(is_array($this->loaders[$loaderName])) {
+    if (is_array($this->loaders[$loaderName])) {
       $this->loaders[$loaderName] = new PluginLoader($this->loaders[$loaderName]);
     }
     return $this->loaders[$loaderName];
@@ -278,16 +269,19 @@ class Environment {
   }
 
   public function addLoaderPaths($loaderName, $options) : void {
-    if(!isset($this->loaders[$loaderName])) {
+    if (!isset($this->loaders[$loaderName])) {
       require_once 'System/Collections/KeyNotFoundException.php';
       throw new KeyNotFoundException();
     }
-    if($this->loaders[$loaderName] instanceof PluginLoader) {
+    if ($this->loaders[$loaderName] instanceof PluginLoader) {
+      $loader = $this->loaders[$loaderName];
       foreach($options as $prefix => $path) {
-        $this->loaders[$loaderName]->addPrefixPath($prefix, realpath($path));
+        $loader->addPrefixPath($prefix, realpath($path));
       }
-    } else {
+    } elseif (isset($this->loaders[$loaderName])) {
       $this->loaders[$loaderName] = array_merge($this->loaders[$loaderName], $options);
+    } else {
+      $this->loaders[$loaderName] = $options;
     }
   }
 

@@ -1,53 +1,41 @@
 <?php
 /**
- * Router que devuelve las imagenes sobre navegadores, sistemas operativos, robots y regiones.
- * Correspondientes a los datos de acceso de dispositivos
- *
- * @package Kansas
- * @author Marcos Porto
- * @copyright Marcos Porto
- * @since v0.4
- */
+  * Router que devuelve las imagenes sobre navegadores, sistemas operativos, robots y regiones.
+  * Correspondientes a los datos de acceso de dispositivos
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Router;
 
-use Kansas\Router;
-use System\NotSupportedException;
 use Kansas\Environment;
+use Kansas\Router;
+use System\EnvStatus;
+use System\NotSupportedException;
 
 require_once 'Kansas/Router.php';
 
 class TrailResources extends Router {
 
-	public function __construct(array $options) {
-        parent::__construct($options);
+## Miembros de Kansas\Configurable
+    public function getDefaultOptions(EnvStatus $environmentStatus) : array {
+        require_once 'Kansas/Environment.php';
+        $libsPath = $environment->getSpecialFolder(Environment::SF_LIBS);
+        return [
+            'paths' => [
+                'img/browser-' => realpath($libsPath . 'bbClone/images/browser') . '/',
+                'img/ext-'     => realpath($libsPath . 'bbClone/images/ext')     . '/',
+                'img/os-'      => realpath($libsPath . 'bbClone/images/os')      . '/',
+                'img/robot-'   => realpath($libsPath . 'bbClone/images/robot')   . '/'
+            ]
+        ];
     }
-    
-    /// Miembros de Kansas\Configurable
-    public function getDefaultOptions(string $environmentStatus) : array {
-        global $environment;
-        switch ($environmentStatus) {
-            case 'production':
-            case 'development':
-            case 'test':
-                require_once 'Kansas/Environment.php';
-                $libsPath = $environment->getSpecialFolder(Environment::SF_LIBS);
-                return [
-                    'paths'	=> [
-                        'img/browser-' => realpath($libsPath . 'bbClone/images/browser') . '/',
-                        'img/ext-'     => realpath($libsPath . 'bbClone/images/ext')     . '/',
-                        'img/os-'      => realpath($libsPath . 'bbClone/images/os')      . '/',
-                        'img/robot-'   => realpath($libsPath . 'bbClone/images/robot')   . '/'
-                    ]
-                ];
-            default:
-                require_once 'System/NotSupportedException.php';
-                throw new NotSupportedException("Entorno no soportado [$environmentStatus]");
-        }
-    }
+## -- Configurable
 
-		
-	public function match() {
+    public function match() {
         global $environment;
         $path = trim($environment->getRequest()->getUri()->getPath(), '/');
         foreach($this->options['paths'] as $requestPath => $realPath) {
@@ -63,7 +51,7 @@ class TrailResources extends Router {
                 }
             }
         }
-		return false;
-	}
-	
+        return false;
+    }
+
 }

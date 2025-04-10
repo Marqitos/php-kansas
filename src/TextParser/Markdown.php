@@ -1,7 +1,8 @@
-<?php
+<?php declare(strict_types = 1);
 /**
- * @title            Markdown Class
- * @desc             Markdown Markup Parser.
+ * Markdown Class
+ *
+ * Markdown Markup Parser.
  *
  * @author           Pierre-Henry Soria <ph7software@gmail.com>
  * @copyright        (c) 2012-2013, Pierre-Henry Soria. All Rights Reserved.
@@ -20,14 +21,7 @@ require_once 'Kansas/TextParser/TextParserAbstract.php';
 
 class Markdown extends TextParserAbstract {
 
-    /**
-     * @access public
-     * @return string The code parsed
-     */
-    public function __toString() {
-        return $this->sText;
-    }
-
+    # Miembros de TextParserAbstract
     /**
      * Run the transform methods
      *
@@ -46,6 +40,7 @@ class Markdown extends TextParserAbstract {
         $this->br();
         $this->hr();
     }
+    # -- Miembros de TextParserAbstract
 
     /**
      * Strong

@@ -1,20 +1,23 @@
 <?php
 /**
- * Proporciona almacenamiento en cache mediante ficheros
- *
- * @package Kansas
- * @since v0.4
- */
+  * Proporciona almacenamiento en cache mediante ficheros
+  *
+  * @package    Kansas
+  * @author     Marcos Porto Mariño
+  * @copyright  2025, Marcos Porto <lib-kansas@marcospor.to>
+  * @since      v0.4
+  */
 
 namespace Kansas\Cache;
 
-use System\ArgumentOutOfRangeException;
-use System\IO\DirectoryNotFoundException;
-use System\IO\IOException;
-use System\NotSupportedException;
 use Kansas\Cache;
 use Kansas\Cache\ExtendedCacheInterface;
 use Kansas\Environment;
+use System\ArgumentOutOfRangeException;
+use System\EnvStatus;
+use System\IO\DirectoryNotFoundException;
+use System\IO\IOException;
+use System\NotSupportedException;
 
 require_once 'Kansas/Cache.php';
 require_once 'Kansas/Cache/ExtendedCacheInterface.php';
@@ -84,45 +87,46 @@ class File extends Cache implements ExtendedCacheInterface {
    */
   protected $metadatasArray = [];
 
-  /// Miembros de System_Configurable_Interface
-  public function getDefaultOptions(string $enviromentStatus) : array {
-    global $environment;
-    return [
-      'cache_dir' => $environment->getSpecialFolder(Environment::SF_CACHE),
-      'read_control' => true,
-      'read_control_type' => 'crc32',
-      'hashed_directory_level' => 0,
-      'hashed_directory_umask' => 0770,
-      'file_name_prefix' => 'cache',
-      'cache_file_umask' => 0600,
-      'metadatas_array_max_size' => 100];
-  }
-
-  /**
-    * Obtiene el directorio de cache
-    *
-    * @throws DirectoryNotFoundException
-    * @throws IOException
-    * @return string
-    */
-  protected function getCacheDir() {
-    global $environment;
-    if($this->cacheDir == null) {
-      $value = ($this->options['cache_dir'] !== null)
-        ? $this->options['cache_dir']
-        : $environment->getSpecialFolder(Environment::SF_CACHE);
-      if (!is_dir($value)) {
-        require_once 'System/IO/DirectoryNotFoundException.php';
-        throw new DirectoryNotFoundException();
-      }
-      if (!is_writable($value)) {
-        require_once 'System/IO/IOException.php';
-        throw new IOException('No se puede escribir en el directorio cache');
-      }
-      $this->cacheDir = rtrim(realpath($value), '\\/') . DIRECTORY_SEPARATOR; // add a trailing DIRECTORY_SEPARATOR if necessary
+    /// Miembros de System_Configurable_Interface
+    public function getDefaultOptions(EnvStatus $enviromentStatus) : array {
+        global $environment;
+        return [
+            'cache_dir'                 => $environment->getSpecialFolder(Environment::SF_CACHE),
+            'read_control'              => true,
+            'read_control_type'         => 'crc32',
+            'hashed_directory_level'    => 0,
+            'hashed_directory_umask'    => 0770,
+            'file_name_prefix'          => 'cache',
+            'cache_file_umask'          => 0600,
+            'metadatas_array_max_size'  => 100];
     }
-    return $this->cacheDir;
-  }
+
+    /**
+      * Obtiene el directorio de cache
+      *
+      * @throws DirectoryNotFoundException
+      * @throws IOException
+      * @return string
+      */
+    protected function getCacheDir() {
+        global $environment;
+        if($this->cacheDir == null) {
+            $value = $this->options['cache_dir'] !== null
+                ? $this->options['cache_dir']
+                : $environment->getSpecialFolder(Environment::SF_CACHE);
+            if (! is_dir($value)) {
+                var_dump($value);
+                require_once 'System/IO/DirectoryNotFoundException.php';
+                throw new DirectoryNotFoundException("No se encuentra la carpeta $value");
+            }
+            if (! is_writable($value)) {
+                require_once 'System/IO/IOException.php';
+                throw new IOException('No se puede escribir en el directorio cache');
+            }
+            $this->cacheDir = rtrim(realpath($value), '\\/') . DIRECTORY_SEPARATOR; // add a trailing DIRECTORY_SEPARATOR if necessary
+        }
+        return $this->cacheDir;
+    }
 
   /**
    * Obtiene el prefijo de los archivos de cache
@@ -368,7 +372,7 @@ class File extends Cache implements ExtendedCacheInterface {
       if ($free >= $total) {
           return 100;
       }
-      return ((int) (100. * ($total - $free) / $total));
+      return (int) (100. * ($total - $free) / $total);
   }
 
   /**
@@ -384,7 +388,7 @@ class File extends Cache implements ExtendedCacheInterface {
    */
   public function getMetadatas($id) {
       $metadatas = $this->_getMetadatas($id);
-      if (!$metadatas || 
+      if (!$metadatas ||
           time() > $metadatas['expire']) {
           return false;
       }
@@ -404,7 +408,7 @@ class File extends Cache implements ExtendedCacheInterface {
    */
   public function touch($id, $extraLifetime) {
       $metadatas = $this->_getMetadatas($id);
-      if (!$metadatas || 
+      if (!$metadatas ||
           time() > $metadatas['expire']) {
           return false;
       }
@@ -792,26 +796,21 @@ class File extends Cache implements ExtendedCacheInterface {
    * @return string Control key
    */
   protected function _hash($data) {
-    switch ($this->options['read_control_type']) {
-    case 'md5':
-      return md5($data);
-    case 'crc32':
-      return crc32($data);
-    case 'strlen':
-      return strlen($data);
-    case 'adler32':
-      return hash('adler32', $data);
-    default:
-      require_once 'System/ArgumentOutOfRangeException.php';
-      throw new ArgumentOutOfRangeException("Incorrect hash function : " . $this->options['read_control_type']);
-    }
+    require_once 'System/ArgumentOutOfRangeException.php';
+    return match ($this->options['read_control_type']) {
+        'md5'       => md5($data),
+        'crc32'     => crc32($data),
+        'strlen'    => strlen($data),
+        'adler32'   => hash('adler32', $data),
+        default     => throw new ArgumentOutOfRangeException("Incorrect hash function : " . $this->options['read_control_type'])
+    };
   }
 
   /**
    * Transform a cache id into a file name and return it
    *
    * @param  string $id Cache id
-   * @return array [Path, FileName] 
+   * @return array [Path, FileName]
    */
   protected function getFilename($id) {
     return [$this->getPath($id), $this->getFileNamePrefix() . '-' . $id];

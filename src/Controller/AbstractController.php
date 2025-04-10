@@ -19,9 +19,9 @@ require_once 'Kansas/Localization/Resources.php';
  * Implementa las funcionalidades básicas de un controlador
  */
 abstract class AbstractController implements ControllerInterface {
-    
+
     private $params;
-        
+
     public function init(array $params) : void {
         $this->params   = $params;
     }
@@ -33,7 +33,7 @@ abstract class AbstractController implements ControllerInterface {
         }
         return $this->$action($vars);
     }
-    
+
     /**
      * Obtiene un parametro de la solicitud
      *
@@ -87,7 +87,7 @@ abstract class AbstractController implements ControllerInterface {
         $template = $this->getParam('template', $defaultTemplate);
         return $view->isCached($template);
     }
-    
+
     /**
      * Obtiene si hay una sesión de usuario activa para la petición actual
      *
@@ -95,7 +95,7 @@ abstract class AbstractController implements ControllerInterface {
      * @param string $ru (opcional) Establece a donde se debe redireccionar despues de iniciar sesión.
      * @return bool true si hay un usuario activo, o false en caso contrario.
      */
-    protected function isAuthenticated(&$result, string $ru = null) : bool {
+    protected function isAuthenticated(&$result, ?string $ru = null) : bool {
         global $application, $environment;
         $auth = $application->getPlugin('auth');
         if($auth->hasIdentity()) {
