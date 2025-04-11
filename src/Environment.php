@@ -24,7 +24,6 @@ use System\IO\IOException;
 use System\Localization\Resources as SysResources;
 use System\Version;
 
-use function array_merge;
 use function constant;
 use function microtime;
 use function ini_get;
@@ -47,155 +46,163 @@ require_once 'System/Version.php';
   */
 class Environment {
 
-  // Posibles valores para SpecialFolder
-  const SF_PUBLIC     = 0x0001;
-  const SF_HOME       = 0x0002;
-  const SF_LIBS       = 0x0004;
-  const SF_LAYOUT     = 0x0008;
-  const SF_TEMP       = 0x0010;
-  const SF_FILES      = 0x0020;
-  const SF_THEMES     = 0x0108;
-  const SF_CACHE      = 0x0110;
-  const SF_COMPILE    = 0x0210;
-  const SF_SESSIONS   = 0x0310;
-  const SF_TRACK      = 0x0410;
-  const SF_ERRORS     = 0x0510;
-  const SF_V_CACHE    = 0x0610;
+    // Posibles valores para SpecialFolder
+    const SF_PUBLIC     = 0x0001;
+    const SF_HOME       = 0x0002;
+    const SF_LIBS       = 0x0004;
+    const SF_LAYOUT     = 0x0008;
+    const SF_TEMP       = 0x0010;
+    const SF_FILES      = 0x0020;
+    const SF_THEMES     = 0x0108;
+    const SF_CACHE      = 0x0110;
+    const SF_COMPILE    = 0x0210;
+    const SF_SESSIONS   = 0x0310;
+    const SF_TRACK      = 0x0410;
+    const SF_ERRORS     = 0x0510;
+    const SF_V_CACHE    = 0x0610;
 
-  protected static $instance;
-  private $request;
-  private $requestTime;
-  private $tStart;
-  private $version;
-  private $phpVersion;
-  private $fileClass      = 'System\IO\File\FileSystem';
-  private $loaders        = [
-    'controller'        => ['Kansas\\Controller\\'  => 'Kansas/Controller/'],
-    'plugin'            => ['Kansas\\Plugin\\'      => 'Kansas/Plugin/'],
-    'provider'          => []];
-  private $specialFolderParts = [
-    self::SF_PUBLIC     => '/../../public',
-    self::SF_HOME       => '/../..',
-    self::SF_LIBS       => '/..',
-    self::SF_LAYOUT     => '/../../layout',
-    self::SF_TEMP       => '/../../tmp',
-    self::SF_FILES      => '/../../private'];
-  private $tempFolderParts = [
-    self::SF_CACHE      => '/cache',
-    self::SF_V_CACHE    => '/cache/view',
-    self::SF_COMPILE    => '/view-compile',
-    self::SF_SESSIONS   => '/sessions',
-    self::SF_TRACK      => '/log/hints',
-    self::SF_ERRORS     => '/log/errors'];
-  private static $apacheRequestHeaders = 'apache_request_headers';
+    protected static $instance;
+    private $request;
+    private $requestTime;
+    private $tStart;
+    private $version;
+    private $phpVersion;
+    private $fileClass      = 'System\IO\File\FileSystem';
+    private $loaders        = [
+        'controller'        => ['Kansas\\Controller\\'  => 'Kansas/Controller/'],
+        'plugin'            => ['Kansas\\Plugin\\'      => 'Kansas/Plugin/'],
+        'provider'          => []];
+    private $specialFolderParts = [
+        self::SF_PUBLIC     => '/../../public',
+        self::SF_HOME       => '/../..',
+        self::SF_LIBS       => '/..',
+        self::SF_LAYOUT     => '/../../layout',
+        self::SF_TEMP       => '/../../tmp',
+        self::SF_FILES      => '/../../private'];
+    private $tempFolderParts = [
+        self::SF_CACHE      => '/cache',
+        self::SF_V_CACHE    => '/cache/view',
+        self::SF_COMPILE    => '/view-compile',
+        self::SF_SESSIONS   => '/sessions',
+        self::SF_TRACK      => '/log/hints',
+        self::SF_ERRORS     => '/log/errors'];
+    private static $apacheRequestHeaders = 'apache_request_headers';
 
-  protected function __construct(
-    private EnvStatus $status,
-    private array $specialFolders
-  ) {
-    $this->tStart = microtime(true);
-    $this->version = new Version('0.6');
-  }
-
-  public static function getInstance(EnvStatus $status, array $specialFolders = []) : self {
-    if (self::$instance == null) {
-      global $environment;
-      $environment = self::$instance = new self($status, $specialFolders);
-    }
-    return self::$instance;
-  }
-
-  public function getStatus(): EnvStatus {
-    return $this->status;
-  }
-
-  public function getRequestTime() {
-    if (!isset($this->requestTime)) {
-      $serverParams = $this->getRequest()->getServerParams();
-      if (isset($serverParams['REQUEST_TIME_FLOAT'])) {
-        $this->requestTime = $serverParams['REQUEST_TIME_FLOAT'];
-      } elseif (isset($serverParams['REQUEST_TIME'])) {
-        $this->requestTime = $serverParams['REQUEST_TIME'];
-      } else {
-        $this->requestTime = $this->tStart;
-      }
-    }
-    return $this->requestTime;
-  }
-
-  public function getExecutionTime() : float {
-    return microtime(true) - $this->getRequestTime();
-  }
-
-  public function getRequest(?array $server = null, ?array $query = null, ?array $body = null, ?array $cookies = null, ?array $files = null) : ServerRequest {
-    if (!isset($this->request)) {
-      require_once 'Kansas/Http/currentServerRequest.php';
-      $this->request = currentServerRequest($server, $query, $body, $cookies, $files, self::$apacheRequestHeaders);
-    }
-    return $this->request;
-  }
-
-  public function setRequest(ServerRequestInterface $request) : void {
-    $this->request = $request;
-  }
-
-  public function getFile($filename, $specialFolder = 0) {
-    if ($specialFolder != 0) {
-      $path = $this->getSpecialFolder($specialFolder);
-      $filename = $path . $filename;
-    }
-    if (class_exists($this->fileClass)) {
-      return new $this->fileClass($filename);
-    }
-  }
-
-  public function getSpecialFolder(int $specialFolder) {
-    if (isset($this->specialFolders[$specialFolder])) {
-      $dir        = realpath($this->specialFolders[$specialFolder]);
-    } elseif (isset($this->specialFolderParts[$specialFolder])) {
-      $part       = $this->specialFolderParts[$specialFolder];
-    } elseif (isset($this->tempFolderParts[$specialFolder])) {
-      $tmpPart    = $this->tempFolderParts[$specialFolder];
-      $part       = $this->specialFolderParts[self::SF_TEMP];
-    } else {
-      require_once 'System/ArgumentOutOfRangeException.php';
-      require_once 'System/Localization/Resources.php';
-      throw new ArgumentOutOfRangeException('specialFolder', SysResources::E_ARGUMENT_OUT_OF_RANGE, $specialFolder);
-    }
-    if ($specialFolder == self::SF_TEMP ||
-      isset($tmpPart)) {
-      $dir = $this->getTempDir($part);
-      if (isset($tmpPart)) {
-        $dir = realpath($dir . $tmpPart);
-      }
-    } elseif (isset($part)) {
-      $dir = realpath(__DIR__ . $part);
-    }
-    if ($dir) {
-      return $dir . DIRECTORY_SEPARATOR;
-    }
-    return false;
-  }
-
-  private function getTempDir($default) : string {
-    require_once 'System/IO/File.php';
-    if (realpath(__DIR__ . $default) &&
-        File::IsGoodTmpDir(realpath(__DIR__ . $default))) {
-      return realpath(__DIR__ . $default);
-    } elseif (realpath($default) &&
-              File::IsGoodTmpDir(realpath($default))) {
-      return realpath($default);
+    protected function __construct(
+        private EnvStatus $status,
+        private array $specialFolders
+    ) {
+        $this->tStart = microtime(true);
+        $this->version = new Version('0.6');
     }
 
-    foreach(self::tmpDirGenerator(__DIR__ . self::SF_TEMP) as $dir) {
-      if(File::IsGoodTmpDir($dir)) {
-        return realpath($dir);
-      }
+## Patrón Singleton
+    public static function getInstance(EnvStatus $status, array $specialFolders = []) : self {
+        if (self::$instance == null) {
+            self::$instance = new self($status, $specialFolders);
+        }
+        return self::$instance;
     }
-    require_once 'System/IO/IOException.php';
-    require_once 'Kansas/Localization/Resources.php';
-    throw new IOException(Resources::IO_EXCEPTION_NO_TEMP_DIR_MESSAGE);
-  }
+## -- Singleton
+
+    public static function getStatus(): EnvStatus {
+        return self::$instance->status;
+    }
+
+    public static function getRequestTime() {
+        if (!isset(self::$instance->requestTime)) {
+            $serverParams = self::$instance->getRequest()->getServerParams();
+            if (isset($serverParams['REQUEST_TIME_FLOAT'])) {
+                self::$instance->requestTime = $serverParams['REQUEST_TIME_FLOAT'];
+            } elseif (isset($serverParams['REQUEST_TIME'])) {
+                self::$instance->requestTime = $serverParams['REQUEST_TIME'];
+            } else {
+                self::$instance->requestTime = self::$instance->tStart;
+            }
+        }
+        return self::$instance->requestTime;
+    }
+
+    public static function getExecutionTime() : float {
+        return microtime(true) - self::$instance->getRequestTime();
+    }
+
+    public static function getRequest(?array $server = null, ?array $query = null, ?array $body = null, ?array $cookies = null, ?array $files = null) : ServerRequest {
+        if (!isset(self::$instance->request)) {
+            require_once 'Kansas/Http/currentServerRequest.php';
+            self::$instance->request = currentServerRequest($server, $query, $body, $cookies, $files, self::$apacheRequestHeaders);
+        }
+        return self::$instance->request;
+    }
+
+    public static function setRequest(ServerRequestInterface $request) : void {
+        self::$instance->request = $request;
+    }
+
+    public static function getFile($filename, $specialFolder = 0) {
+        if ($specialFolder != 0) {
+        $path = self::$instance->getSpecialFolder($specialFolder);
+        $filename = $path . $filename;
+        }
+        if (class_exists(self::$instance->fileClass)) {
+        return new self::$instance->fileClass($filename);
+        }
+    }
+
+    public static function getSpecialFolder(int $specialFolder): string|false {
+        if (isset(self::$instance->specialFolders[$specialFolder])) {
+            $dir        = realpath(self::$instance->specialFolders[$specialFolder]);
+        } elseif (isset(self::$instance->specialFolderParts[$specialFolder])) {
+            $part       = self::$instance->specialFolderParts[$specialFolder];
+        } elseif (isset(self::$instance->tempFolderParts[$specialFolder])) {
+            $tmpPart    = self::$instance->tempFolderParts[$specialFolder];
+            $part       = self::$instance->specialFolderParts[self::SF_TEMP];
+        } else {
+            require_once 'System/ArgumentOutOfRangeException.php';
+            require_once 'System/Localization/Resources.php';
+            throw new ArgumentOutOfRangeException('specialFolder', SysResources::E_ARGUMENT_OUT_OF_RANGE, $specialFolder);
+        }
+        if ($specialFolder == self::SF_TEMP ||
+            isset($tmpPart)) {
+            $dir = self::$instance->getTempDir($part);
+            if (isset($tmpPart)) {
+                $dir = realpath($dir . $tmpPart);
+            }
+        } elseif (isset($part)) {
+            $dir = realpath(__DIR__ . $part);
+        }
+        if ($dir) {
+            return $dir . DIRECTORY_SEPARATOR;
+        } elseif (self::$instance->status == EnvStatus::DEVELOPMENT) {
+            var_dump($dir, $specialFolder);
+        }
+        return false;
+    }
+
+    private function getTempDir($default): string {
+        require_once 'System/IO/File.php';
+        if (realpath(__DIR__ . $default) &&
+            File::IsGoodTmpDir(realpath(__DIR__ . $default))) {
+            return realpath(__DIR__ . $default);
+        } elseif (realpath($default) &&
+                  File::IsGoodTmpDir(realpath($default))) {
+            return realpath($default);
+        } elseif (self::$instance->status == EnvStatus::DEVELOPMENT) {
+            var_dump (__DIR__ . $default, realpath(__DIR__ . $default),
+                      $default, realpath($default));
+        }
+
+        foreach(self::tmpDirGenerator(__DIR__ . self::SF_TEMP) as $dir) {
+            if(File::IsGoodTmpDir($dir)) {
+                return realpath($dir);
+            } elseif (self::$instance->status == EnvStatus::DEVELOPMENT) {
+                var_dump ($dir, realpath($dir));
+            }
+        }
+        require_once 'System/IO/IOException.php';
+        require_once 'Kansas/Localization/Resources.php';
+        throw new IOException(Resources::IO_EXCEPTION_NO_TEMP_DIR_MESSAGE);
+    }
 
   // Devuelve posibles valores para una carpeta temporal
   protected static function tmpDirGenerator($tempDir = null) {
@@ -231,58 +238,58 @@ class Environment {
     yield '\\temp';
   }
 
-  public function getVersion() : Version {
-    return $this->version;
-  }
-
-  public function getPhpVersion() {
-    if (!isset($this->phpVersion)) {
-      $this->phpVersion = new Version(PHP_VERSION);
+    public static function getVersion() : Version {
+        return self::$instance->version;
     }
-    return $this->phpVersion;
-  }
 
-  protected function getLoader($loaderName) : PluginLoader {
-    if (!isset($this->loaders[$loaderName])) {
-      require_once 'System/Collections/KeyNotFoundException.php';
-      throw new KeyNotFoundException();
+    public static function getPhpVersion() {
+        if (!isset(self::$instance->phpVersion)) {
+        self::$instance->phpVersion = new Version(PHP_VERSION);
+        }
+        return self::$instance->phpVersion;
     }
-    if (is_array($this->loaders[$loaderName])) {
-      $this->loaders[$loaderName] = new PluginLoader($this->loaders[$loaderName]);
+
+    protected static function getLoader($loaderName) : PluginLoader {
+        if (!isset(self::$instance->loaders[$loaderName])) {
+            require_once 'System/Collections/KeyNotFoundException.php';
+            throw new KeyNotFoundException();
+        }
+        if (is_array(self::$instance->loaders[$loaderName])) {
+            self::$instance->loaders[$loaderName] = new PluginLoader(self::$instance->loaders[$loaderName]);
+        }
+        return self::$instance->loaders[$loaderName];
     }
-    return $this->loaders[$loaderName];
-  }
 
-  public function createController($controllerName) : ControllerInterface {
-    $controllerClass = $this->getLoader('controller')->load($controllerName);
-    return new $controllerClass();
-  }
-
-  public function createPlugin($pluginName, array $options) : PluginInterface {
-    $pluginClass = $this->getLoader('plugin')->load($pluginName);
-    return new $pluginClass($options);
-  }
-
-  public function createProvider($providerName) {
-    $providerClass = $this->getLoader('provider')->load($providerName);
-    return new $providerClass();
-  }
-
-  public function addLoaderPaths($loaderName, $options) : void {
-    if (!isset($this->loaders[$loaderName])) {
-      require_once 'System/Collections/KeyNotFoundException.php';
-      throw new KeyNotFoundException();
+    public static function createController($controllerName) : ControllerInterface {
+        $controllerClass = self::$instance->getLoader('controller')->load($controllerName);
+        return new $controllerClass();
     }
-    if ($this->loaders[$loaderName] instanceof PluginLoader) {
-      $loader = $this->loaders[$loaderName];
-      foreach($options as $prefix => $path) {
-        $loader->addPrefixPath($prefix, realpath($path));
-      }
-    } elseif (isset($this->loaders[$loaderName])) {
-      $this->loaders[$loaderName] = array_merge($this->loaders[$loaderName], $options);
-    } else {
-      $this->loaders[$loaderName] = $options;
+
+    public static function createPlugin($pluginName, array $options) : PluginInterface {
+        $pluginClass = self::$instance->getLoader('plugin')->load($pluginName);
+        return new $pluginClass($options);
     }
-  }
+
+    public static function createProvider($providerName) {
+        $providerClass = self::$instance->getLoader('provider')->load($providerName);
+        return new $providerClass();
+    }
+
+    public static function addLoaderPaths($loaderName, $options) : void {
+        if (!isset(self::$instance->loaders[$loaderName])) {
+            require_once 'System/Collections/KeyNotFoundException.php';
+            throw new KeyNotFoundException();
+        }
+        if (self::$instance->loaders[$loaderName] instanceof PluginLoader) {
+            $loader = self::$instance->loaders[$loaderName];
+            foreach($options as $prefix => $path) {
+                $loader->addPrefixPath($prefix, realpath($path));
+            }
+        } elseif (isset(self::$instance->loaders[$loaderName])) {
+            self::$instance->loaders[$loaderName] = [...self::$instance->loaders[$loaderName], ...$options];
+        } else {
+            self::$instance->loaders[$loaderName] = $options;
+        }
+    }
 
 }

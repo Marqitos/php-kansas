@@ -13,6 +13,7 @@ namespace Kansas\Router;
 use LogicException;
 use Throwable;
 use Kansas\API\APIExceptionInterface;
+use Kansas\Environment;
 use Kansas\Router;
 use Kansas\Localization\Resources;
 use Kansas\Plugin\API as APIPlugin;
@@ -48,13 +49,13 @@ class API extends Router implements RouterInterface {
 
 ## Miembros de Kansas\Router\RouterInterface
     public function match(): array|false {
-        global $application, $environment;
+        global $application;
         $path = static::getPath($this);
         if ($path === false) {
             return false;
         }
         $path       = trim($path, '/');
-        $method     = $environment->getRequest()->getMethod();
+        $method     = Environment::getRequest()->getMethod();
         // Gestionamos el metodo OPTIONS
         if ($method == RequestMethodInterface::METHOD_OPTIONS) {
             $methods = $this->getMethods($path);

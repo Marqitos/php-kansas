@@ -10,6 +10,7 @@
 
 namespace Kansas\Router;
 
+use Kansas\Environment;
 use Kansas\Router;
 use Kansas\Plugin\Token as TokenPlugin;
 use System\Guid;
@@ -46,7 +47,7 @@ class Token extends Router {
             return false;
         }
         require_once 'System/Guid.php';
-        global $application, $environment;
+        global $application;
         $parts = explode('/', trim($path, '/'));
         if (Guid::tryParse($parts[0], $id) && count($parts) == 2) {
             $provider = $application->getProvider('token');

@@ -3,12 +3,13 @@
 namespace Kansas\Plugin;
 
 use Kansas\Application;
+use Kansas\Environment;
+use Kansas\Plugin\PluginInterface;
+use Kansas\Router\Cache as RouterCache;
 use Psr\Http\Message\ServerRequestInterface;
 use System\Configurable;
 use System\EnvStatus;
 use System\Version;
-use Kansas\Plugin\PluginInterface;
-use Kansas\Router\Cache as RouterCache;
 
 require_once 'Psr/Http/Message/ServerRequestInterface.php';
 require_once 'System/Configurable.php';
@@ -42,8 +43,7 @@ class CacheRouter extends Configurable implements PluginInterface {
 
     /// Miembros de PluginInterface
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     public function getCache() {

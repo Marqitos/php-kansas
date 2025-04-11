@@ -20,13 +20,12 @@ class LegalID {
     protected static $type      = null;
 
     public static function tryParse(&$legalCode) {
-        global $environment;
         // Eliminamos carácteres especiales y lo pasamos a mayúsculas
         $legalCode  = trim(strtoupper($legalCode));
         $legalCode  = preg_replace('/[^A-Z0-9]/', '', $legalCode);
 
         // En modo desarrollo todos los DNIS, son válidos
-        if($environment->getStatus() == Environment::ENV_DEVELOPMENT) {
+        if(Environment::getStatus() == Environment::ENV_DEVELOPMENT) {
             return true;
         }
 

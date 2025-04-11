@@ -10,6 +10,7 @@
 
 namespace Kansas\Router;
 
+use Kansas\Environment;
 use Kansas\Router\Pages;
 
 require_once 'Kansas/Router/Pages.php';
@@ -19,9 +20,8 @@ class Auth extends Pages {
     private $_actions = [];
 
     public function match(): array|false {
-        global $environment;
         $params = false;
-        $path = trim($environment->getRequest()->getUri()->getPath(), '/');
+        $path = trim(Environment::getRequest()->getUri()->getPath(), '/');
 
         foreach($this->_actions as $action) {
             if(isset($action['path'])) {

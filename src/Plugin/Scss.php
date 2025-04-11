@@ -16,6 +16,7 @@ use System\NotSupportedException;
 use System\Version;
 use Kansas\Controller\ControllerInterface;
 use Kansas\Controller\Index;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\View\Result\Scss as ScssViewResult;
 use Leafo\ScssPhp\Compiler;
@@ -56,8 +57,7 @@ class Scss extends Configurable implements PluginInterface {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     public function getParser() {
@@ -87,8 +87,7 @@ class Scss extends Configurable implements PluginInterface {
         if(!$first) {
             $files[] = dirname($fileName).DIRECTORY_SEPARATOR.'_'.basename($fileName);
         }
-        global $environment;
-        foreach($environment->getThemePaths() as $dir) {
+        foreach(Environment::getThemePaths() as $dir) {
             foreach ($files as $file) {
                 $path = realpath($dir . DIRECTORY_SEPARATOR . $file);
                 if ($path && is_readable($path) && !is_dir($path)) {

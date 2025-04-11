@@ -118,17 +118,16 @@ class Application extends Configurable implements DisposableInterface {
     }
 
     public function onOptionChanged($optionName) {
-        global $environment;
         if ($optionName == 'loader') {
             if (!is_array($this->options['loader'])){
                 require_once 'System/ArgumentOutOfRangeException.php';
                 throw new ArgumentOutOfRangeException('optionName');
             }
             foreach ($this->options['loader'] as $loaderName => $options) {
-                $environment->addLoaderPaths($loaderName, $options);
+                Environment::addLoaderPaths($loaderName, $options);
             }
         } elseif ($optionName == 'language') {
-            $environment->setLanguage($this->options['language']);
+            Environment::setLanguage($this->options['language']);
         }
     }
 ## -- System\Configurable\ConfigurableInterface
@@ -245,123 +244,119 @@ class Application extends Configurable implements DisposableInterface {
     }
 
 
-  public function getPlugin(string $pluginName) { // Obtiene el modulo seleccionado, lo carga si es necesario
-    $pluginName = ucfirst($pluginName);
-    $this->loadPlugins();
-    if (! isset($this->plugins[$pluginName])) {
-      $options = (isset($this->options['plugin'][$pluginName]) && is_array($this->options['plugin'][$pluginName]))
-        ? $this->options['plugin'][$pluginName]
-        : [];
-      return $this->loadPlugin($pluginName, $options);
-    }
-    return $this->plugins[$pluginName];
-  }
-
-  public function setPlugin(string $pluginName, array $options = []) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
-    $pluginName = ucfirst($pluginName);
-    if (is_array($this->plugins)) {
-      if (isset($this->plugins[$pluginName])) {
-        $this->plugins[$pluginName]->setOptions($options);
+    public function getPlugin(string $pluginName) { // Obtiene el modulo seleccionado, lo carga si es necesario
+        $pluginName = ucfirst($pluginName);
+        $this->loadPlugins();
+        if (! isset($this->plugins[$pluginName])) {
+            $options = (isset($this->options['plugin'][$pluginName]) && is_array($this->options['plugin'][$pluginName]))
+                ? $this->options['plugin'][$pluginName]
+                : [];
+            return $this->loadPlugin($pluginName, $options);
+        }
         return $this->plugins[$pluginName];
-      } else {
-        $this->options['plugin'][$pluginName] = $options;
-        return $this->loadPlugin($pluginName, $options);
-      }
-    } else {
-      $this->options['plugin'][$pluginName] = $options;
     }
-    return false;
+
+    public function setPlugin(string $pluginName, array $options = []) { // Guarda la configuración del modulo, y lo carga si el resto ya han sido cargados
+        $pluginName = ucfirst($pluginName);
+        if (is_array($this->plugins)) {
+            if (isset($this->plugins[$pluginName])) {
+                $this->plugins[$pluginName]->setOptions($options);
+                return $this->plugins[$pluginName];
+            } else {
+                $this->options['plugin'][$pluginName] = $options;
+                return $this->loadPlugin($pluginName, $options);
+            }
+        } else {
+            $this->options['plugin'][$pluginName] = $options;
+        }
+        return false;
   }
 
-  public function hasPlugin(string $pluginName) { // Obtiene el modulo seleccionado si está cargado o false en caso contrario
-    $pluginName = ucfirst($pluginName);
-    return (is_array($this->plugins) && isset($this->plugins[$pluginName]))
-      ? $this->plugins[$pluginName]
-      : false;
-  }
+    public function hasPlugin(string $pluginName) { // Obtiene el modulo seleccionado si está cargado o false en caso contrario
+        $pluginName = ucfirst($pluginName);
+        return (is_array($this->plugins) && isset($this->plugins[$pluginName]))
+            ? $this->plugins[$pluginName]
+            : false;
+    }
 
-  public function getPlugins() {
-    $this->loadPlugins();
-    $result = [];
-    foreach ($this->plugins as $pluginName => $plugin) {
-      if(!$plugin) {
-        $result[$pluginName] = [
-          'type'    => get_class($plugin),
-          'options' => $plugin->getOptions(),
-          'version' => 'v' . (string)$plugin->getVersion()
-        ];
-      }
+    public function getPlugins() {
+        $this->loadPlugins();
+        $result = [];
+        foreach ($this->plugins as $pluginName => $plugin) {
+            if(!$plugin) {
+                $result[$pluginName] = [
+                    'type'    => get_class($plugin),
+                    'options' => $plugin->getOptions(),
+                    'version' => 'v' . (string)$plugin->getVersion()
+                ];
+            }
+        }
+        return $result;
     }
-    return $result;
-  }
 
-  public function loadPlugins() {
-    if (is_array($this->plugins)) {
-      return;
+    public function loadPlugins() {
+        if (is_array($this->plugins)) {
+            return;
+        }
+        $this->plugins = [];
+        foreach (array_keys($this->options['plugin']) as $pluginName) {
+            $this->getPlugin($pluginName);
+        }
     }
-    $this->plugins = [];
-    foreach (array_keys($this->options['plugin']) as $pluginName) {
-      $this->getPlugin($pluginName);
-    }
-  }
 
-  protected function loadPlugin($pluginName, array $options) {
-    global $environment;
-    try {
-      $plugin = $environment->createPlugin($pluginName, $options);
-    } catch(Throwable $e) {
-      $plugin = false;
-      throw $e;
+    protected function loadPlugin($pluginName, array $options) {
+        try {
+            $plugin = Environment::createPlugin($pluginName, $options);
+        } catch(Throwable $e) {
+            $plugin = false;
+            throw $e;
+        }
+        $this->plugins[$pluginName] = $plugin;
+        return $plugin;
     }
-    $this->plugins[$pluginName] = $plugin;
-    return $plugin;
-  }
 
-  public function searchProvider(string $type) {
-    foreach ($this->plugins as $pluginName => $options) {
-      $plugin = $this->getPlugin($pluginName);
-      if (is_a($plugin, $type)) {
-        return $this->plugins[$pluginName];
-      }
+    public function searchProvider(string $type) {
+        foreach ($this->plugins as $pluginName => $options) {
+            $plugin = $this->getPlugin($pluginName);
+            if (is_a($plugin, $type)) {
+                return $this->plugins[$pluginName];
+            }
+        }
+        return false;
     }
-    return false;
-  }
 
-  public function getProvider(string $providerName) {
-    global $environment;
-    $providerName = ucfirst($providerName);
-    if(!isset($this->providers[$providerName])) {
-      $provider = $environment->createProvider($providerName);
-      $this->providers[$providerName] = $provider;
-      foreach ($this->callbacks[self::EVENT_C_PROVIDER] as $callback) {
-        call_user_func($callback, $provider, $providerName);
-      }
+    public function getProvider(string $providerName) {
+        $providerName = ucfirst($providerName);
+        if(!isset($this->providers[$providerName])) {
+            $provider = Environment::createProvider($providerName);
+            $this->providers[$providerName] = $provider;
+            foreach ($this->callbacks[self::EVENT_C_PROVIDER] as $callback) {
+                call_user_func($callback, $provider, $providerName);
+            }
+        }
+        return $this->providers[$providerName];
     }
-    return $this->providers[$providerName];
-  }
 
-  public function dispatch(array $params) : ViewResultInterface {
-    global $environment;
-    $request    = $environment->getRequest();
-    foreach ($this->callbacks[self::EVENT_DISPATCH] as $callback) { // Dispatch event
-      $params   = array_merge($params, call_user_func($callback, $request, $params));
+    public function dispatch(array $params) : ViewResultInterface {
+        $request        = Environment::getRequest();
+        foreach ($this->callbacks[self::EVENT_DISPATCH] as $callback) { // Dispatch event
+            $params     = array_merge($params, call_user_func($callback, $request, $params));
+        }
+        $controllerName = isset($params['controller'])
+                        ? ucfirst($params['controller'])
+                        : 'Index';
+        $action         = isset($params['action'])
+                        ? $params['action']
+                        : 'Index';
+        unset($params['action']);
+        unset($params['controller']);
+        $controller     = Environment::createController($controllerName);
+        $controller->init($params);
+        $this->status = AppStatus::DISPATCH;
+        return $controller->callAction($action, $params);
     }
-    $controllerName = isset($params['controller'])
-                    ? ucfirst($params['controller'])
-                    : 'Index';
-    $action         = isset($params['action'])
-                    ? $params['action']
-                    : 'Index';
-    unset($params['action']);
-    unset($params['controller']);
-    $controller     = $environment->createController($controllerName);
-    $controller->init($params);
-    $this->status = AppStatus::DISPATCH;
-    return $controller->callAction($action, $params);
-  }
 
     public function run() : void {
-        global $environment;
         $params     = false;
         $viewResult = false;
         $this->loadPlugins();
@@ -372,7 +367,7 @@ class Application extends Configurable implements DisposableInterface {
                 $params = $result;
             } elseif(is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
                 $viewResult = $result;
-            } elseif ($environment->getStatus() == EnvStatus::DEVELOPMENT) {
+            } elseif (Environment::getStatus() == EnvStatus::DEVELOPMENT) {
                 var_dump($result);
             }
         }
@@ -401,7 +396,7 @@ class Application extends Configurable implements DisposableInterface {
         if ($params &&
             ! $viewResult) {
             $this->status = AppStatus::ROUTE;
-            $request    = $environment->getRequest();
+            $request    = Environment::getRequest();
             $params     = $this->route($request, $params);
             $viewResult = $this->dispatch($params);
         }
@@ -424,9 +419,8 @@ class Application extends Configurable implements DisposableInterface {
      * Devuelve los parámetros básicos de la petición actual
      */
     public static function getDefaultParams() : array {
-        global $environment;
         require_once 'Kansas/Request/getRequestType.php';
-        $request = $environment->getRequest();
+        $request = Environment::getRequest();
         return [
             'url'         => trim($request->getUri()->getPath(), '/'),
             'uri'         => $request->getRequestTarget(),
@@ -464,32 +458,31 @@ class Application extends Configurable implements DisposableInterface {
         return $this->db;
     }
 
-  public function getView() {
-    global $environment;
-    if($this->view == null) {
-      $viewClass = $this->options['view']['class'];
-      unset($this->options['view']['class']);
-      $this->view = new $viewClass($this->options['view']);
-      if($this->view->getCaching()) {
-        $this->view->setCacheId($environment->getRequest()->getUri());
-      }
-      foreach ($this->callbacks[self::EVENT_C_VIEW] as $callback) {
-        call_user_func($callback, $this->view);
-      }
+    public function getView() {
+        if($this->view == null) {
+            $viewClass = $this->options['view']['class'];
+            unset($this->options['view']['class']);
+            $this->view = new $viewClass($this->options['view']);
+            if($this->view->getCaching()) {
+                $this->view->setCacheId(Environment::getRequest()->getUri());
+            }
+            foreach ($this->callbacks[self::EVENT_C_VIEW] as $callback) {
+                call_user_func($callback, $this->view);
+            }
+        }
+        return $this->view;
     }
-    return $this->view;
-  }
 
-  public function createTitle() {
-    if($this->title == null) {
-      $titleClass = (isset($this->options['title']['class']))
-        ? $this->options['title']['class']
-        : 'Kansas\\TitleBuilder\\DefaultTitleBuilder';
-      unset($this->options['title']['class']);
-      $this->title = new $titleClass($this->options['title']);
+    public function createTitle() {
+        if($this->title == null) {
+            $titleClass = (isset($this->options['title']['class']))
+                ? $this->options['title']['class']
+                : 'Kansas\\TitleBuilder\\DefaultTitleBuilder';
+            unset($this->options['title']['class']);
+            $this->title = new $titleClass($this->options['title']);
+        }
+        return $this->title;
     }
-    return $this->title;
-  }
 
     /* Miembros de singleton */
     public static function getInstance(array $options) : self {

@@ -64,8 +64,7 @@ class Tracker extends Configurable implements PluginInterface {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     /// Eventos de la aplicación
@@ -108,7 +107,6 @@ class Tracker extends Configurable implements PluginInterface {
     }
 
     public function appShutdown() {
-        global $environment;
         if(!isset($this->trail)) {
             $this->initialize();
         }
@@ -116,15 +114,14 @@ class Tracker extends Configurable implements PluginInterface {
         if($error !== null) {
             $this->trail['lastError'] = $error;
         }
-        $this->trail['executionTime'] = $environment->getExecutionTime();
+        $this->trail['executionTime'] = Environment::getExecutionTime();
         $this->saveTrailData();
     }
 
 
     protected function initialize() { // obtiene los datos de solicitud actual
         require_once 'Kansas/Request/getTrailData.php';
-        global $environment;
-        $request = $environment->getRequest();
+        $request = Environment::getRequest();
         $this->trail = getTrailData($request);
         $this->trail['requestType'] = $this->options['request_type'];
         $this->trail['responseType'] = $this->options['response_type'];
@@ -136,9 +133,8 @@ class Tracker extends Configurable implements PluginInterface {
      * @return void
      */
     protected function saveTrailData() {
-        global $environment;
         require_once 'Kansas/Environment.php';
-        $trackPath = $environment->getSpecialFolder(Environment::SF_TRACK);
+        $trackPath = Environment::getSpecialFolder(Environment::SF_TRACK);
         $trail = $this->trail;
         $modifyHits = function($read) use ($trail) { // Función lambda de modificar archivo de solicitudes
             $hits = unserialize($read);
@@ -154,7 +150,6 @@ class Tracker extends Configurable implements PluginInterface {
             return serialize($hits);
         };
         $modifyIndex = function($read) use ($modifyHits, $trackPath) { // Función lambda de modificar archivo indice
-            global $environment;
             $index = unserialize($read);
             if(!is_array($index)) {
                 $index = [];
@@ -168,12 +163,12 @@ class Tracker extends Configurable implements PluginInterface {
                     $count = 0;
                 }
             } while($count > 99);
-            $hitsFile = $environment->getFile($trackPath . 'hits-' . $c . '.ser'); // Guardar cambios de solicitud
+            $hitsFile = Environment::getFile($trackPath . 'hits-' . $c . '.ser'); // Guardar cambios de solicitud
             $hitsFile->modify($modifyHits);
             $index['hits-' . $c . '.ser'] = $count + 1;
             return serialize($index);
         };
-        $indexFile = $environment->getFile($trackPath . 'index.ser');
+        $indexFile = Environment::getFile($trackPath . 'index.ser');
         $indexFile->modify($modifyIndex);
     }
 

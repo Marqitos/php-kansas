@@ -89,9 +89,8 @@ class File extends Cache implements ExtendedCacheInterface {
 
     /// Miembros de System_Configurable_Interface
     public function getDefaultOptions(EnvStatus $enviromentStatus) : array {
-        global $environment;
         return [
-            'cache_dir'                 => $environment->getSpecialFolder(Environment::SF_CACHE),
+            'cache_dir'                 => Environment::getSpecialFolder(Environment::SF_CACHE),
             'read_control'              => true,
             'read_control_type'         => 'crc32',
             'hashed_directory_level'    => 0,
@@ -109,11 +108,10 @@ class File extends Cache implements ExtendedCacheInterface {
       * @return string
       */
     protected function getCacheDir() {
-        global $environment;
         if($this->cacheDir == null) {
             $value = $this->options['cache_dir'] !== null
                 ? $this->options['cache_dir']
-                : $environment->getSpecialFolder(Environment::SF_CACHE);
+                : Environment::getSpecialFolder(Environment::SF_CACHE);
             if (! is_dir($value)) {
                 var_dump($value);
                 require_once 'System/IO/DirectoryNotFoundException.php';
@@ -517,8 +515,7 @@ class File extends Cache implements ExtendedCacheInterface {
    * @return array|false Metadatas associative array
    */
   protected function _loadMetadatas($id) {
-    global $environment;
-    $file = $environment->getFile($this->_metadatasFile($id));
+    $file = Environment::getFile($this->_metadatasFile($id));
     $result = $file->read();
     return ($result === false)
       ? false
@@ -533,8 +530,7 @@ class File extends Cache implements ExtendedCacheInterface {
    * @return boolean True if no problem
    */
   protected function _saveMetadatas($id, $metadatas) {
-    global $environment;
-    $file = $environment->getFile($this->_metadatasFile($id));
+    $file = Environment::getFile($this->_metadatasFile($id));
     $result = $file->write(serialize($metadatas), 'c', $this->getCacheFileUmask());
     return $result !== false;
   }
@@ -823,9 +819,8 @@ class File extends Cache implements ExtendedCacheInterface {
    * @return System\IO\File File name (with path)
    */
   protected function getFile($id) {
-    global $environment;
     list($path, $fileName) = $this->getFileName($id);
-    return $environment->getFile($path . $fileName);
+    return Environment::getFile($path . $fileName);
   }
 
   /**

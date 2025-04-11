@@ -11,6 +11,7 @@
 namespace Kansas\Plugin;
 
 use Kansas\Application;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use System\Configurable;
 use System\EnvStatus;
@@ -40,8 +41,7 @@ class WebErrors extends Configurable implements PluginInterface {
 
 ## Miembros de Kansas\Plugin\PluginInterface
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 ## --
 

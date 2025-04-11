@@ -15,6 +15,7 @@ use System\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\View\Result\Redirect;
 
@@ -44,16 +45,14 @@ class RedirectionError extends Configurable implements PluginInterface {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     public function errorManager($params) {
         if ($params['code'] == 404 &&
             $path = $this->options['basePath']) {
-            global $environment;
             if($this->options['append']) {
-                $path = rtrim($path, '/') . $environment->getRequest()->getRequestUri();
+                $path = rtrim($path, '/') . Environment::getRequest()->getRequestUri();
             }
             require_once 'Kansas/View/Result/Redirect.php';
             $result = Redirect::gotoUrl($path);

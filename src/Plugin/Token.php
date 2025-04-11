@@ -15,6 +15,7 @@ use System\Configurable;
 use System\EnvStatus;
 use System\Guid;
 use System\Version;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Router\Token as Router;
 use Lcobucci\JWT\Builder;
@@ -47,8 +48,7 @@ class Token extends Configurable implements PluginInterface {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
   /**
@@ -126,9 +126,8 @@ class Token extends Configurable implements PluginInterface {
           $device = $this->options['device'];
       }
       if ($device === true) {
-          global $environment;
           require_once 'Kansas/Request/getTrailData.php';
-          $request    = $environment->getRequest();
+          $request    = Environment::getRequest();
           $userAgent  = getTrailData($request)['userAgent'];
           $data['dev']=  md5($userAgent); // guardar información del dispositivo
       }
@@ -250,9 +249,8 @@ class Token extends Configurable implements PluginInterface {
   }
 
   public static function getDevice() {
-    global $environment;
     require_once 'Kansas/Request/getTrailData.php';
-    $request    = $environment->getRequest();
+    $request    = Environment::getRequest();
     $userAgent  = getTrailData($request)['userAgent'];
     return md5($userAgent, false);
   }

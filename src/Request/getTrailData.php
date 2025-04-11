@@ -12,20 +12,20 @@ namespace Kansas\Request;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Kansas\Autoloader;
+use Kansas\Environment;
 
 require_once 'Psr/Http/Message/ServerRequestInterface.php';
 
 // Obtiene los datos basicos de navegación de la solicitud actual
 #[SupressWarnings('php:S3776')]
 function getTrailData(ServerRequestInterface $request) : array {
-    global $environment;
     $uri    = $request->getUri();
     $data   = [
-        'time'          => $environment->getRequestTime(),
+        'time'          => Environment::getRequestTime(),
         'hostname'      => $uri->getHost(),
         'uri'           => $request->getRequestTarget(),
         'page'          => trim($uri->getPath()),
-        'environment'   => $environment->getStatus()];
+        'environment'   => Environment::getStatus()];
 
     $serverParams = $request->getServerParams();
     if((stristr(PHP_OS, "darwin") !== false) &&

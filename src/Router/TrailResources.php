@@ -23,7 +23,7 @@ class TrailResources extends Router {
 ## Miembros de Kansas\Configurable
     public function getDefaultOptions(EnvStatus $environmentStatus) : array {
         require_once 'Kansas/Environment.php';
-        $libsPath = $environment->getSpecialFolder(Environment::SF_LIBS);
+        $libsPath = Environment::getSpecialFolder(Environment::SF_LIBS);
         return [
             'paths' => [
                 'img/browser-' => realpath($libsPath . 'bbClone/images/browser') . '/',
@@ -36,8 +36,7 @@ class TrailResources extends Router {
 ## -- Configurable
 
     public function match() {
-        global $environment;
-        $path = trim($environment->getRequest()->getUri()->getPath(), '/');
+        $path = trim(Environment::getRequest()->getUri()->getPath(), '/');
         foreach($this->options['paths'] as $requestPath => $realPath) {
             $length = strlen($requestPath);
             if($requestPath == substr($path, 0, $length)) {

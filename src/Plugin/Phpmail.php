@@ -48,8 +48,7 @@ class Phpmail extends Configurable implements PluginInterface {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     public function getSMTP() {
@@ -81,10 +80,9 @@ class Phpmail extends Configurable implements PluginInterface {
      */
     public function serverSend($to, $subject, $htmlTemplate, $textTemplate, array $templateData, array $options = []) {
         require_once 'Kansas/View/Template.php';
-        global $environment;
-        $template = new Template($environment->getSpecialFolder(Environment::SF_LAYOUT) . $htmlTemplate, $templateData);
+        $template = new Template(Environment::getSpecialFolder(Environment::SF_LAYOUT) . $htmlTemplate, $templateData);
         $htmlMessage = $template->fetch();
-        $template = new Template($environment->getSpecialFolder(Environment::SF_LAYOUT) . $textTemplate, $templateData);
+        $template = new Template(Environment::getSpecialFolder(Environment::SF_LAYOUT) . $textTemplate, $templateData);
         $txtMessage = $template->fetch();
 
         $mail = $this->getSMTP();

@@ -11,6 +11,7 @@
 
 namespace Kansas\Router;
 
+use Kansas\Environment;
 use Kansas\Router;
 use System\EnvStatus;
 
@@ -18,7 +19,7 @@ require_once 'Kansas/Router.php';
 
 class Pages extends Router {
 
-  // Miembros de System\Configurable\ConfigurableInterface
+## Miembros de System\Configurable\ConfigurableInterface
   public function getDefaultOptions(EnvStatus $environment): array {
     return [
       'base_path' => '',
@@ -29,17 +30,18 @@ class Pages extends Router {
         'pattern']
     ];
   }
+## -- ConfigurableInterface
 
+## Miembros de Kansas\Router\RouterInterface
     /**
       * Devuelve los datos de enrutamiento de la ruta actual
       *
       * @return array | false
       */
-    #[SuppressWarnings("php:S1142")]
-    #[SuppressWarnings("php:S3776")]
+    #[SuppressWarnings('php:S3776')]
+    #[SuppressWarnings('php:S1142')]
     public function match(): array|false {
-        $path   = self::getPath($this);
-        if ($path === false) {
+        if (($path = self::getPath($this)) === false) {
             return false;
         }
 
@@ -47,21 +49,28 @@ class Pages extends Router {
         if (is_array($match)) {
             return $this->getParams($match);
         }
+        $method = Environment::getRequest()->getMethod();
+        var_dump($method);
 
         $routes = $this->options['routes'];
         foreach ($routes as $route) {
+            if (isset($route['methods'])) {
+                //if ()
+            }
             // Comparamos con rutas estáticas
-            if (isset($route['path']) &&
-                is_array($route['path'])) {
-                $match = false;
-                foreach ($route['path'] as $page) {
-                    if ($page == $path) {
-                        $match = true;
-                        break;
+            if (isset($route['path'])) {
+                $match = $route['path'] == $path;
+                if (! $match &&
+                    isset($route['path']) &&
+                    is_array($route['path'])) {
+                    foreach ($route['path'] as $page) {
+                        if ($page == $path) {
+                            $match = true;
+                            break;
+                        }
                     }
                 }
-                if ($match ||
-                    $route['path'] == $path) {
+                if ($match) {
                     return $this->getParams($route);
                 }
             }
@@ -76,6 +85,7 @@ class Pages extends Router {
         }
         return false;
     }
+## -- RouterInterface
 
 ## Miebros de Kansas\Router
     public function getParams($route) : array {

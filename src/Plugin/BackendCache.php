@@ -11,6 +11,7 @@
 namespace Kansas\Plugin;
 
 use Kansas\Cache;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use System\Configurable;
 use System\EnvStatus;
@@ -46,8 +47,7 @@ class BackendCache extends Configurable implements PluginInterface {
 
   /// Miembros de PluginInterface
   public function getVersion() : Version {
-    global $environment;
-    return $environment->getVersion();
+    return Environment::getVersion();
   }
 
   public function getCache(string $category = '.', ?string $cacheType = null, array $cacheOptions = []) {

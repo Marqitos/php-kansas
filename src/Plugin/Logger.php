@@ -14,6 +14,7 @@ namespace Kansas\Plugin;
 // TODO: Implementar formateado de MarkDown
 
 use Throwable;
+use Kansas\Environment;
 use Kansas\Localization\Resources;
 use Kansas\Plugin\PluginInterface;
 use Psr\Log\LoggerTrait;
@@ -44,8 +45,7 @@ class Logger extends Configurable implements PluginInterface, LoggerInterface {
 
 ## Miembros de Kansas\Plugin\PluginInterface
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 ## --
 

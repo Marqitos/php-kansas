@@ -14,6 +14,7 @@ use Kansas\Application;
 use Kansas\Auth\AuthorizationInterface;
 use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Auth\Session\SessionInterface;
+use Kansas\Environment;
 use Kansas\Loader;
 use Kansas\Plugin\Localization;
 use Kansas\Plugin\RouterPluginInterface;
@@ -76,8 +77,7 @@ class Auth extends Configurable implements RouterPluginInterface {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     // Miembros de Kansas\Plugin\RouterPluginInterface

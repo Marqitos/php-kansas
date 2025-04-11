@@ -16,6 +16,7 @@ use System\ArgumentOutOfRangeException;
 use System\EnvStatus;
 use System\Version;
 use Kansas\Application;
+use Kansas\Environment;
 use Kansas\Controller\Index;
 use Kansas\Plugin\PluginInterface;
 use Google\Client;
@@ -53,8 +54,7 @@ class Google extends Configurable implements PluginInterface {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     /// Eventos de la aplicación

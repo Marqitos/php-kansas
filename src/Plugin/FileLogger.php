@@ -72,8 +72,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
 
     # Miembros de PluginInterface
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
     # --
 
@@ -103,14 +102,13 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
 
 
     public function writeError(string $message, $showTime = false) {
-        global $environment;
         if ($showTime) {
             $time = '[' . date('H:i:s') . '] ';
             $message = $time . $message;
         }
 
         ignore_user_abort();
-        $logFile = $environment->getSpecialFolder(Environment::SF_ERRORS) . 'errors.html';
+        $logFile = Environment::getSpecialFolder(Environment::SF_ERRORS) . 'errors.html';
 
         $stderr = fopen($logFile, 'a');
         flock($stderr, LOCK_EX);
@@ -119,7 +117,6 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
     }
 
     public function log(string $level, $message, array $context = []) {
-        global $environment;
         if ($level == LogLevel::ERROR &&
             is_string($message) &&
             isset($context['exception']) &&
@@ -146,11 +143,11 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
         $now = new DateTime('now');
         switch ($this->options['format']) {
             case Logger::FORMAT_MARKDOWN:
-                $logFile = $environment->getSpecialFolder(Environment::SF_ERRORS) . $now->format('Ymd') . '.md';
+                $logFile = Environment::getSpecialFolder(Environment::SF_ERRORS) . $now->format('Ymd') . '.md';
                 break;
             case Logger::FORMAT_HTML:
             default:
-                $logFile = $environment->getSpecialFolder(Environment::SF_ERRORS) . $now->format('Ymd') . '.html';
+                $logFile = Environment::getSpecialFolder(Environment::SF_ERRORS) . $now->format('Ymd') . '.html';
                 break;
         }
 

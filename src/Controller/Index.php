@@ -38,7 +38,7 @@ class Index extends AbstractController {
 
     private static $actions = [];
 
-    public function callAction(string $action, array $vars) : ViewResultInterface {
+    public function callAction(string $action, array $vars): ViewResultInterface {
         if(is_callable([$this, $action])) {
             return $this->$action($vars);
         }
@@ -75,7 +75,7 @@ class Index extends AbstractController {
         return Redirect::gotoUrl($this->getParam('ru', '/'));
     }
 
-    public function template(array $vars) : Template {
+    public function template(array $vars): Template {
         if(!isset($vars['template'])) {
             require_once 'System/ArgumentNullException.php';
             throw new ArgumentNullException('vars["template"]');
@@ -138,6 +138,7 @@ class Index extends AbstractController {
     public const CORS_ACAC  = 0x8;
     public const CORS_ALL   = 0xF;
 
+    //#[SupressWarnings['(php:S3776')]]
     public static function sendCORSHeaders(array $data): int {
         $result = self::NO_CORS;
         if (isset($data['cors'])) {

@@ -17,6 +17,7 @@ use System\NotSupportedException;
 use System\Version;
 use Kansas\Auth\ServiceInterface as AuthService;
 use Kansas\Auth\AuthException;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 
 require_once 'System/Configurable.php';
@@ -63,8 +64,7 @@ class Membership extends Configurable implements PluginInterface, AuthService {
   }
 
   public function getVersion() : Version {
-    global $environment;
-    return $environment->getVersion();
+    return Environment::getVersion();
   }
 
   /// Miembros de Kansas_Auth_Service_Interface

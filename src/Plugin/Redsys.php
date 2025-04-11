@@ -14,6 +14,7 @@ use System\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Omnipay\Omnipay;
 use Omnipay\Common\AbstractGateway;
@@ -72,6 +73,7 @@ class Redsys extends Configurable implements PluginInterface {
 
     // Miembros de Kansas\Plugin\PluginInterface
     public function getDefaultOptions(EnvStatus $environment) : array {
+        // TODO: Use dovent
         $data = [
             'redirect'          => true,
             'currency'          => 'EUR',
@@ -98,8 +100,7 @@ class Redsys extends Configurable implements PluginInterface {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     public function getGateway() : AbstractGateway {

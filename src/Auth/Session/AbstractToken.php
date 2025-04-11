@@ -12,6 +12,7 @@ namespace Kansas\Auth\Session;
 
 use System\Guid;
 use Kansas\Auth\Session\SessionInterface;
+use Kansas\Environment;
 use Kansas\Plugin\Token as TokenPlugin;
 
 use function intval;
@@ -99,10 +100,10 @@ abstract class AbstractToken implements SessionInterface {
         if($this->initialized) {
             return;
         }
-        global $application, $environment;
+        global $application;
         $localizationPlugin     = $application->getPlugin('Localization');
         $locale                 = $localizationPlugin->getLocale();
-        $request = $environment->getRequest();
+        $request = Environment::getRequest();
         if($request->hasHeader('Authorization')) { // Obtener sessión de headers
             require_once 'System/String/startWith.php';
             foreach($request->getHeader('Authorization') as $authHeader) {

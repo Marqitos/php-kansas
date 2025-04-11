@@ -3,6 +3,7 @@
 namespace Kansas\Controller;
 
 use System\NotImplementedException;
+use Kansas\Environment;
 use Kansas\Controller\ControllerInterface;
 use Kansas\Localization\Resources;
 use Kansas\View\Result\ViewResultInterface;
@@ -96,7 +97,7 @@ abstract class AbstractController implements ControllerInterface {
      * @return bool true si hay un usuario activo, o false en caso contrario.
      */
     protected function isAuthenticated(&$result, ?string $ru = null) : bool {
-        global $application, $environment;
+        global $application;
         $auth = $application->getPlugin('auth');
         if($auth->hasIdentity()) {
             $result = $auth->getIdentity();
@@ -104,7 +105,7 @@ abstract class AbstractController implements ControllerInterface {
         } else {
             require_once 'Kansas/View/Result/Redirect.php';
             if($ru === null) {
-                $ru = $environment->getRequest()->getRequestUri();
+                $ru = Environment::getRequest()->getRequestUri();
             }
             $result = Redirect::gotoUrl(
                 $auth->getRouter()->assemble([

@@ -13,6 +13,7 @@ namespace Kansas\Plugin;
 use Exception;
 use Kansas\Application;
 use Kansas\Auth\ServiceInterface as AuthService;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Auth\AuthException;
 use Kansas\View\Result\StringInterface;
@@ -57,8 +58,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
 

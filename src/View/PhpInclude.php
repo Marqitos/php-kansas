@@ -59,8 +59,7 @@ class PhpInclude extends Configurable implements ViewInterface {
             return $this->scriptPaths;
         }
         require_once 'Kansas/Environment.php';
-        global $environment;
-        return $environment->getSpecialFolder(Environment::SF_LAYOUT);
+        return Environment::getSpecialFolder(Environment::SF_LAYOUT);
     }
 
     /**

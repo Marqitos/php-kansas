@@ -14,6 +14,7 @@ use System\Configurable;
 use System\EnvStatus;
 use System\Version;
 use Kansas\Application;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\View\Template;
 
@@ -47,8 +48,7 @@ class Localization extends Configurable implements PluginInterface {
   }
 
   public function getVersion() : Version {
-    global $environment;
-    return $environment->getVersion();
+    return Environment::getVersion();
   }
 
   public function appPreInit() { // obtener idioma del cliente
@@ -66,8 +66,8 @@ class Localization extends Configurable implements PluginInterface {
     if (isset($this->options['q'])) {
       return;
     }
-    global $environment, $lang;
-    $request    = $environment->getRequest();
+    global $lang;
+    $request    = Environment::getRequest();
     $uri        = $request->getUri();
     $path       = $uri->getPath();
     if (substr($path, 3, 1) == '/') {
@@ -88,7 +88,7 @@ class Localization extends Configurable implements PluginInterface {
       $c = substr($path, 4, 2);
       foreach ($this->getAppLangs() as $appLang) {
         if (strcasecmp($l, $appLang['lang']) == 0 &&
-          strcasecmp($c, $appLang['country']) == 0) { // obtenemos el idioma y la región de la url
+            strcasecmp($c, $appLang['country']) == 0) { // obtenemos el idioma y la región de la url
           $this->options['lang']      = $appLang['lang'];
           $this->options['country']   = $appLang['country'];
           $this->options['q']         = true;
@@ -100,7 +100,7 @@ class Localization extends Configurable implements PluginInterface {
     if (isset($this->options['q']) &&
         $this->options['q'] === true) { // Si el idioma estaba incrustado en la url, modificamos la url
       $request = $request->withUri($uri);
-      $environment->setRequest($request);
+      Environment::setRequest($request);
     } else {
       foreach ($this->getUserLangs() as $userLang){
         foreach ($this->getAppLangs() as $appLang) {
@@ -131,7 +131,7 @@ class Localization extends Configurable implements PluginInterface {
     header('Content-Language: ' . (string) $this); // establecemos la cabecera
   }
 
-  public function getAppLangs() {
+  public function getAppLangs(): array {
     global $application;
     if (!isset($this->appLangs)) {
       $localizationProvider = $application->getProvider('Localization');

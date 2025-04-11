@@ -24,8 +24,7 @@ class Sri {
     public static function getInstance(?string $publicFolder = null) : Sri {
         if (is_null(self::$instance)) {
             if (empty($publicFolder)) {
-                global $environment;
-                $publicFolder = $environment->getSpecialFolder(Environment::SF_PUBLIC);
+                $publicFolder = Environment::getSpecialFolder(Environment::SF_PUBLIC);
             } else {
                 $publicFolder = realpath($publicFolder) . '/';
             }
@@ -55,7 +54,7 @@ class Sri {
     }
 
     public static function inlineScript(string $script, array $attributes = []) {
-        global $application, $environment;
+        global $application;
 
         $hash = hash('sha256', $script, true);
         $attributes['integrity'] = 'sha256-' . base64_encode($hash);
@@ -65,11 +64,11 @@ class Sri {
             : false;
 
         if ($cachePlugin &&
-            isset($environment)) {
+            class_exists('Kansas\Environment', false)) {
             $filename = bin2hex($hash) . '.js';
             $cache = $cachePlugin->getCache('router',
                 BackendCache::TYPE_FILE, [
-                'cache_dir' => $environment->getSpecialFolder(Environment::SF_V_CACHE)]
+                'cache_dir' => Environment::getSpecialFolder(Environment::SF_V_CACHE)]
             );
             $data = serialize([
                 'content'   => $script,
@@ -95,7 +94,6 @@ class Sri {
     }
 
     public static function inlineStylesheet(string $style, array $attributes = []) {
-        global $application, $environment;
 
         if (empty($attributes)) {
             $attributes = ['rel' => 'stylesheet'];
@@ -109,11 +107,11 @@ class Sri {
             : false;
 
         if ($cachePlugin &&
-            isset($environment)) {
+            class_exists('Kansas\Environment', false)) {
             $filename = bin2hex($hash) . '.css';
             $cache = $cachePlugin->getCache('router',
                 BackendCache::TYPE_FILE, [
-                'cache_dir' => $environment->getSpecialFolder(Environment::SF_V_CACHE)]
+                'cache_dir' => Environment::getSpecialFolder(Environment::SF_V_CACHE)]
             );
             $data = serialize([
                 'content'   => $style,

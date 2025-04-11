@@ -16,6 +16,7 @@ use System\NotSupportedException;
 use System\Version;
 use Kansas\Controller\ControllerInterface;
 use Kansas\Controller\Index;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\View\Result\Javascript as ViewResultJavascript;
 use JShrink\Minifier;
@@ -62,8 +63,7 @@ class Javascript extends Configurable implements PluginInterface {
     }
 
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
     # -- Miembros de Kansas\Plugin\Interface
 

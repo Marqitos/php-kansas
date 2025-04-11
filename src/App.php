@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /**
-  * Proporciona métodos estáticos y tipados relativos a $application y $environment;
+  * Proporciona métodos estáticos relativos a $application;
   *
   * @package    Kansas
   * @author     Marcos Porto Mariño
@@ -48,16 +48,6 @@ class App {
     public static function hasPlugin($pluginName) {
         global $application;
         return $application->hasPlugin($pluginName);
-    }
-
-    public static function getRequest() : ServerRequest {
-        global $environment;
-        return $environment->getRequest();
-    }
-
-    public static function getSpecialFolder(int $folderId) {
-        global $environment;
-        return $environment->getSpecialFolder($folderId);
     }
 
     public static function getDb() : Adapter {

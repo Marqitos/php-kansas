@@ -17,9 +17,8 @@ class Json extends StringAbstract {
     }
 
     public function getResult(&$cache) {
-        global $environment;
         require_once 'Kansas/Environment.php';
-        $result = $environment->getStatus() == Environment::ENV_DEVELOPMENT
+        $result = Environment::getStatus() == Environment::ENV_DEVELOPMENT
             ? json_encode($this->data, JSON_PRETTY_PRINT)
             : json_encode($this->data);
         $cache = md5($result);

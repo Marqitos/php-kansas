@@ -11,6 +11,7 @@
 namespace Kansas\Plugin;
 
 use Throwable;
+use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Maurina\Debug as MaurinaDebug;
 use Psr\Log\LoggerTrait;
@@ -51,8 +52,7 @@ class SocketLogger extends Configurable implements PluginInterface, LoggerInterf
 
     // Miembros de PluginInterface
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     public function trackError(Throwable $ex) {

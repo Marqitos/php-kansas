@@ -30,21 +30,23 @@ class Router extends Configurable implements RouterInterface {
         return [...$this->options['params'], ...$params];
     }
 
-    // Miembros de System\Configurable\ConfigurableInterface
+## Miembros de System\Configurable\ConfigurableInterface
     public function getDefaultOptions(EnvStatus $environment) : array {
         return [
             'base_path' => '',
             'params'  => []
         ];
     }
+## -- ConfigurableInterface
 
-    // Miembros de Kansas\Router\RouterInterface
+## Miembros de Kansas\Router\RouterInterface
     public function getBasePath(): string {
         return $this->options['base_path'];
     }
+## -- RouterInterface
 
     public function match(): array|false {
-        global $application, $environment;
+        global $application;
         $cachePlugin = $application->hasPlugin('BackendCache');
         if ($cachePlugin) {
             $path   = self::getPath($this);
@@ -55,7 +57,7 @@ class Router extends Configurable implements RouterInterface {
             $cache = $cachePlugin->getCache(
                 'router',
                 BackendCache::TYPE_FILE, [
-                'cache_dir' => $environment->getSpecialFolder(Environment::SF_V_CACHE)]
+                'cache_dir' => Environment::getSpecialFolder(Environment::SF_V_CACHE)]
             );
             if ($cache->test($path)) {
                 $match = unserialize($cache->load($path));
@@ -78,10 +80,9 @@ class Router extends Configurable implements RouterInterface {
         $this->options['base_path'] = trim($basePath, '/');
     }
 
-    public static function getPath(RouterInterface $router): mixed {
-        global $environment;
+    public static function getPath(RouterInterface $router): string|false {
         require_once 'System/String/startWith.php';
-        $path = trim($environment->getRequest()->getUri()->getPath(), '/');
+        $path = trim(Environment::getRequest()->getUri()->getPath(), '/');
         $basePath = $router->getBasePath();
         if (mb_strlen($basePath) == 0) {
             $result = $path;

@@ -11,6 +11,7 @@
 namespace Kansas\Plugin;
 
 use Kansas\Application;
+use Kansas\Environment;
 use Kansas\Router\API as RouterAPI;
 use Kansas\Router\RouterInterface;
 use System\Configurable;
@@ -51,8 +52,7 @@ class API extends Configurable implements RouterPluginInterface {
 
     // Miembros de Kansas\Plugin\PluginInterface
     public function getVersion() : Version {
-        global $environment;
-        return $environment->getVersion();
+        return Environment::getVersion();
     }
 
     // Miembros de Kansas\Router\RouterInterface
