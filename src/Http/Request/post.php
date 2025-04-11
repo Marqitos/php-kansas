@@ -48,7 +48,7 @@ function post(string $uri, array $post, array $headers = []) : string {
   $opts = [
     'http'=> [
       'method'  => 'POST',
-      'header'  => join("\r\n", $headers),
+      'header'  => implode("\r\n", $headers),
       'content' => $postData
   ]];
   $context = stream_context_create($opts);

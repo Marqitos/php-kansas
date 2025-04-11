@@ -27,8 +27,9 @@ use function trim;
 
 require_once 'Kansas/Plugin/API.php';
 require_once 'Kansas/Router.php';
+require_once 'Psr/Http/Message/RequestMethodInterface.php';
 
-class API extends Router implements RouterInterface {
+class API extends Router implements RouterInterface, RequestMethodInterface {
 
     private $callbacks  = [];
     private $paths      = [];
@@ -57,7 +58,7 @@ class API extends Router implements RouterInterface {
         $path       = trim($path, '/');
         $method     = Environment::getRequest()->getMethod();
         // Gestionamos el metodo OPTIONS
-        if ($method == RequestMethodInterface::METHOD_OPTIONS) {
+        if ($method == self::METHOD_OPTIONS) {
             $methods = $this->getMethods($path);
             if (!empty($methods)) {
                 $methods = implode(', ', $methods);
@@ -111,14 +112,14 @@ class API extends Router implements RouterInterface {
                     $result = call_user_func($callback, $path, $method);
                     // Establecemos un cache predeterminado según el metodo de llamada
                     switch($method) {
-                        case RequestMethodInterface::METHOD_GET:
-                        case RequestMethodInterface::METHOD_HEAD:
+                        case self::METHOD_GET:
+                        case self::METHOD_HEAD:
                             header('Cache-Control: must-revalidate');
                             break;
-                        case RequestMethodInterface::METHOD_POST:
-                        case RequestMethodInterface::METHOD_PUT:
-                        case RequestMethodInterface::METHOD_DELETE:
-                        case RequestMethodInterface::METHOD_PATCH:
+                        case self::METHOD_POST:
+                        case self::METHOD_PUT:
+                        case self::METHOD_DELETE:
+                        case self::METHOD_PATCH:
                             header('Cache-Control: no-cache');
                             break;
                         default:
@@ -160,7 +161,7 @@ class API extends Router implements RouterInterface {
         } elseif (! is_string($path)) {
             throw new ArgumentException('path', 'Formato de ruta no válido');
         }
-        if ($method == RequestMethodInterface::METHOD_OPTIONS) {
+        if ($method == self::METHOD_OPTIONS) {
             require_once 'Kansas/Localization/Resources.php';
             throw new LogicException(Resources::API_OPTIONS_METHOD_RESERVED);
         }

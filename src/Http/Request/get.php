@@ -43,7 +43,7 @@ function get(string $uri, array $headers = []) : mixed {
     'http'=> [
       'method'  => 'GET']];
   if (!empty($headers)) {
-    $opts['http']['header'] = join("\r\n", $headers);
+    $opts['http']['header'] = implode("\r\n", $headers);
   }
   $context = stream_context_create($opts);
   return @file_get_contents($uri, false, $context);

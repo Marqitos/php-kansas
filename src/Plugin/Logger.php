@@ -129,7 +129,7 @@ class Logger extends Configurable implements PluginInterface, LoggerInterface {
 
         return empty($types)
             ? false
-            : join(', ', $types);
+            : implode(', ', $types);
     }
 
 }

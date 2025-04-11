@@ -50,7 +50,6 @@ class Pages extends Router {
             return $this->getParams($match);
         }
         $method = Environment::getRequest()->getMethod();
-        var_dump($method);
 
         $routes = $this->options['routes'];
         foreach ($routes as $route) {
