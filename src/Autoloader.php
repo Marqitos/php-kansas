@@ -25,7 +25,7 @@ use function substr;
 use const DIRECTORY_SEPARATOR;
 use const PATH_SEPARATOR;
 
-require_once "System/Configurable.php";
+require_once "Kansas/Configurable.php";
 require_once "Kansas/Loader/SplInterface.php";
 
 /**
