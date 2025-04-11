@@ -17,7 +17,7 @@ use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Auth\AuthException;
 use Kansas\View\Result\StringInterface;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\Version;
 
@@ -27,7 +27,7 @@ use function strtolower;
 use function strpos;
 use function substr;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Auth/ServiceInterface.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 

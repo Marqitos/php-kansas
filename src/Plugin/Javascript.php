@@ -10,7 +10,7 @@
 
 namespace Kansas\Plugin;
 
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
@@ -28,7 +28,7 @@ use function md5;
 use function serialize;
 use function unserialize;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Javascript extends Configurable implements PluginInterface {

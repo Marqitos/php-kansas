@@ -19,14 +19,14 @@ use Kansas\Localization\Resources;
 use Kansas\Plugin\PluginInterface;
 use Psr\Log\LoggerTrait;
 use Psr\Log\LoggerInterface;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\Version;
 
 require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Psr/Log/LoggerInterface.php';
 require_once 'Psr/Log/LoggerTrait.php';
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 
 class Logger extends Configurable implements PluginInterface, LoggerInterface {
     use LoggerTrait;

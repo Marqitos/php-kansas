@@ -10,7 +10,7 @@
 
 namespace Kansas\Plugin;
 
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\Version;
 use Kansas\Application;
@@ -25,7 +25,7 @@ use function strtoupper;
 use function substr;
 use function uasort;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Localization extends Configurable implements PluginInterface {
@@ -40,7 +40,7 @@ class Localization extends Configurable implements PluginInterface {
     $application->registerCallback(Application::EVENT_C_VIEW, [$this, 'createView']);
   }
 
-  /// Miembros de System\Configurable\Interface
+  /// Miembros de Kansas\Configurable\Interface
   public function getDefaultOptions(EnvStatus $environment) : array {
     return [
       'lang'      => 'es',

@@ -17,7 +17,7 @@ use Maurina\Debug as MaurinaDebug;
 use Psr\Log\LoggerTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\Version;
 use function System\String\interpolate as StringInterpolate;
@@ -25,7 +25,7 @@ use function System\String\interpolate as StringInterpolate;
 require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Psr/Log/LoggerInterface.php';
 require_once 'Psr/Log/LoggerTrait.php';
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 
 class SocketLogger extends Configurable implements PluginInterface, LoggerInterface {
     use LoggerTrait;

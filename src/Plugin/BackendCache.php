@@ -13,13 +13,13 @@ namespace Kansas\Plugin;
 use Kansas\Cache;
 use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\Version;
 use function array_merge;
 use function md5;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class BackendCache extends Configurable implements PluginInterface {

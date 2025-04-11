@@ -5,13 +5,13 @@
 
 namespace Kansas;
 
-use System\Configurable;
+use Kansas\Configurable;
 use System\ArgumentOutOfRangeException;
 use System\IO\File;
 use System\IO\FileNotFoundException;
 use Kansas\Cache\CacheInterface;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Cache/CacheInterface.php';
 
 abstract class Cache extends Configurable implements CacheInterface {

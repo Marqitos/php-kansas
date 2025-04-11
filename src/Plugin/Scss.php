@@ -10,7 +10,7 @@
 
 namespace Kansas\Plugin;
 
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
@@ -23,7 +23,7 @@ use Leafo\ScssPhp\Compiler;
 
 use function file_get_contents;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Kansas/Controller/Index.php';
 

@@ -10,7 +10,7 @@
 
 namespace Kansas\TitleBuilder;
 
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use Kansas\TitleBuilder\TitleBuilderInterface;
 
@@ -19,7 +19,7 @@ use function array_unshift;
 use function count;
 use function implode;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 
 class DefaultTitleBuilder extends Configurable implements TitleBuilderInterface {
 

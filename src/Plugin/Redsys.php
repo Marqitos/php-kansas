@@ -10,7 +10,7 @@
 
 namespace Kansas\Plugin;
 
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
@@ -19,7 +19,7 @@ use Kansas\Plugin\PluginInterface;
 use Omnipay\Omnipay;
 use Omnipay\Common\AbstractGateway;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Omnipay/Common/AbstractGateway.php';
 

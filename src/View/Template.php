@@ -13,6 +13,7 @@ namespace Kansas\View;
 use Kansas\TextParser\Plain;
 use Kansas\TextParser\Markdown;
 use Kansas\TitleBuilder\TitleBuilderInterface;
+use System\EnvStatus;
 
 use function is_array;
 use function ob_end_clean;
@@ -48,9 +49,16 @@ class Template {
             ob_start();
             include $this->script;
             return ob_get_clean();
+        } catch (Throwable $th) {
+            $buffer = ob_end_clean();
+            if (Environment::getStatus() == EnvStatus::DEVELEPMENT) {
+                var_dump($th);
+                echo $buffer;
+            }
+            throw $th;
         } finally {
             if (!empty(ob_get_status())) {
-                ob_end_clean();
+                ob_clean();
             }
         }
     }

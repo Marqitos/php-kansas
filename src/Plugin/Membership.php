@@ -11,7 +11,7 @@
 namespace Kansas\Plugin;
 
 use Exception;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
@@ -20,7 +20,7 @@ use Kansas\Auth\AuthException;
 use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 require_once 'Kansas/Auth/ServiceInterface.php';
 

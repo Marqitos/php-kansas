@@ -7,12 +7,12 @@ use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\Router\Cache as RouterCache;
 use Psr\Http\Message\ServerRequestInterface;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\Version;
 
 require_once 'Psr/Http/Message/ServerRequestInterface.php';
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class CacheRouter extends Configurable implements PluginInterface {

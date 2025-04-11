@@ -10,7 +10,7 @@
 
 namespace Kansas\Plugin;
 
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
@@ -19,7 +19,7 @@ use Kansas\View\Template;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Phpmail extends Configurable implements PluginInterface {

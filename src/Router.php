@@ -13,7 +13,7 @@ namespace Kansas;
 use Kansas\Environment;
 use Kansas\Plugin\BackendCache;
 use Kansas\Router\RouterInterface;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use function array_merge;
 use function mb_strlen;
@@ -21,7 +21,7 @@ use function mb_substr;
 use function trim;
 use function System\String\startWith;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Router/RouterInterface.php';
 
 class Router extends Configurable implements RouterInterface {

@@ -11,7 +11,7 @@
 namespace Kansas\Plugin;
 
 use Exception;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
@@ -19,7 +19,7 @@ use Kansas\Environment;
 use Kansas\Plugin\PluginInterface;
 use Kansas\View\Result\Redirect;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class RedirectionError extends Configurable implements PluginInterface {

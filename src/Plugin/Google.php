@@ -10,7 +10,7 @@
 
 namespace Kansas\Plugin;
 
-use System\Configurable;
+use Kansas\Configurable;
 use System\ArgumentException;
 use System\ArgumentOutOfRangeException;
 use System\EnvStatus;
@@ -26,7 +26,7 @@ use function implode;
 use function json_decode;
 use function strpbrk;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Google extends Configurable implements PluginInterface {

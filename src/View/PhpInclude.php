@@ -13,11 +13,11 @@ namespace Kansas\View;
 use Kansas\View\ViewInterface;
 use Kansas\Environment;
 use Kansas\View\Template;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use function is_array;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/View/ViewInterface.php';
 
 class PhpInclude extends Configurable implements ViewInterface {

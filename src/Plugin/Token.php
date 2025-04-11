@@ -11,7 +11,7 @@
 namespace Kansas\Plugin;
 
 use OutOfBoundsException;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\Guid;
 use System\Version;
@@ -27,7 +27,7 @@ use function Kansas\Plugin\Token\verifyToken;
 use function Kansas\Request\getTrailData;
 use function time;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/PluginInterface.php';
 
 class Token extends Configurable implements PluginInterface {

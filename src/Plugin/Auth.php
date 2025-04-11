@@ -22,7 +22,7 @@ use Kansas\Provider\UsersInterface;
 use Kansas\Router\Auth as AuthRouter;
 use Kansas\Router\RouterInterface;
 use Psr\Http\Message\RequestInterface;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;
@@ -32,7 +32,7 @@ require_once 'Kansas/Auth/Session/SessionInterface.php';
 require_once 'Kansas/Plugin/RouterPluginInterface.php';
 require_once 'Kansas/Router/RouterInterface.php';
 require_once 'Psr/Http/Message/RequestInterface.php';
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 
 class Auth extends Configurable implements RouterPluginInterface {
 

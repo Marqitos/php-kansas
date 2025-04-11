@@ -11,7 +11,7 @@
 namespace Kansas\Plugin;
 
 use Psr\Http\Message\RequestInterface;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\NotSupportedException;
 use System\Version;

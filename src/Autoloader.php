@@ -8,7 +8,7 @@ namespace Kansas;
 use Traversable;
 use Kansas\Loader\SplInterface;
 use System\ArgumentOutOfRangeException;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use function explode;
 use function get_include_path;

@@ -1,2 +1,2 @@
-Commit: c9766c6
+Commit: 92bba26
 Version: 0.6

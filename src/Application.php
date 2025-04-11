@@ -18,7 +18,7 @@ use Kansas\Router\RouterInterface;
 use Kansas\View\Result\ViewResultInterface;
 use System\AggregateException;
 use System\ArgumentOutOfRangeException;
-use System\Configurable;
+use Kansas\Configurable;
 use System\DisposableInterface;
 use System\EnvStatus;
 use System\NotSupportedException;
@@ -33,7 +33,7 @@ use function is_array;
 use function ucfirst;
 
 require_once 'AppStatus.php';
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'System/DisposableInterface.php';
 require_once 'System/AggregateException.php';
 

@@ -14,11 +14,11 @@ use Kansas\Application;
 use Kansas\Environment;
 use Kansas\Router\API as RouterAPI;
 use Kansas\Router\RouterInterface;
-use System\Configurable;
+use Kansas\Configurable;
 use System\EnvStatus;
 use System\Version;
 
-require_once 'System/Configurable.php';
+require_once 'Kansas/Configurable.php';
 require_once 'Kansas/Plugin/RouterPluginInterface.php';
 
 class API extends Configurable implements RouterPluginInterface {
