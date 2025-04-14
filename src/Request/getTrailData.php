@@ -28,17 +28,17 @@ function getTrailData(ServerRequestInterface $request) : array {
         'environment'   => Environment::getStatus()];
 
     $serverParams = $request->getServerParams();
-    if((stristr(PHP_OS, "darwin") !== false) &&
+    if ((stristr(PHP_OS, "darwin") !== false) &&
         isset($serverParams['HTTP_PC_REMOTE_ADDR']) &&
         !empty($serverParams['HTTP_PC_REMOTE_ADDR'])) {
         $data['remoteAddress'] = $serverParams['HTTP_PC_REMOTE_ADDR'];
-    } elseif(isset($serverParams['REMOTE_ADDR'])) {
+    } elseif (isset($serverParams['REMOTE_ADDR'])) {
         $data['remoteAddress'] = $serverParams['REMOTE_ADDR'];
     }
 
-    if($request->hasHeader('user-agent')) {
+    if ($request->hasHeader('user-agent')) {
         $data['userAgent'] = $request->getHeader('user-agent')[0];
-    } elseif(isset($serverParams['HTTP_USER_AGENT'])) {
+    } elseif (isset($serverParams['HTTP_USER_AGENT'])) {
         $data['userAgent'] = $serverParams['HTTP_USER_AGENT'];
     }
 
@@ -78,7 +78,7 @@ function getTrailData(ServerRequestInterface $request) : array {
         $data['referer'] = empty($httpReferer)
             ? 'unknown'
             : $marker->bbc_filter_ref($httpHost, $httpReferer, $serverName, $serverAddr);
-    } elseif(isset($serverParams['HTTP_REFERER'])) {
+    } elseif (isset($serverParams['HTTP_REFERER'])) {
         $data['referer'] = $serverParams['HTTP_REFERER'];
     }
 

@@ -1,2 +1,2 @@
-Commit: 22dfe47
+Commit: 69f18ac
 Version: 0.6

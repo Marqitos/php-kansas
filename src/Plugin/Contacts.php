@@ -44,7 +44,7 @@ class Contacts {
      */
     public static function getFormattedName(array $contact) {
         foreach($contact['contact'] as $property) {
-            if($property['key'] == 'FN') {
+            if ($property['key'] == 'FN') {
                 return $property['value'];
             }
         }
@@ -57,9 +57,9 @@ class Contacts {
      * @return mixed string con el nombre del contacto en caso de que lo tenga, o false en caso contrario
      */
     public static function getGivenName(array $contact) {
-        if($contact['kind'] == 'individual') {
+        if ($contact['kind'] == 'individual') {
             foreach($contact['contact'] as $property) {
-                if($property['key'] == 'N') {
+                if ($property['key'] == 'N') {
                     return explode(';', $property['value'])[1];
                 }
             }

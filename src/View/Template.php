@@ -50,14 +50,14 @@ class Template {
             include $this->script;
             return ob_get_clean();
         } catch (Throwable $th) {
-            $buffer = ob_end_clean();
-            if (Environment::getStatus() == EnvStatus::DEVELEPMENT) {
-                var_dump($th);
-                echo $buffer;
+            if (Environment::getStatus() == EnvStatus::DEVELOPMENT) {
+                $status = ob_get_status();
+                echo ob_end_clean();
+                var_dump($th, $status);
             }
             throw $th;
         } finally {
-            if (!empty(ob_get_status())) {
+            if (! empty(ob_get_status())) {
                 ob_clean();
             }
         }
@@ -165,7 +165,7 @@ class Template {
     public static function getTitle() : TitleBuilderInterface {
         global $application;
         $title = $application->createTitle();
-        if(isset(self::$datacontext['title'])) {
+        if (isset(self::$datacontext['title'])) {
             $title->setTitle(self::$datacontext['title']);
         }
         return $title;

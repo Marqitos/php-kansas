@@ -58,7 +58,7 @@ class App {
     public static function getLocale(array $keys, ...$values) {
         require_once 'System/Localization/Resources.php';
         $value = Resources::getResource($keys);
-        if (!$value) {
+        if (! $value) {
             return false;
         }
         return count($values) == 0

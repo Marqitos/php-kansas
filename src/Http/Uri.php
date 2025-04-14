@@ -481,7 +481,7 @@ class Uri implements UriInterface {
             return '';
         }
 
-        if (!isset($this->allowedSchemes[$scheme])) {
+        if (! isset($this->allowedSchemes[$scheme])) {
             throw new InvalidArgumentException(sprintf(
                 'Unsupported scheme "%s"; must be any empty string or in the set (%s)',
                 $scheme,

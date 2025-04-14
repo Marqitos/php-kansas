@@ -36,7 +36,7 @@ class Google extends Configurable implements PluginInterface {
     public function __construct(array $options = []) {
         parent::__construct($options);
         global $application;
-        if($this->options['ga_tracker']) {
+        if ($this->options['ga_tracker']) {
             require_once 'Kansas/Application.php';
             require_once 'Kansas/Controller/Index.php';
             Index::addAction('gaTracker', [self::class, 'gaAction']); // Añade una acción al controlador principal
@@ -70,7 +70,7 @@ class Google extends Configurable implements PluginInterface {
 
 
     public function customSearch(string $query) {
-        if(!$this->options['cse_cx']) {
+        if (! $this->options['cse_cx']) {
             require_once 'System/ArgumentException.php';
             throw new ArgumentException('Google::cse_cx');
         }
@@ -83,13 +83,13 @@ class Google extends Configurable implements PluginInterface {
     }
 
     protected function getClient() {
-        if($this->client == null) {
+        if ($this->client == null) {
             require_once 'System/ArgumentException.php';
             require_once 'Google/Client.php';
-            if(!$this->options['AppName']) {
+            if (! $this->options['AppName']) {
                 throw new ArgumentException('Google::AppName');
             }
-            if(!$this->options['api_key']) {
+            if (! $this->options['api_key']) {
                 throw new ArgumentException('Google::ApiKey');
             }
 
@@ -102,13 +102,13 @@ class Google extends Configurable implements PluginInterface {
     }
 
     public function getGeoCodeFromComponents(array $components, array $options = []) {
-        if(!$this->options['api_key']) {
+        if (! $this->options['api_key']) {
             require_once 'System/ArgumentException.php';
             throw new ArgumentException('Google::api_key');
         }
         $componentsValues = [];
         foreach($components as $key => $value) {
-            if(strpbrk($key, ':|') || strpbrk($value, ':|')) {
+            if (strpbrk($key, ':|') || strpbrk($value, ':|')) {
                 require_once 'System/ArgumentOutOfRangeException.php';
                 throw new ArgumentOutOfRangeException('components');
             }
@@ -122,7 +122,7 @@ class Google extends Configurable implements PluginInterface {
     }
 
     public function getGeoCodeFromLatLng(float $latitude, float $longitude, array $options = []) {
-        if(!$this->options['api_key']) {
+        if (! $this->options['api_key']) {
             require_once 'System/ArgumentException.php';
             throw new ArgumentException('Google::api_key');
         }

@@ -15,18 +15,18 @@ use Psr\Http\Message\RequestInterface;
 require_once 'Psr/Http/Message/RequestInterface.php';
 
 function getRequestType(RequestInterface $request) : string {
-    if($request->hasHeader('X_REQUESTED_WITH')) {
+    if ($request->hasHeader('X_REQUESTED_WITH')) {
         // Devuelve XMLHttpRequest en las peticiones mediante Javascript XMLHttpRequest
         // Funciona con Prototype/Script.aculo.us, y posiblemente otros.
         $requestedWith = $request->getHeader('X_REQUESTED_WITH');
-        if(isset($requestedWith['XMLHttpRequest'])) {
+        if (isset($requestedWith['XMLHttpRequest'])) {
             return 'XMLHttpRequest';
         }
     }
-    if($request->hasHeader('user-agent')) {
+    if ($request->hasHeader('user-agent')) {
         // Devuelve flash en las peticiones mediante Adobe Flash
         $userAgent = $request->getHeader('user-agent');
-        if(stristr($userAgent[0], ' flash')) {
+        if (stristr($userAgent[0], ' flash')) {
             return 'FlashRequest';
         }
     }

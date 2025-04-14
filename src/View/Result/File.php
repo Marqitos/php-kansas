@@ -46,18 +46,18 @@ class File extends FileAbstract {
     $this->size         = isset($options['size'])
                         ? $options['size']
                         : false;
-    if(isset($options['mime'])) {
+    if (isset($options['mime'])) {
         parent::__construct($options['mime']);
     }
   }
 
   // Obtiene o establece el tipo de contenido de archivo
   public function getMimeType() : string {
-    if(empty($this->mimeType)) {
-      if(class_exists("MIME_Type", false)) {
+    if (empty($this->mimeType)) {
+      if (class_exists("MIME_Type", false)) {
         return MIME_Type::autoDetect($this->filename);
       }
-      if(function_exists("finfo_open")) {
+      if (function_exists("finfo_open")) {
         try {
           $finfo = finfo_open(FILEINFO_MIME_TYPE);
           return finfo_file($finfo, $this->filename);
@@ -75,21 +75,21 @@ class File extends FileAbstract {
   public function executeResult() {
     $cnt        = 0;
     $sendFile   = parent::sendHeaders($this->eTag);
-    if(!$sendFile) {
+    if (! $sendFile) {
         return $cnt;
     }
 
-    if($this->getUseXSendFile()) {
+    if ($this->getUseXSendFile()) {
       $filename = (strtolower(substr(php_uname('s'), 0, 3)) == 'win')
         ? str_replace('\\', '/', $this->filename)
         : $this->filename;
       header("X-SENDFILE: " . $filename);
     } else {
       set_time_limit(0);
-      if($this->chunksize) {
+      if ($this->chunksize) {
         $buffer = '';
         $handle = fopen($this->filename, 'rb');
-        if($handle) {
+        if ($handle) {
           while (!feof($handle)) {
             $buffer = fread($handle, $this->chunksize);
             echo $buffer;
@@ -98,7 +98,7 @@ class File extends FileAbstract {
             $cnt += strlen($buffer);
           }
           $status = fclose($handle);
-          if(!$status) {
+          if (! $status) {
             $cnt = false;
           }
         } else {

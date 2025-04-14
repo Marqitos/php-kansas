@@ -51,7 +51,7 @@ class RedirectionError extends Configurable implements PluginInterface {
     public function errorManager($params) {
         if ($params['code'] == 404 &&
             $path = $this->options['basePath']) {
-            if($this->options['append']) {
+            if ($this->options['append']) {
                 $path = rtrim($path, '/') . Environment::getRequest()->getRequestUri();
             }
             require_once 'Kansas/View/Result/Redirect.php';

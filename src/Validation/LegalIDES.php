@@ -21,7 +21,7 @@ require_once 'System/ArgumentOutOfRangeException.php';
 function validateLegalID(string $legalID, string &$type = null) {
 
     // Comprobamos que tenga 9 caracteres
-    if(strlen($legalID) != 9) {
+    if (strlen($legalID) != 9) {
         return false;
     }
 
@@ -47,17 +47,17 @@ function validateLegalID(string $legalID, string &$type = null) {
 function getType(string $legalCode, callable &$validate = null) : string {
     $firstChar = substr($legalCode, 0, 1);
     // Comprobamos si es un NIF
-    if(preg_match('/\d/', $firstChar) == 1) {
+    if (preg_match('/\d/', $firstChar) == 1) {
         $validate = 'Kansas\LegalID\validateNIF';
         return T_NIF;
     }
     // Comprobamos si es un NIE
-    if(preg_match('/[XYZ]/', $firstChar) == 1) {
+    if (preg_match('/[XYZ]/', $firstChar) == 1) {
         $validate = 'Kansas\LegalID\validateNIF';
         return T_NIE;
     }
     // Comprobamos si es un CIF
-    if(preg_match('/[ABCDEFGHJPQRSUVNW]/', $firstChar) == 1) {
+    if (preg_match('/[ABCDEFGHJPQRSUVNW]/', $firstChar) == 1) {
         $validate = 'Kansas\LegalID\validateCIF';
         return T_CIF;
     }
@@ -70,11 +70,11 @@ function validateCIF(string $legalCode, string $type) {
     $impares    = 0;
     // Recorrido por todos los dígitos del número
     for($index = 1; $index < 8; $index++) {
-        if(($number = filter_var(substr($legalCode, $index, 1), FILTER_VALIDATE_INT)) === false) {
+        if (($number = filter_var(substr($legalCode, $index, 1), FILTER_VALIDATE_INT)) === false) {
             throw new ArgumentOutOfRangeException('legalCode', 'El código no tiene un formato válido', $legalCode);
         }
 
-        if(($index) % 2 == 0) { // Si es una posición par, se suman los dígitos
+        if (($index) % 2 == 0) { // Si es una posición par, se suman los dígitos
             $pares += $number;
         } else { // Si es una posición impar, se multiplican los dígitos por 2
             $number *= 2;
@@ -128,14 +128,14 @@ function validateCIF(string $legalCode, string $type) {
  */
 function validateNIF(string $legalCode, string $type) {
     // Obtenemos la parte númerica del documento
-    if($type == T_NIF) {
+    if ($type == T_NIF) {
         $number = filter_var(substr($legalCode, 0, 8), FILTER_VALIDATE_INT);
-    } elseif($type == T_NIE) {
+    } elseif ($type == T_NIE) {
         $number = filter_var(substr($legalCode, 1, 7), FILTER_VALIDATE_INT);
     } else{
         throw new ArgumentOutOfRangeException('type', 'El tipo de documento no es válido',  $type);
     }
-    if($number === false) {
+    if ($number === false) {
         return false;
     }
     // Comprobamos el dígito de control

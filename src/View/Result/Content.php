@@ -37,7 +37,7 @@ class Content extends ViewResultAbstract {
             $this->etag = md5($this->content);
         }
         if (parent::sendHeaders()) {
-            if(is_string($this->download)) {
+            if (is_string($this->download)) {
                 $disposition = 'Content-Disposition: attachment; filename="' . basename($this->download) . '"';
             } else {
                 $disposition = 'Content-Disposition: ' . ($this->download

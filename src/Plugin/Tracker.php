@@ -45,7 +45,7 @@ class Tracker extends Configurable implements PluginInterface {
             $this->setOption('trail', false);
         }
         $application->registerCallback(Application::EVENT_PREINIT,      [$this, 'appPreInit']);
-        if($this->options['trail']) {
+        if ($this->options['trail']) {
             $application->registerCallback(Application::EVENT_ROUTE,    [$this, "appRoute"]);
             $application->registerCallback(Application::EVENT_C_VIEW,   [$this, "appCreateView"]);
             $application->registerCallback(Application::EVENT_DISPOSE,  [$this, "appShutdown"]);
@@ -75,23 +75,23 @@ class Tracker extends Configurable implements PluginInterface {
 
     public function appRoute(RequestInterface $request, $params) { // Añadir rastro
         global $application;
-        if(!isset($this->trail)) {
+        if (! isset($this->trail)) {
             $this->initialize();
         }
-        if(isset($params['requestType'])) { // Obtenemos el tipo de request
+        if (isset($params['requestType'])) { // Obtenemos el tipo de request
             $this->trail['requestType'] = $params['requestType'];
         }
-        if(isset($params['identity'])) {
+        if (isset($params['identity'])) {
             $identity = $params['identity']; // Obtenemos los datos de usuario y sesión
         }
-        if($authPlugin = $application->hasPlugin('auth')) {
+        if ($authPlugin = $application->hasPlugin('auth')) {
             $session = $authPlugin->getSession();
-            if(!isset($identity)) {
+            if (! isset($identity)) {
                 $identity = $session->getIdentity();
             }
             $this->trail['session'] = $session->getId();
         }
-        if($identity) {
+        if ($identity) {
             $this->trail['user'] = $identity['id'];
         }
         return [ // Devolvemos los datos de rastreo
@@ -100,18 +100,18 @@ class Tracker extends Configurable implements PluginInterface {
     }
 
     public function appCreateView($view) {
-        if(!isset($this->trail)) {
+        if (! isset($this->trail)) {
             $this->initialize();
         }
         $this->trail['responseType'] = 'page';
     }
 
     public function appShutdown() {
-        if(!isset($this->trail)) {
+        if (! isset($this->trail)) {
             $this->initialize();
         }
         $error = error_get_last();
-        if($error !== null) {
+        if ($error !== null) {
             $this->trail['lastError'] = $error;
         }
         $this->trail['executionTime'] = Environment::getExecutionTime();
@@ -138,7 +138,7 @@ class Tracker extends Configurable implements PluginInterface {
         $trail = $this->trail;
         $modifyHits = function($read) use ($trail) { // Función lambda de modificar archivo de solicitudes
             $hits = unserialize($read);
-            if (!is_array($hits)) {
+            if (! is_array($hits)) {
                 $hits = [];
             }
             if ($trail['responseType'] == 'page') {
@@ -151,13 +151,13 @@ class Tracker extends Configurable implements PluginInterface {
         };
         $modifyIndex = function($read) use ($modifyHits, $trackPath) { // Función lambda de modificar archivo indice
             $index = unserialize($read);
-            if(!is_array($index)) {
+            if (! is_array($index)) {
                 $index = [];
             }
             $c = 0;
             do {
                 $c++;
-                if(isset($index['hits-' . $c . '.ser'])) {
+                if (isset($index['hits-' . $c . '.ser'])) {
                     $count = $index['hits-' . $c . '.ser'];
                 } else {
                     $count = 0;
@@ -176,8 +176,8 @@ class Tracker extends Configurable implements PluginInterface {
         require_once 'Kansas/Request/getUserAgentData.php';
         require_once 'Kansas/Request/getRemoteAddressData.php';
         $useThis = ($trail == null);
-        if($useThis) {
-            if(!isset($this->trail)) {
+        if ($useThis) {
+            if (! isset($this->trail)) {
                 $this->initialize();
             }
             $trail = $this->trail;
@@ -186,7 +186,7 @@ class Tracker extends Configurable implements PluginInterface {
         $userAgent = getUserAgentData($trail['userAgent']);
         $remote = getRemoteAddressData($trail['remoteAddress'], $this->options['remote_plugin']);
 
-        if($useThis) {
+        if ($useThis) {
             $this->trail = array_merge(
                 $trail,
                 $userAgent,
@@ -208,7 +208,7 @@ class Tracker extends Configurable implements PluginInterface {
      * @return Kansas\Router\TrailResources
      */
     public function getRouter() {
-        if(!isset($this->router)) {
+        if (! isset($this->router)) {
             require_once 'Kansas/Router/TrailResources.php';
             $this->router = new TrailResources([]);
         }

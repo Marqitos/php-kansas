@@ -28,7 +28,7 @@ abstract class AbstractController implements ControllerInterface {
     }
 
     public function callAction(string $action, array $vars) : ViewResultInterface {
-        if(!is_callable([$this, $action])) {
+        if (! is_callable([$this, $action])) {
             require_once 'System/NotImplementedException.php';
             throw new NotImplementedException(sprintf(Resources::NOT_IMPLEMENTED_EXCEPTION_ACTION_FORMAT, $action, get_class($this)));
         }
@@ -43,7 +43,7 @@ abstract class AbstractController implements ControllerInterface {
      * @return mixed Valor almacenado, o valor por defecto en caso de que no esté establecido
      */
     public function getParam(string $key, $default = null) {
-        if(isset($this->params[$key])) {
+        if (isset($this->params[$key])) {
             return $this->params[$key];
         }
         return isset($_REQUEST[$key])
@@ -59,7 +59,7 @@ abstract class AbstractController implements ControllerInterface {
      */
     public static function getIdentity(array $vars) {
         global $application;
-        if(isset($vars['identity'])) {
+        if (isset($vars['identity'])) {
             return $vars['identity'];
         }
         return $application
@@ -99,12 +99,12 @@ abstract class AbstractController implements ControllerInterface {
     protected function isAuthenticated(&$result, ?string $ru = null) : bool {
         global $application;
         $auth = $application->getPlugin('auth');
-        if($auth->hasIdentity()) {
+        if ($auth->hasIdentity()) {
             $result = $auth->getIdentity();
             return true;
         } else {
             require_once 'Kansas/View/Result/Redirect.php';
-            if($ru === null) {
+            if ($ru === null) {
                 $ru = Environment::getRequest()->getRequestUri();
             }
             $result = Redirect::gotoUrl(

@@ -80,17 +80,17 @@ class Logger extends Configurable implements PluginInterface, LoggerInterface {
                     !empty($errorFile)) {
                     $message .= sprintf(Resources::E_LINE_ERROR_FORMAT, $errorLine, $errorFile);
                     $fileLine = self::getLineFromFile($errorFile, $errorLine);
-                } elseif (!empty($errorFile)) {
+                } elseif (! empty($errorFile)) {
                     $message .= sprintf(Resources::E_FILE_ERROR_FORMAT, $errorFile);
                 }
                 $message .= "</span><br>\r\n";
-                if (!empty($fileLine)) {
+                if (! empty($fileLine)) {
                     $message .= '<span style="color:#DE2500"><em>';
                     $message .= $fileLine;
                     $message .= "</em></span><br>\r\n";
                 }
                 $message .= $errorMsg;
-                if (!empty($trace)) {
+                if (! empty($trace)) {
                     $message   .= str_replace('#', "<br>\r\n#" , $trace);
                 }
                 $message .= "<br>\r\n";

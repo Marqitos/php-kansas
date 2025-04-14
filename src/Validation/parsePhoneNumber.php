@@ -23,19 +23,19 @@ function parsePhoneNumber(string $phoneNumber, PhoneNumber &$phoneNumberProto = 
     require_once 'libphonenumber/NumberParseException.php';
     require_once 'libphonenumber/CountryCodeToRegionCodeMap.php';
     try {
-        if($phoneCountry == null) {
+        if ($phoneCountry == null) {
             $phoneCountry = $options['country'];
         }
         $phoneUtil          = PhoneNumberUtil::getInstance();
         $phoneNumberProto   = $phoneUtil->parse($phoneNumber, $phoneCountry);
         $countryCode        = $phoneUtil->getRegionCodeForNumber($phoneNumberProto);
-        if(isset(CountryCodeToRegionCodeMap::$countryCodeToRegionCodeMap[$countryCode]) &&
+        if (isset(CountryCodeToRegionCodeMap::$countryCodeToRegionCodeMap[$countryCode]) &&
             count(CountryCodeToRegionCodeMap::$countryCodeToRegionCodeMap[$countryCode]) == 1) {
             $phoneCountry   = CountryCodeToRegionCodeMap::$countryCodeToRegionCodeMap[$countryCode][0];
         }
         return true;
     } catch (NumberParseException $ex) {
-        if($logger = $application->hasPlugin('Logger')) {
+        if ($logger = $application->hasPlugin('Logger')) {
             $logger->debug($ex->__toString(), ['exception' => $ex]);
         }
     }

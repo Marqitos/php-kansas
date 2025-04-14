@@ -104,12 +104,12 @@ class Redsys extends Configurable implements PluginInterface {
     }
 
     public function getGateway() : AbstractGateway {
-        if($this->gateway == null) {
+        if ($this->gateway == null) {
             require_once 'Http/Discovery/Psr17FactoryDiscovery.php';
             require_once 'Http/Adapter/Guzzle7/Client.php';
             require_once 'Psr/Http/Client/ClientInterface.php';
             require_once 'Omnipay/Omnipay.php';
-            if($this->options['redirect']) {
+            if ($this->options['redirect']) {
                 require_once 'Omnipay/Redsys/RedirectGateway.php';
                 $className = self::CLASSNAME_REDIRECT;
             } else {

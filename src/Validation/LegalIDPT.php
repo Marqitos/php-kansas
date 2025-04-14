@@ -44,7 +44,7 @@ require_once 'System/ArgumentOutOfRangeException.php';
 function validateLegalID(string $legalID, string &$type = null) {
 
     // Comprobamos que tenga 9 caracteres
-    if(strlen($legalID) != 9) {
+    if (strlen($legalID) != 9) {
         return false;
     }
 
@@ -76,28 +76,28 @@ function getType(string $legalCode) {
         if (in_array(substr($legalCode, 0, 1), ['1', '2', '3']) ||
            substr($legalCode, 0, 2) == '45') {
             return T_PESSOA_SINGULAR;
-        } elseif(substr($legalCode, 0, 1) == '5') {
+        } elseif (substr($legalCode, 0, 1) == '5') {
             return T_PESSOA_COLECTIVA;
-        } elseif(substr($legalCode, 0, 1) == '6') {
+        } elseif (substr($legalCode, 0, 1) == '6') {
             return T_ADMINISTRACAO_PUBLICA;
-        } elseif(substr($legalCode, 0, 2) == '70') {
+        } elseif (substr($legalCode, 0, 2) == '70') {
             return T_HERANCA_INDIVISA;
-        } elseif(substr($legalCode, 0, 2) == '71') {
+        } elseif (substr($legalCode, 0, 2) == '71') {
             return T_NAO_RESIDENTES_COLECTIVOS;
-        } elseif(substr($legalCode, 0, 2) == '72') {
+        } elseif (substr($legalCode, 0, 2) == '72') {
             return T_FUNDOS_INVESTIMENTO;
-        } elseif(substr($legalCode, 0, 2) == '77') {
+        } elseif (substr($legalCode, 0, 2) == '77') {
             return T_SUJEITO_PASSIVO;
-        } elseif(substr($legalCode, 0, 2) == '78') {
+        } elseif (substr($legalCode, 0, 2) == '78') {
             return T_NAO_RESIDENTES_VAT_REFUND;
-        } elseif(substr($legalCode, 0, 2) == '79') {
+        } elseif (substr($legalCode, 0, 2) == '79') {
             return T_REGIME_EXCEPCIONAL;
-        } elseif(substr($legalCode, 0, 2) == '90' ||
+        } elseif (substr($legalCode, 0, 2) == '90' ||
                  substr($legalCode, 0, 2) == '91') {
             return T_HERANCA_INDIVISA_EMPRESARIO;
-        } elseif(substr($legalCode, 0, 2) == '98') {
+        } elseif (substr($legalCode, 0, 2) == '98') {
             return T_NAO_RESIDENTES;
-        } elseif(substr($legalCode, 0, 2) == '99') {
+        } elseif (substr($legalCode, 0, 2) == '99') {
             return T_SOCIEDADES_CIVIS;
         }
     }

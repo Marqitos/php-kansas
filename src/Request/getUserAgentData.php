@@ -24,18 +24,18 @@ function getUserAgentData(string $userAgent) : array|false {
     require_once 'bbClone/robot.php';
     require_once 'Kansas/Request/bbcParseUserAgent.php';
     $data = bbcParseUserAgent($userAgent, $robot);
-    if($data !== false) {
+    if ($data !== false) {
         return [ 'robot' => $data ];
     }
     $result = [];
     require_once 'bbClone/os.php';
     $data = bbcParseUserAgent($userAgent, $os);
-    if($data !== false) {
+    if ($data !== false) {
         $result['os'] = $data;
     }
     require_once 'bbClone/browser.php';
     $data = bbcParseUserAgent($userAgent, $browser);
-    if($data !== false) {
+    if ($data !== false) {
         $result['browser'] = $data;
     }
     return $result;

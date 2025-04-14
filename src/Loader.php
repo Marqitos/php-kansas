@@ -44,7 +44,7 @@ class Loader {
      * @return Kansas\Loader
      */
     public static function autoload() {
-        if (!isset(self::$instance)) {
+        if (! isset(self::$instance)) {
             self::$instance = new self();
         }
         return self::$instance;
@@ -145,7 +145,7 @@ class Loader {
         }
         $file .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
 
-        if (!empty($dirs)) {
+        if (! empty($dirs)) {
             // use the autodiscovered path
             $dirPath = dirname($file);
             if (is_string($dirs)) {
@@ -197,7 +197,7 @@ class Loader {
          * Search in provided directories, as well as include_path
          */
         $incPath = false;
-        if (!empty($dirs) &&
+        if (! empty($dirs) &&
             (is_array($dirs) ||
              is_string($dirs))) {
             if (is_array($dirs)) {

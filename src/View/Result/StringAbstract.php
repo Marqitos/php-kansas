@@ -21,7 +21,7 @@ abstract class StringAbstract extends ViewResultAbstract implements StringInterf
   public function executeResult() {
     $cache = null;
     $result = $this->getResult($cache);
-    if(parent::sendHeaders($cache)) {
+    if (parent::sendHeaders($cache)) {
       echo $result;
     }
     return true;

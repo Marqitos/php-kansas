@@ -57,7 +57,7 @@ class SessionDefault implements SessionInterface {
     public function clearIdentity() : bool {
         unset($_SESSION['auth']);
         $res = session_destroy();
-        if($res) { // eliminamos la cookie de sesión
+        if ($res) { // eliminamos la cookie de sesión
             $cookieName = session_name();
             unset($_COOKIE[$cookieName]);
             $res = setcookie($cookieName, '', time() - 3600);
@@ -76,14 +76,14 @@ class SessionDefault implements SessionInterface {
      * @return void
      */
     public function initialize($force = false, $lifetime = 0, $domain = null) {
-        if(session_status() == PHP_SESSION_ACTIVE) {
+        if (session_status() == PHP_SESSION_ACTIVE) {
             return session_id();
         }
         $cookieName = session_name();
 
         if (isset($_COOKIE[$cookieName]) ||
             $force !== false) {
-            if($domain == null) {
+            if ($domain == null) {
                 session_set_cookie_params($lifetime);
             } else {
                 session_set_cookie_params($lifetime, '/', $domain);

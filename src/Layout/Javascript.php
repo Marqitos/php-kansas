@@ -30,7 +30,7 @@ abstract class Javascript {
       foreach($dependencies as $callable) {
         // Comprobamos si el script ya está en la lista, lo mueve al principio
         $name = '';
-        if (!is_callable($callable, false, $name)) {
+        if (! is_callable($callable, false, $name)) {
           require_once 'System/Collections/KeyNotFoundException.php';
           throw new KeyNotFoundException($name);
         }
@@ -43,7 +43,7 @@ abstract class Javascript {
         }
 
         // Cargamos el script si es necesario
-        if (!isset($this->scripts[$name])) {
+        if (! isset($this->scripts[$name])) {
           $this->loadScript($callable);
         }
         $dependencie = $this->scripts[$name];
@@ -79,7 +79,7 @@ abstract class Javascript {
 
     // Escribimos los scripts
     foreach ($parts as &$part) {
-      if (!isset($part[self::CRC_32])) {
+      if (! isset($part[self::CRC_32])) {
         $part[self::CRC_32] = crc32($part[self::SCRIPT]);
       }
 
@@ -97,7 +97,7 @@ abstract class Javascript {
     // Escribimos el fingerprint
     ob_start(); ?>
 
-if('scripts' in window) {
+if ('scripts' in window) {
   window.scripts += '<?= $fingerprint ?>';
 } else {
   window.scripts = '<?= $fingerprint ?>';
@@ -120,6 +120,6 @@ if('scripts' in window) {
 
 global $javascript;
 
-if (!isset($javascript)) {
+if (! isset($javascript)) {
   $javascript = [];
 }

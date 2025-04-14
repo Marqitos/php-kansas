@@ -68,7 +68,7 @@ class Javascript extends Configurable implements PluginInterface {
     # -- Miembros de Kansas\Plugin\Interface
 
     public function getPackager() {
-        if($this->packager == null){
+        if ($this->packager == null){
             require_once 'packager/packager.php';
             $this->packager = new Packager($this->options['packages']);
         }
@@ -78,15 +78,15 @@ class Javascript extends Configurable implements PluginInterface {
     public function build($components, &$md5 = null) {
         global $application;
         $md5 = false;
-        if($cache = $application->hasPlugin('BackendCache')) { // Se puede obtener el resultado javascript de cache
-            if($cache->test('js-' . md5(serialize($components)))) {
+        if ($cache = $application->hasPlugin('BackendCache')) { // Se puede obtener el resultado javascript de cache
+            if ($cache->test('js-' . md5(serialize($components)))) {
                 $data = $cache->load('js-' . md5(serialize($components)));
                 $md5 = md5($data);
-                if($this->options['verifyFiles']) {
+                if ($this->options['verifyFiles']) {
                     $dataList = unserialize($data);
-                    if($dataList['packages'] == $this->options['packages']) {
+                    if ($dataList['packages'] == $this->options['packages']) {
                         foreach($dataList['files'] as $path => $crc) { // Comprueba si alguno de los archivos ha cambiado
-                            if(!is_readable($path) || $crc != hash_file("crc32b", $path)) {
+                            if (! is_readable($path) || $crc != hash_file("crc32b", $path)) {
                                 $md5 = false;
                                 break;
                             }
@@ -96,12 +96,12 @@ class Javascript extends Configurable implements PluginInterface {
                     }
                 }
             }
-            if($md5 !== false && $cache->test('js-' . $md5)) { // Si no hay cambios devuelve desde cache
+            if ($md5 !== false && $cache->test('js-' . $md5)) { // Si no hay cambios devuelve desde cache
                 return $cache->load('js-' . $md5);
             }
         }
         $jsCode = $this->javascriptFromComponents($components, $this->options['minifier']);
-        if($cache = $application->hasPlugin('BackendCache')) { // Se puede guardar el resultado javascript en cache
+        if ($cache = $application->hasPlugin('BackendCache')) { // Se puede guardar el resultado javascript en cache
             $files = $this->getPackager()->components_to_files($components);
             $fileList = $this->getPackager()->complete_files($files);
             $dataList = [
@@ -120,7 +120,7 @@ class Javascript extends Configurable implements PluginInterface {
     }
 
     protected function buildFromComponents(array $components, array $exclude, &$md5 = null) {
-        if($md5 !== false) {
+        if ($md5 !== false) {
             $files = $this->getPackager()->components_to_files($components);
             $fileList = $this->getPackager()->complete_files($files);
             $dataList = [
@@ -150,17 +150,17 @@ class Javascript extends Configurable implements PluginInterface {
      * Comprime el código javascript
      */
     public static function minifier($jsCode, $minifier) {
-        if($minifier && !class_exists('Minifier', false) && is_readable('JShrink/Minifier.php')) {
+        if ($minifier && !class_exists('Minifier', false) && is_readable('JShrink/Minifier.php')) {
             require_once 'JShrink/Minifier.php';
         }
-        if($minifier && class_exists('Minifier')) {
+        if ($minifier && class_exists('Minifier')) {
             $jsCode = Minifier::minify($jsCode, $minifier);
         }
         return $jsCode;
     }
 
     public static function controllerAction(ControllerInterface $controller, array $vars) {
-        if(isset($vars['component'])) {
+        if (isset($vars['component'])) {
             require_once 'Kansas/View/Result/Javascript.php';
             return new ViewResultJavascript($vars['component']);
         }

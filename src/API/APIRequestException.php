@@ -29,7 +29,7 @@ class APIRequestException extends APIAggregateException implements APIExceptionI
      * @param Throwable|null $previous Excepción previa
      */
     public function __construct(string $message, int $code, Throwable $previous = null) {
-        if($previous == null) {
+        if ($previous == null) {
             require_once 'Kansas/API/APIException.php';
             $previous = new APIException($message, $code);
         }

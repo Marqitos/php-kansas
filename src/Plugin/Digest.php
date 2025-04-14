@@ -92,7 +92,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
         $digest = self::getDigest();
         // If there was no digest, show login
         require_once 'Kansas/Auth/AuthException.php';
-        if (!$digest) {
+        if (! $digest) {
             throw new AuthException(AuthException::FAILURE_UNCATEGORIZED);
         } else {
             $digestParts = self::digestParse($digest);
@@ -106,7 +106,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
 
                 return $user;
             } catch(AuthException $ex) {
-                if($ex->getErrorCode() != AuthException::FAILURE_UNCATEGORIZED) {
+                if ($ex->getErrorCode() != AuthException::FAILURE_UNCATEGORIZED) {
                 // Registrar evento de intento de inicio de sesión
                 }
                 throw $ex;
@@ -117,7 +117,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
             $a1 = $digestParts['username'] == $this->_adminUsername
                 ? $this->_adminA1
                 : $this->_digest->getA1($this->_realm, $digestParts['username']);
-            if(!$a1) {
+            if (! $a1) {
                 throw new AuthException(AuthException::FAILURE_CREDENTIAL_INVALID);
             } else {
 
@@ -153,7 +153,7 @@ class Digest extends Configurable implements PluginInterface, AuthService {
     public static function getDigest() {
         if (isset($_SERVER['PHP_AUTH_DIGEST'])) { // mod_php
             return $_SERVER['PHP_AUTH_DIGEST'];
-        } elseif(isset($_SERVER['HTTP_AUTHENTICATION']) &&
+        } elseif (isset($_SERVER['HTTP_AUTHENTICATION']) &&
                  strpos(strtolower($_SERVER['HTTP_AUTHENTICATION']), 'digest') === 0) { // most other servers
             return substr($_SERVER['HTTP_AUTHORIZATION'], 7);
         }

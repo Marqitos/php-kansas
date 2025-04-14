@@ -86,14 +86,14 @@ class Phpmail extends Configurable implements PluginInterface {
         $txtMessage = $template->fetch();
 
         $mail = $this->getSMTP();
-        if(is_array($to)) {
+        if (is_array($to)) {
             $mail->addAddress($to[0], $to[1]);
         } else {
             $mail->addAddress($to);
         }
         foreach($options as $key => $value) {
-            if($key == 'replyTo') {
-                if(is_array($value)) {
+            if ($key == 'replyTo') {
+                if (is_array($value)) {
                     $mail->addReplyTo($value[0], $value[1]);
                 } else {
                     $mail->addReplyTo($value);

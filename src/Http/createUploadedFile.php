@@ -22,9 +22,9 @@ require_once 'Kansas/Http/UploadedFile.php';
  *     size, or error keys are missing from $spec.
  */
 function createUploadedFile(array $spec) : UploadedFile {
-    if (! isset($spec['tmp_name'])
-        || ! isset($spec['size'])
-        || ! isset($spec['error'])
+    if (! isset($spec['tmp_name']) ||
+        ! isset($spec['size']) ||
+        ! isset($spec['error'])
     ) {
         throw new Exception\InvalidArgumentException(sprintf(
             '$spec provided to %s MUST contain each of the keys "tmp_name",'

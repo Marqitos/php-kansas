@@ -60,7 +60,7 @@ abstract class Configurable implements ConfigurableInterface {
       * @return void
       */
     protected function registerEvent(string $eventName, callable $callback) : void {
-        if (!array_key_exists($eventName, $this->callbacks)) {
+        if (! array_key_exists($eventName, $this->callbacks)) {
             require_once 'System/Collections/KeyNotFoundException.php';
             throw new KeyNotFoundException(sprintf(Resources::KEY_NOT_FOUND_EXCEPTION_NO_EVENT_FORMAT, $eventName));
         }
@@ -71,7 +71,7 @@ abstract class Configurable implements ConfigurableInterface {
         $result = true;
         foreach ($this->callbacks[self::EVENT_CHANGING] as $callback) {
             $result = call_user_func($callback, $optionName, $value);
-            if(!$result) {
+            if (! $result) {
                 break;
             }
         }

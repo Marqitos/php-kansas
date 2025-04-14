@@ -119,7 +119,7 @@ class Application extends Configurable implements DisposableInterface {
 
     public function onOptionChanged($optionName) {
         if ($optionName == 'loader') {
-            if (!is_array($this->options['loader'])){
+            if (! is_array($this->options['loader'])){
                 require_once 'System/ArgumentOutOfRangeException.php';
                 throw new ArgumentOutOfRangeException('optionName');
             }
@@ -283,7 +283,7 @@ class Application extends Configurable implements DisposableInterface {
         $this->loadPlugins();
         $result = [];
         foreach ($this->plugins as $pluginName => $plugin) {
-            if(!$plugin) {
+            if (! $plugin) {
                 $result[$pluginName] = [
                     'type'    => get_class($plugin),
                     'options' => $plugin->getOptions(),
@@ -327,7 +327,7 @@ class Application extends Configurable implements DisposableInterface {
 
     public function getProvider(string $providerName) {
         $providerName = ucfirst($providerName);
-        if(!isset($this->providers[$providerName])) {
+        if (! isset($this->providers[$providerName])) {
             $provider = Environment::createProvider($providerName);
             $this->providers[$providerName] = $provider;
             foreach ($this->callbacks[self::EVENT_C_PROVIDER] as $callback) {
@@ -365,7 +365,7 @@ class Application extends Configurable implements DisposableInterface {
             $result = $this->error($init);
             if (is_array($result)) {
                 $params = $result;
-            } elseif(is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
+            } elseif (is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
                 $viewResult = $result;
             } elseif (Environment::getStatus() == EnvStatus::DEVELOPMENT) {
                 var_dump($result);
@@ -388,7 +388,7 @@ class Application extends Configurable implements DisposableInterface {
                 $result = $this->error(new WebException(404));
                 if (is_array($result)) {
                     $params = $result;
-                } elseif(is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
+                } elseif (is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
                     $viewResult = $result;
                 }
             }
@@ -403,9 +403,9 @@ class Application extends Configurable implements DisposableInterface {
         if (! $viewResult) {
             require_once 'System/Net/WebException.php';
             $result = $this->error(new WebException(500));
-            if(is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
+            if (is_a($result, 'Kansas\View\Result\ViewResultInterface')) {
                 $viewResult = $result;
-            } elseif(is_a($result, 'Throwable')) {
+            } elseif (is_a($result, 'Throwable')) {
                 throw $result;
             } else {
                 throw new WebException(500);
@@ -459,11 +459,11 @@ class Application extends Configurable implements DisposableInterface {
     }
 
     public function getView() {
-        if($this->view == null) {
+        if ($this->view == null) {
             $viewClass = $this->options['view']['class'];
             unset($this->options['view']['class']);
             $this->view = new $viewClass($this->options['view']);
-            if($this->view->getCaching()) {
+            if ($this->view->getCaching()) {
                 $this->view->setCacheId(Environment::getRequest()->getUri());
             }
             foreach ($this->callbacks[self::EVENT_C_VIEW] as $callback) {
@@ -474,7 +474,7 @@ class Application extends Configurable implements DisposableInterface {
     }
 
     public function createTitle() {
-        if($this->title == null) {
+        if ($this->title == null) {
             $titleClass = (isset($this->options['title']['class']))
                 ? $this->options['title']['class']
                 : 'Kansas\\TitleBuilder\\DefaultTitleBuilder';
@@ -487,8 +487,8 @@ class Application extends Configurable implements DisposableInterface {
     /* Miembros de singleton */
     public static function getInstance(array $options) : self {
         global $application;
-        if($application == null) {
-            if(self::$instance == null) {
+        if ($application == null) {
+            if (self::$instance == null) {
                 self::$instance = new self($options);
             }
             $application = self::$instance;

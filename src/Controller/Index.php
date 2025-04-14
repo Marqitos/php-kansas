@@ -39,11 +39,10 @@ class Index extends AbstractController {
     private static $actions = [];
 
     public function callAction(string $action, array $vars): ViewResultInterface {
-        if(is_callable([$this, $action])) {
+        if (is_callable([$this, $action])) {
             return $this->$action($vars);
         }
-        if(isset(self::$actions[$action])) {
-            // ignore CWE-94 - Code Injection
+        if (isset(self::$actions[$action])) {
             return call_user_func(self::$actions[$action], $this, $vars);
         }
         require_once 'System/NotImplementedException.php';
@@ -54,12 +53,12 @@ class Index extends AbstractController {
         self::$actions[$actionName] = $callback;
     }
 
-    public function file(array $vars) {
+    public function file(array $vars): ViewResultInterface {
         require_once 'Kansas/View/Result/File.php';
         return new File($vars['file'], $vars);
     }
 
-    public function content(array $vars) {
+    public function content(array $vars): ViewResultInterface {
         $etag = isset($vars['etag'])
             ? $vars['etag']
             : null;
@@ -67,7 +66,7 @@ class Index extends AbstractController {
         return new Content($vars['content'], $vars['mimetype'], $etag);
     }
 
-    public function clearCache(array $vars) {
+    public function clearCache(array $vars): ViewResultInterface {
         global $application;
         $application->getView()->getEngine()->clearAllCache();
 
@@ -75,8 +74,8 @@ class Index extends AbstractController {
         return Redirect::gotoUrl($this->getParam('ru', '/'));
     }
 
-    public function template(array $vars): Template {
-        if(!isset($vars['template'])) {
+    public function template(array $vars): ViewResultInterface {
+        if (! isset($vars['template'])) {
             require_once 'System/ArgumentNullException.php';
             throw new ArgumentNullException('vars["template"]');
         }
@@ -85,15 +84,15 @@ class Index extends AbstractController {
         return $this->createViewResult($template, $vars);
     }
 
-    public function redirection(array $vars) {
-        if(!isset($vars['gotoUrl'])) {
+    public function redirection(array $vars): ViewResultInterface {
+        if (! isset($vars['gotoUrl'])) {
             require_once 'System/ArgumentNullException.php';
             throw new ArgumentNullException('vars["gotoUrl"]');
         }
         return Redirect::gotoUrl($vars['gotoUrl']);
     }
 
-    public function API(array $vars) {
+    public function API(array $vars): ViewResultInterface {
         require_once 'Kansas/View/Result/Json.php';
         // Si el usuario ya se ha desconectado, abandonamos el procesamiento
         if (connection_aborted() == 1) {

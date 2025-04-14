@@ -55,7 +55,7 @@ class PhpInclude extends Configurable implements ViewInterface {
       * @inheritDoc
       */
     public function getScriptPaths(): string {
-        if($this->scriptPaths !== null) {
+        if ($this->scriptPaths !== null) {
             return $this->scriptPaths;
         }
         require_once 'Kansas/Environment.php';
@@ -87,7 +87,7 @@ class PhpInclude extends Configurable implements ViewInterface {
       * @inheritDoc
       */
     public function assign(string|array $spec, $value = null) {
-        if(is_array($spec)) {
+        if (is_array($spec)) {
             $this->data = array_merge($this->data, $spec);
         } else {
             $this->data[$spec] = $value;

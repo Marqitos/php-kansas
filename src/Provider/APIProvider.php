@@ -34,18 +34,18 @@ class APIProvider {
     * @return void
     */
   protected function fillLang(string &$lang = null) : void {
-    if($lang == null) {
+    if ($lang == null) {
       global $application, $lang;
 
       // Obtenemos el idioma de la petición actual
-      if(!isset($lang) &&
+      if (! isset($lang) &&
           $localizationPlugin = $application->hasPlugin('localization')) {
           $localizationPlugin->getLocale();
       }
     }
 
     global $options;
-    if (!$lang) {
+    if (! $lang) {
       // Establecemos el idioma por defecto
       $lang = $options['lang'];
     }

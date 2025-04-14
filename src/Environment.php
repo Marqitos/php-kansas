@@ -110,7 +110,7 @@ class Environment {
     }
 
     public static function getRequestTime() {
-        if (!isset(self::$instance->requestTime)) {
+        if (! isset(self::$instance->requestTime)) {
             $serverParams = self::$instance->getRequest()->getServerParams();
             if (isset($serverParams['REQUEST_TIME_FLOAT'])) {
                 self::$instance->requestTime = $serverParams['REQUEST_TIME_FLOAT'];
@@ -128,7 +128,7 @@ class Environment {
     }
 
     public static function getRequest(?array $server = null, ?array $query = null, ?array $body = null, ?array $cookies = null, ?array $files = null) : ServerRequest {
-        if (!isset(self::$instance->request)) {
+        if (! isset(self::$instance->request)) {
             require_once 'Kansas/Http/currentServerRequest.php';
             self::$instance->request = currentServerRequest($server, $query, $body, $cookies, $files, self::$apacheRequestHeaders);
         }
@@ -174,7 +174,10 @@ class Environment {
         if ($dir) {
             return $dir . DIRECTORY_SEPARATOR;
         } elseif (self::$instance->status == EnvStatus::DEVELOPMENT) {
-            var_dump($dir, $specialFolder);
+            var_dump($dir, $specialFolder,
+                self::$instance->specialFolders[$specialFolder] ?? null,
+                self::$instance->specialFolderParts[$specialFolder] ?? null,
+                self::$instance->tempFolderParts[$specialFolder] ?? null);
         }
         return false;
     }
@@ -193,7 +196,7 @@ class Environment {
         }
 
         foreach(self::tmpDirGenerator(__DIR__ . self::SF_TEMP) as $dir) {
-            if(File::IsGoodTmpDir($dir)) {
+            if (File::IsGoodTmpDir($dir)) {
                 return realpath($dir);
             } elseif (self::$instance->status == EnvStatus::DEVELOPMENT) {
                 var_dump ($dir, realpath($dir));
@@ -206,7 +209,7 @@ class Environment {
 
   // Devuelve posibles valores para una carpeta temporal
   protected static function tmpDirGenerator($tempDir = null) {
-    if(is_string($tempDir)) {
+    if (is_string($tempDir)) {
       yield $tempDir;
     }
     foreach ([$_ENV, $_SERVER] as $tab) {
@@ -243,14 +246,14 @@ class Environment {
     }
 
     public static function getPhpVersion() {
-        if (!isset(self::$instance->phpVersion)) {
+        if (! isset(self::$instance->phpVersion)) {
         self::$instance->phpVersion = new Version(PHP_VERSION);
         }
         return self::$instance->phpVersion;
     }
 
     protected static function getLoader($loaderName) : PluginLoader {
-        if (!isset(self::$instance->loaders[$loaderName])) {
+        if (! isset(self::$instance->loaders[$loaderName])) {
             require_once 'System/Collections/KeyNotFoundException.php';
             throw new KeyNotFoundException();
         }
@@ -276,7 +279,7 @@ class Environment {
     }
 
     public static function addLoaderPaths($loaderName, $options) : void {
-        if (!isset(self::$instance->loaders[$loaderName])) {
+        if (! isset(self::$instance->loaders[$loaderName])) {
             require_once 'System/Collections/KeyNotFoundException.php';
             throw new KeyNotFoundException();
         }

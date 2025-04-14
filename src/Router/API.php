@@ -60,7 +60,7 @@ class API extends Router implements RouterInterface, RequestMethodInterface {
         // Gestionamos el metodo OPTIONS
         if ($method == self::METHOD_OPTIONS) {
             $methods = $this->getMethods($path);
-            if (!empty($methods)) {
+            if (! empty($methods)) {
                 $methods = implode(', ', $methods);
                 header('Cache-Control: no-cache');
                 header('Access-Control-Allow-Origin: *');
@@ -92,7 +92,7 @@ class API extends Router implements RouterInterface, RequestMethodInterface {
                 } else {
                     $function = $dispatch;
                 }
-                if (!function_exists($function)) {
+                if (! function_exists($function)) {
                     require_once str_replace('\\', DIRECTORY_SEPARATOR, $function) . '.php';
                 }
                 $result = call_user_func($function, $path, $method);
@@ -106,7 +106,7 @@ class API extends Router implements RouterInterface, RequestMethodInterface {
             }
         }
 
-        if(!$result) { // Gestionamos callbacks
+        if (! $result) { // Gestionamos callbacks
             foreach($this->callbacks as $callback) {
                 try {
                     $result = call_user_func($callback, $path, $method);
@@ -123,7 +123,7 @@ class API extends Router implements RouterInterface, RequestMethodInterface {
                             header('Cache-Control: no-cache');
                             break;
                         default:
-                        if($logger = $application->hasPlugin('Logger')) {
+                        if ($logger = $application->hasPlugin('Logger')) {
                             $logger->debug('metodo desconocido: {method}', ['method' => $method]);
                         }
                     }
@@ -138,7 +138,7 @@ class API extends Router implements RouterInterface, RequestMethodInterface {
             }
         }
 
-        if (!$result) { // No se ha encontrado el documento
+        if (! $result) { // No se ha encontrado el documento
             $result = APIPlugin::ERROR_NOT_FOUND;
         } elseif (is_array($this->options['params']['cors'])) { // Gestionamos CORS
             $methods = implode(', ', $this->getMethods($path));
@@ -165,7 +165,7 @@ class API extends Router implements RouterInterface, RequestMethodInterface {
             require_once 'Kansas/Localization/Resources.php';
             throw new LogicException(Resources::API_OPTIONS_METHOD_RESERVED);
         }
-        if (!isset($this->paths[$method])) {
+        if (! isset($this->paths[$method])) {
             $this->paths[$method] = [];
         }
         $this->paths[$method][$path] = $dispatch;

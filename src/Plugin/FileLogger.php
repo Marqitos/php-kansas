@@ -135,7 +135,7 @@ class FileLogger extends Configurable implements PluginInterface, LoggerInterfac
         if (gettype($message) == 'NULL') {
             $message = 'NULL';
         }
-        if (!empty($context)) {
+        if (! empty($context)) {
             require_once 'System/String/interpolate.php';
             $message = StringInterpolate($message, $context);
         }

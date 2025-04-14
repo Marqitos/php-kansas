@@ -44,28 +44,28 @@ abstract class AbstractToken implements SessionInterface {
         global $application;
         $tokenPlugin    = $application->getPlugin('Token');
         $this->user     = $user;
-        if($lifetime == 0) {
+        if ($lifetime == 0) {
             $lifetime = $tokenPlugin->getEXP();
         }
-        if($domain == null) {
+        if ($domain == null) {
             $domain = $tokenPlugin->getSessionDomain();
         }
         $data = [
             'iss'   => $tokenPlugin->getISS(),
             'iat'   => time()
         ];
-        if(isset($user['id'])) {
-            if(is_object($user['id'])) {
+        if (isset($user['id'])) {
+            if (is_object($user['id'])) {
                 $data['sub'] = (string) $user['id'];
             } else {
                 $data['sub'] = $user['id'];
             }
         }
-        if($lifetime > 0) {
+        if ($lifetime > 0) {
             $lifetime += time();
             $data['exp'] = $lifetime;
         }
-        if(!empty($domain)) {
+        if (! empty($domain)) {
             $data['aud'] = $domain;
         }
         $this->token = $tokenPlugin->createToken($data);
@@ -80,7 +80,7 @@ abstract class AbstractToken implements SessionInterface {
     }
 
     public function clearIdentity() : bool {
-        if($this->token) {
+        if ($this->token) {
             require_once 'Kansas/Plugin/Token.php';
             TokenPlugin::deleteToken($this->token);
         }
@@ -97,38 +97,38 @@ abstract class AbstractToken implements SessionInterface {
     }
 
     public function initialize(int $lifetime = null, string $domain = null) {
-        if($this->initialized) {
+        if ($this->initialized) {
             return;
         }
         global $application;
         $localizationPlugin     = $application->getPlugin('Localization');
         $locale                 = $localizationPlugin->getLocale();
         $request = Environment::getRequest();
-        if($request->hasHeader('Authorization')) { // Obtener sessión de headers
+        if ($request->hasHeader('Authorization')) { // Obtener sessión de headers
             require_once 'System/String/startWith.php';
             foreach($request->getHeader('Authorization') as $authHeader) {
-                if(startWith($authHeader, 'Bearer ')) {
+                if (startWith($authHeader, 'Bearer ')) {
                     $tokenString = substr($authHeader, 7);
                     break;
                 }
             }
         }
-        if(!isset($tokenString) &&
-           isset($_COOKIE['token'])) { // Obtener sesión de cookies
+        if (! isset($tokenString) &&
+            isset($_COOKIE['token'])) { // Obtener sesión de cookies
             $tokenString = $_COOKIE['token'];
         }
-        if(isset($tokenString)) {
+        if (isset($tokenString)) {
             $tokenPlugin = $application->getPlugin('Token');
-            if($lifetime == null) {
+            if ($lifetime == null) {
                 $lifetime = $tokenPlugin->getEXP();
             }
-            if($domain == null) {
+            if ($domain == null) {
                 $domain = $tokenPlugin->getSessionDomain();
             }
             $tokenPlugin    = $application->getPlugin('token');
             $jwt            = $tokenPlugin->parse($tokenString);
-            if($jwt) {
-                if($jwt->hasClaim('jti')) {
+            if ($jwt) {
+                if ($jwt->hasClaim('jti')) {
                     $tokenProvider  = $application->getProvider('token');
                     $id = new Guid($jwt->getClaim('jti'));
                     $this->token = $tokenProvider->getToken($id);
@@ -136,26 +136,26 @@ abstract class AbstractToken implements SessionInterface {
                     $this->token = $jwt;
                 }
             }
-            if($this->token &&
+            if ($this->token &&
                $this->token->hasClaim('sub')) { // Obtener usuario
                 $userId = false;
                 $this->tryParseUser($this->token->getClaim('sub'), $userId);
                 $usersProvider = $application->getProvider('Users');
                 $userRow = $usersProvider->getById($userId, $locale['lang'], $locale['country']);
-                if($userRow) {
+                if ($userRow) {
                     $this->user = $userRow;
                 }
             }
-            if($this->token &&
+            if ($this->token &&
                $this->token->hasClaim('exp') &&
                $lifetime > 0) { // Renovar token si es necesario
                 $updateTime = intval($this->token->getClaim('exp')) - ($lifetime / 2);
-                if($updateTime < time()) {
+                if ($updateTime < time()) {
                     $lifetime += time();
                     $this->token = $tokenPlugin->updateToken($this->token, [
                         'exp' => $lifetime
                     ]);
-                    if($this->token->hasClaim('jti')) {
+                    if ($this->token->hasClaim('jti')) {
                         $tokenProvider->saveToken($this->token);
                     }
                     setcookie('token', (string) $this->token, $lifetime, '/', $domain); // Establecer cookie
@@ -167,28 +167,10 @@ abstract class AbstractToken implements SessionInterface {
 
     abstract protected function tryParseUser($value, &$userId);
 
-    public static function tryParseGuidUser($value, &$userId) {
-        require_once 'System/Guid.php';
-        if(!Guid::tryParse($value, $userId)) {
-            $userId = $value;
-            return false;
-        }
-        return true;
-    }
-
-    public static function tryParseIntUser($value, &$userId) {
-        $userId = intval($value);
-        if($userId == 0) {
-            $userId = $value;
-            return false;
-        }
-        return true;
-    }
-
     public function getId() {
         $this->initialize();
-        if($this->token &&
-           $this->token->hasClaim('jti')) {
+        if ($this->token &&
+            $this->token->hasClaim('jti')) {
             return $this->token->getClaim('jti');
         }
         return false;

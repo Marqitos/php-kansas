@@ -64,7 +64,7 @@ class MysqliAdapter extends Adapter implements DisposableInterface {
             } else {
                 try {
                     $result = $this->con->store_result();
-                    if($this->con->errno == 0) {
+                    if ($this->con->errno == 0) {
                         return $result->fetch_all(MYSQLI_ASSOC);
                     }
                 } finally {
@@ -239,7 +239,7 @@ class MysqliAdapter extends Adapter implements DisposableInterface {
       * @return void
       */
     public function dispose() : void {
-        if (!$this->disposed) {
+        if (! $this->disposed) {
             mysqli_close($this->con);
         }
         $this->disposed = true;

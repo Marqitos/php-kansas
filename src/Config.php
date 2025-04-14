@@ -72,16 +72,16 @@ class Config {
     $dataArray = [];
     if (null === $section) { // Load entire file
       foreach ($iniArray as $sectionName => $sectionData) {
-          if(!is_array($sectionData))
+          if (! is_array($sectionData))
               $dataArray = array_replace_recursive ($dataArray, self::ProcessIniKey([], $sectionName, $sectionData, $nestSeparator));
           else
               $dataArray[$sectionName] = self::processIniSection($iniArray, $sectionName, $skipExtends, $nestSeparator);
       }
     } else { // Load one or more sections
-      if (!is_array($section))
+      if (! is_array($section))
         $section = [$section];
       foreach ($section as $sectionName) {
-        if (!isset($iniArray[$sectionName])) {
+        if (! isset($iniArray[$sectionName])) {
             require_once 'Kansas/Config/Exception.php';
             throw new ConfigException("Section '$sectionName' cannot be found in $filename");
         }
@@ -171,13 +171,13 @@ class Config {
         if (strpos($key, $nestSeparator) !== false) {
             $pieces = explode($nestSeparator, $key, 2);
             if (strlen($pieces[0]) && strlen($pieces[1])) {
-              if (!isset($config[$pieces[0]])) {
+              if (! isset($config[$pieces[0]])) {
                 if ($pieces[0] === '0' && !empty($config)) { // convert the current values in $config into an array
                   $config = [$pieces[0] => $config];
                 } else {
                   $config[$pieces[0]] = [];
                 }
-              } elseif (!is_array($config[$pieces[0]])) {
+              } elseif (! is_array($config[$pieces[0]])) {
                 require_once 'Kansas/Config/Exception.php';
                 throw new ConfigException("Cannot create sub-key for '{$pieces[0]}' as key already exists");
               }

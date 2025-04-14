@@ -86,7 +86,7 @@ class Router extends Configurable implements RouterInterface {
         $basePath = $router->getBasePath();
         if (mb_strlen($basePath) == 0) {
             $result = $path;
-        } elseif(!startWith($path, $basePath)) {
+        } elseif (! startWith($path, $basePath)) {
             return false;
         } else {
             $result = trim(mb_substr($path, mb_strlen($basePath)), '/');

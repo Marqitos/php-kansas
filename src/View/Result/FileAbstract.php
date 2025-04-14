@@ -23,15 +23,15 @@ abstract class FileAbstract extends ViewResultAbstract {
 
     protected function sendHeaders($noCache = false) {
         $result = parent::sendHeaders($noCache);
-        if($this->download) { // Si se quiere indicar al navegador que debe guardar el archivo
+        if ($this->download) { // Si se quiere indicar al navegador que debe guardar el archivo
             //$basename = basename($this->download);
-            //if(mb_check_encoding($basename, ))
+            //if (mb_check_encoding($basename, ))
             header('Content-Disposition: attachment; filename="' . basename($this->download) . '"');
             header("Content-Transfer-Encoding: binary");
         } else {
             header('Content-Disposition: inline');
         }
-        if($this->size !== false &&
+        if ($this->size !== false &&
             $result) {
             header('Content-Length: ' . $this->size);
         }

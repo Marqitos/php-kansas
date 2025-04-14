@@ -52,7 +52,7 @@ class Token extends Router {
         if (Guid::tryParse($parts[0], $id) && count($parts) == 2) {
             $provider = $application->getProvider('token');
             $token = $provider->getToken($id, $parts[1]);
-            if($token) {
+            if ($token) {
                 $params = [
                     'token' => $token
                 ];
@@ -65,7 +65,7 @@ class Token extends Router {
                             $this->plugin->authenticate($claim->getValue());
                             // TODO: Registrar inicio de sesión
                         }
-                    } elseif(array_search($claim->getName(), ['jti', 'iss', 'exp', 'iat']) === false) {
+                    } elseif (array_search($claim->getName(), ['jti', 'iss', 'exp', 'iat']) === false) {
                         $params[$claim->getName()] = $claim->getValue();
                     }
                 }

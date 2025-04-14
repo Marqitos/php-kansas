@@ -39,9 +39,9 @@ abstract class Adapter implements DisposableInterface {
             'database']];
 
     public static function Create(string $driver, array $options) : self {
-        if($driver == self::DRIVER_MYSQLI) {
+        if ($driver == self::DRIVER_MYSQLI) {
             foreach(self::DRIVER_OPTIONS[self::DRIVER_MYSQLI] as $key) {
-                if(!isset($options[$key])) {
+                if (! isset($options[$key])) {
                     require_once 'System/ArgumentOutOfRangeException.php';
                     require_once 'Kansas/Localization/Resources.php';
                     throw new ArgumentOutOfRangeException('options', sprintf(Resources::ARGUMENT_OUT_OF_RANGE_EXCEPTION_ADAPTER_OPTIONS_CONTAINS_FORMAT, $driver, $key));

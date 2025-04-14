@@ -64,22 +64,22 @@ abstract class Cache extends Configurable implements CacheInterface {
    * @return Kansas\Cache
    */
   public static function _makeBackend($backend, array $backendOptions, $customBackendNaming = false, $autoload = false) {
-      if (!$customBackendNaming) {
+      if (! $customBackendNaming) {
         $backend  = self::_normalizeName($backend);
       }
       // we use a custom backend
-      if (!preg_match('~^[\w]+$~D', $backend)) {
+      if (! preg_match('~^[\w]+$~D', $backend)) {
         require_once 'System/ArgumentOutOfRange.php';
         throw new ArgumentOutOfRangeException("Invalid backend name [$backend]");
       }
-      if (!$customBackendNaming) { // we use this boolean to avoid an API break
+      if (! $customBackendNaming) { // we use this boolean to avoid an API break
         $backendClass = 'Kansas\\Cache\\' . $backend;
       } else {
         $backendClass = $backend;
       }
-      if (!$autoload) {
+      if (! $autoload) {
         $file = str_replace('\\', DIRECTORY_SEPARATOR, $backendClass) . '.php';
-        if (!(File::IsReadable($file))) {
+        if (! (File::IsReadable($file))) {
           require_once 'System/IO/FileNotFoundException.php';
           throw new FileNotFoundException("file $file not found in include_path");
         }
@@ -115,7 +115,7 @@ abstract class Cache extends Configurable implements CacheInterface {
    */
   public function setDirectives(array $directives) {
     foreach($directives as $name => $value) {
-      if (!is_string($name)) {
+      if (! is_string($name)) {
         require_once 'System/ArgumentOutOfRange.php';
         throw new ArgumentOutOfRangeException("Incorrect option name : $name");
       }

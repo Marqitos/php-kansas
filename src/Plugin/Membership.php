@@ -86,13 +86,13 @@ class Membership extends Configurable implements PluginInterface, AuthService {
     global $application;
     $provider = $application->getProvider('Auth_Membership');
     // comprobar bloqueo de inicio de sessión
-    if($this->canLogin($remoteAddress, $email)) {
+    if ($this->canLogin($remoteAddress, $email)) {
       try {
         $user = $provider->validate($email, $password);
         $this->authPlugin->setIdentity($user, $remember, $remoteAddress, $userAgent);
         return $user;
       } catch(AuthException $ex) {
-        if($ex->getErrorCode() != AuthException::FAILURE_UNCATEGORIZED) {
+        if ($ex->getErrorCode() != AuthException::FAILURE_UNCATEGORIZED) {
           // Registar evento de intento de inicio de sesión
           $this->authPlugin->registerFailLogin($remoteAddress, $email, $ex->getErrorCode());
         }

@@ -151,7 +151,7 @@ class Resources {
 }
 
 global $lang;
-if(!isset($lang)) {
+if (! isset($lang)) {
     $lang = 'es';
 }
 

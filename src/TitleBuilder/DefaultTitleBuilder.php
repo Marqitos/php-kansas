@@ -71,9 +71,9 @@ class DefaultTitleBuilder extends Configurable implements TitleBuilderInterface 
     }
 
     public function __toString() {
-        if(count($this->items) == 0) {
+        if (count($this->items) == 0) {
             $result = [$this->options['title']];
-        } elseif(empty($this->options['title'])) {
+        } elseif (empty($this->options['title'])) {
             $result = $this->items;
         } else {
             $result = ($this->options['attachOrder'] == self::APPEND)

@@ -39,9 +39,9 @@ class TrailResources extends Router {
         $path = trim(Environment::getRequest()->getUri()->getPath(), '/');
         foreach($this->options['paths'] as $requestPath => $realPath) {
             $length = strlen($requestPath);
-            if($requestPath == substr($path, 0, $length)) {
+            if ($requestPath == substr($path, 0, $length)) {
                 $partial = substr($path, $length);
-                if($file = realpath($realPath . $partial . ".png")) {
+                if ($file = realpath($realPath . $partial . ".png")) {
                     return [
                         'controller'    => 'index',
                         'action'        => 'file',

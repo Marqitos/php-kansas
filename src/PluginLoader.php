@@ -67,7 +67,7 @@ class PluginLoader {
      */
     protected static function formatPrefix(string $prefix) : string {
         require_once 'Kansas/Autoloader.php';
-        if($prefix == "") {
+        if ($prefix == "") {
             return $prefix;
         }
 
@@ -93,10 +93,10 @@ class PluginLoader {
         }
         $path   = strtr(rtrim($path, '/\\') . DIRECTORY_SEPARATOR, '/\\', DIRECTORY_SEPARATOR);
 
-        if (!isset($this->prefixToPaths[$prefix])) {
+        if (! isset($this->prefixToPaths[$prefix])) {
             $this->prefixToPaths[$prefix] = [];
         }
-        if (!in_array($path, $this->prefixToPaths[$prefix])) {
+        if (! in_array($path, $this->prefixToPaths[$prefix])) {
             $this->prefixToPaths[$prefix][] = $path;
         }
         return $this;
@@ -157,7 +157,7 @@ class PluginLoader {
             $prefix = $this->formatPrefix($prefix);
             $registry =& $this->prefixToPaths;
 
-            if (!isset($registry[$prefix])) {
+            if (! isset($registry[$prefix])) {
                 require_once 'System/Collections/KeyNotFoundException.php';
                 throw new KeyNotFoundException('Prefix ' . $prefix . ' was not found in the PluginLoader.');
             }
@@ -220,7 +220,7 @@ class PluginLoader {
      */
     public function getClassPath($name) {
             $name = self::formatName((string)$name);
-            if (!empty($this->loadedPluginPaths[$name])) {
+            if (! empty($this->loadedPluginPaths[$name])) {
                 return $this->loadedPluginPaths[$name];
             }
 
@@ -281,8 +281,8 @@ class PluginLoader {
             }
         }
 
-        if (!$found) {
-            if (!$throwExceptions) {
+        if (! $found) {
+            if (! $throwExceptions) {
                 return false;
             }
             require_once 'Kansas/Loader/NotFoundException.php';
@@ -308,17 +308,17 @@ class PluginLoader {
             self::$includeFileCache = null;
             return;
         }
-        if(!file_exists($file) &&
+        if (! file_exists($file) &&
            !file_exists(dirname($file))) {
             require_once 'System/IO/IOException.php';
             throw new IOException('Specified file does not exist and directory does not exist (' . $file . ')');
         }
-        if(file_exists($file) &&
+        if (file_exists($file) &&
            !is_writable($file)) {
             require_once 'System/IO/IOException.php';
             throw new IOException('Specified file is not writeable (' . $file . ')');
         }
-        if(!file_exists($file) &&
+        if (! file_exists($file) &&
            file_exists(dirname($file)) &&
            !is_writable(dirname($file))) {
             require_once 'System/IO/IOException.php';
@@ -344,12 +344,12 @@ class PluginLoader {
      * @return void
      */
     protected static function appendIncFile($incFile) {
-        if (!file_exists(self::$includeFileCache)) {
+        if (! file_exists(self::$includeFileCache)) {
             $file = '<?php';
         } else {
             $file = file_get_contents(self::$includeFileCache);
         }
-        if (!strstr($file, $incFile)) {
+        if (! strstr($file, $incFile)) {
             $file .= "\ninclude_once '$incFile';";
             file_put_contents(self::$includeFileCache, $file);
         }

@@ -61,16 +61,16 @@ class SocketLogger extends Configurable implements PluginInterface, LoggerInterf
 
     // Miembros de Psr\Log\LoggerInterface
     public function log(string $level, $message, array $context = []) {
-        if($level == LogLevel::ERROR &&
+        if ($level == LogLevel::ERROR &&
            isset($context['exception']) &&
            is_a($context['exception'], 'Throwable')) {
             $this->maurina->exceptionHandler($context['exception']);
-            if(is_string($message) &&
+            if (is_string($message) &&
                $message == $context['exception']->getMessage()) {
                 return;
             }
         }
-        if(is_string($message) &&
+        if (is_string($message) &&
            is_array($context)) {
             require_once 'System/String/interpolate.php';
             $message = StringInterpolate($message, $context);

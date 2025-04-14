@@ -30,7 +30,7 @@ abstract class APIAggregateException extends AggregateException implements APIEx
     abstract protected function getHTTPStatusCode(): int;
 
     public static function aggregateError(string $message, int $code, APIAggregateException &$aggregateException = null): APIAggregateException {
-        if($aggregateException == null) {
+        if ($aggregateException == null) {
             $className = get_called_class();
             $aggregateException = new $className($message, $code);
         } else {

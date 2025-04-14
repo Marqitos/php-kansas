@@ -136,7 +136,7 @@ class Autoloader extends Configurable implements SplInterface {
      * @return Autoloader
      */
     public function registerNamespaces($namespaces) {
-        if (!is_array($namespaces) && !$namespaces instanceof Traversable) {
+        if (! is_array($namespaces) && !$namespaces instanceof Traversable) {
             require_once "System/ArgumentOutOfRangeException.php";
             throw new ArgumentOutOfRangeException('callback', 'Se esperaba un iterable', $namespaces);
         }
@@ -251,7 +251,7 @@ class Autoloader extends Configurable implements SplInterface {
      * @throws Exception\InvalidArgumentException
      */
     protected function loadClass(string $class, string $type) : bool {
-        if (!in_array($type, [self::LOAD_NS, self::LOAD_PREFIX, self::ACT_AS_FALLBACK])) {
+        if (! in_array($type, [self::LOAD_NS, self::LOAD_PREFIX, self::ACT_AS_FALLBACK])) {
             require_once "System/ArgumentOutOfRangeException.php";
             throw new ArgumentOutOfRangeException('type');
         }
@@ -310,21 +310,21 @@ class Autoloader extends Configurable implements SplInterface {
      * @return bool
      */
     public static function isReadable(string $filename) : bool {
-        if(is_readable($filename)) { // Return early if the filename is readable without needing the
+        if (is_readable($filename)) { // Return early if the filename is readable without needing the
             return true;             // include_path
         }
 
-        if(strtoupper(substr(PHP_OS, 0, 3)) == 'WIN' &&
+        if (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN' &&
            preg_match('/^[a-z]:/i', $filename)) { // If on windows, and path provided is clearly an absolute path,
             return false;                         // return false immediately
         }
 
         foreach (self::explodeIncludePath() as $path) {
-            if($path == '.') {
+            if ($path == '.') {
                 continue;
             }
             $file = rtrim($path, '/') . '/' . $filename;
-            if(@is_readable($file)) {
+            if (@is_readable($file)) {
                 return true;
             }
         }
@@ -341,7 +341,7 @@ class Autoloader extends Configurable implements SplInterface {
       * @return array
       */
     public static function explodeIncludePath(?string $path = null): array {
-        if(null === $path) {
+        if (null === $path) {
             $path = get_include_path();
         }
 

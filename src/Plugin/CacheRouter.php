@@ -26,7 +26,7 @@ class CacheRouter extends Configurable implements PluginInterface {
         global $application;
         parent::__construct($options);
         $application->registerCallback(Application::EVENT_PREINIT, [$this, 'appPreInit']);
-        if($this->options['cache_routing']) { // Cache de rutas
+        if ($this->options['cache_routing']) { // Cache de rutas
             $application->registerCallback(Application::EVENT_ROUTE, [$this, "appRoute"]);
         }
     }
@@ -47,7 +47,7 @@ class CacheRouter extends Configurable implements PluginInterface {
     }
 
     public function getCache() {
-        if(!isset($this->cache)) {
+        if (! isset($this->cache)) {
             global $application;
             $cacheModule = $application->getPlugin('BackendCache');
             $this->cache = $cacheModule->getCache(
@@ -65,7 +65,7 @@ class CacheRouter extends Configurable implements PluginInterface {
     }
 
     public function appRoute(ServerRequestInterface $request, $params) { // Guardar ruta en cache
-        if(! isset($params['cache']) &&
+        if (! isset($params['cache']) &&
            ! isset($params['error'])) {
             $this->getCache()->save(serialize($params), self::getCacheId($request));
         }
@@ -80,7 +80,7 @@ class CacheRouter extends Configurable implements PluginInterface {
     }
 
     public function getRouter() {
-        if(!isset($this->router)) {
+        if (! isset($this->router)) {
             require_once 'Kansas/Router/Cache.php';
             $this->router = new RouterCache($this->getCache());
         }

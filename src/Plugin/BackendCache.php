@@ -51,7 +51,7 @@ class BackendCache extends Configurable implements PluginInterface {
   }
 
   public function getCache(string $category = '.', ?string $cacheType = null, array $cacheOptions = []) {
-    if (!isset($this->caches[$category])) {
+    if (! isset($this->caches[$category])) {
       if (empty($cacheType)) {
           $cacheType = $this->options['cache_type'];
       }

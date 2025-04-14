@@ -71,7 +71,7 @@ class UploadedFile implements UploadedFileInterface {
                 $this->stream = $streamOrFile;
             }
 
-            if (!$this->file && !$this->stream) {
+            if (! $this->file && !$this->stream) {
                 require_once 'System/ArgumentException.php';
                 throw new ArgumentException('streamOrFile', 'Invalid stream or file provided for UploadedFile');
             }
@@ -140,7 +140,7 @@ class UploadedFile implements UploadedFileInterface {
         }
 
         $sapi = PHP_SAPI;
-        if(empty($sapi) || 0 === strpos($sapi, 'cli') || 0 === strpos($sapi, 'phpdbg') || ! $this->file) { // Non-SAPI environment, or no filename present
+        if (empty($sapi) || 0 === strpos($sapi, 'cli') || 0 === strpos($sapi, 'phpdbg') || ! $this->file) { // Non-SAPI environment, or no filename present
             $this->writeFile($targetPath);
         } else { // SAPI environment, with file present
             if (false === move_uploaded_file($this->file, $targetPath)) {

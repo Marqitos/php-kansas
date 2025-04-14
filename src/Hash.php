@@ -91,7 +91,7 @@ class Hash {
      * @return  bool                true si el hash es válido y corresponde a la contraseña, false en caso contrario
      */
     public static function validateHash(string $hexHash, string $password, ?string $username = null): bool {
-        if(strtolower(substr($hexHash, 0, 4)) == self::HEX_BCRYPT) {
+        if (strtolower(substr($hexHash, 0, 4)) == self::HEX_BCRYPT) {
             if (strlen($hexHash) == 86) { // El hash está encriptado con Bcrypt / Blowfish y lleva incluido el salt
                 return self::validateBcrypt(substr($hexHash, 4), $password);
             } elseif ($username != null &&
@@ -117,7 +117,7 @@ class Hash {
         if (strlen($hash) == 82) {
             $salt       = hex2bin(substr($hash, 2, 32) . 'e0');
             $passHash   = hex2bin(substr($hash, 34));
-        } elseif($salt !== null &&
+        } elseif ($salt !== null &&
                  strlen($salt) == 30 &&
                  strlen($hash) != 52) {
             $salt       = hex2bin($salt);
@@ -129,7 +129,6 @@ class Hash {
         $cryptHash      = '$' . self::BCRYPT_CODE .
                           '$' . sprintf('%02d', $cost) .
                           '$' . substr(strtr(base64_encode($salt), '+', '.'), 0, 22);
-        // ignore: CWE-328 - Insecure cryptography
         $bcrypt         = crypt($password, $cryptHash);
         $cryptHash     .= substr(strtr(base64_encode($passHash), '+', '.'), 0, 31);
         return $bcrypt == $cryptHash;
